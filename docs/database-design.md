@@ -1045,3 +1045,22 @@ Chỉ những Trip thực sự:
 
 mới xuất hiện.
 Và một ghế được tái sử dụng trên các đoạn không overlap.
+
+## M2 authentication persistence decision
+
+The approved M2 addition is `refresh_tokens`, created by Flyway V3. Existing M1
+tables and migrations are unchanged.
+
+| Column | Type | Constraint |
+| --- | --- | --- |
+| id | BIGINT | Auto-increment primary key |
+| user_id | BIGINT | Required foreign key to users(id), indexed |
+| token_hash | VARCHAR(64), ASCII binary collation | Required unique SHA-256 hex digest |
+| expires_at | DATETIME(6) | Required UTC expiry, indexed |
+| created_at | DATETIME(6) | Required UTC creation time |
+
+Raw refresh tokens are never persisted. Rotation consumes the old row and creates
+a new row in one transaction. User-row locking serializes rotation with password
+changes; password changes delete all refresh-token rows for that user. There is
+no session history or token-family subsystem. Expired rows cannot authenticate;
+automatic removal of expired rows is not part of M2.

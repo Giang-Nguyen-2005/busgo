@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("dev")
 @Transactional
-class CoreDatabaseIT {
+class CoreDatabaseIT extends JwtTestSupport {
     @Autowired UserRepository users;
     @Autowired RoleRepository roles;
     @Autowired UserRoleRepository userRoles;
@@ -57,7 +57,7 @@ class CoreDatabaseIT {
         assertThat(environment.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
         flyway.validate();
         assertThat(flyway.info().pending()).isEmpty();
-        assertThat(flyway.info().applied()).hasSize(2);
+        assertThat(flyway.info().applied()).hasSize(3);
         assertThat(roles.findAll()).extracting(Role::getCode).containsExactlyInAnyOrder(RoleCode.values());
         assertThat(jdbc.queryForList("""
                 SELECT table_name FROM information_schema.tables
@@ -65,7 +65,7 @@ class CoreDatabaseIT {
                 """, String.class)).containsExactlyInAnyOrder(
                 "flyway_schema_history", "users", "roles", "user_roles", "transport_operators",
                 "operator_staff", "locations", "routes", "route_stops", "operator_routes",
-                "operator_route_fares", "bus_types", "seat_templates", "buses");
+                "operator_route_fares", "bus_types", "seat_templates", "buses", "refresh_tokens");
     }
 
     @Test

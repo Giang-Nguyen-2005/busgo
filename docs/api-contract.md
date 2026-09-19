@@ -1458,3 +1458,30 @@ booking state
 payment state
 authorization
 trước khi ghi dữ liệu.
+
+## M2 authentication implementation decisions
+
+Approved password policy: at least 8 characters, nonblank, at most 72 UTF-8 bytes;
+no uppercase/lowercase/digit/symbol requirements. Passwords are BCrypt hashes.
+Emails are stripped and lowercased before lookup/registration. Phone remains
+required at registration but is not unique, following the database design;
+`PHONE_ALREADY_EXISTS` is therefore not emitted by M2 registration.
+
+Access and refresh tokens are signed JWTs with distinct token-use claims and
+finite configurable lifetimes (defaults: 1 hour / 7 days). Refresh tokens require
+persisted SHA-256 hashes and single-use rotation. Password changes revoke all
+refresh tokens. Already-issued access tokens remain valid until expiration, with
+current user status, deletion state, and persisted roles checked on each request.
+Only ACTIVE, non-deleted accounts may authenticate. Public registration assigns
+CUSTOMER regardless of extra client-supplied role fields.
+
+Registration returns HTTP 201. Profile PATCH updates supplied fullName/phone
+fields and returns the same profile shape as GET; omitted/null fields are unchanged.
+Password change returns HTTP 204. Invalid credentials, invalid access tokens,
+and prohibited account states return HTTP 401 INVALID_CREDENTIALS; expired access
+tokens return ACCESS_TOKEN_EXPIRED; invalid, expired, consumed, revoked, or
+unpersisted refresh tokens return REFRESH_TOKEN_INVALID. Missing authentication
+retains the foundation's HTTP 401 UNAUTHORIZED response. Denied authorization
+returns HTTP 403 ACCESS_DENIED. Duplicate email returns HTTP 409 EMAIL_ALREADY_EXISTS.
+Password policy violations return HTTP 400 INVALID_PASSWORD; other field validation
+retains VALIDATION_ERROR. All errors retain the common API error envelope.

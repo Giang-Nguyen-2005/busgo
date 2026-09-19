@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("dev")
-class MySqlConnectionIT {
+class MySqlConnectionIT extends JwtTestSupport {
     @Autowired DataSource dataSource;
     @Autowired TestRestTemplate http;
 

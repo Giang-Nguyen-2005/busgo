@@ -13,8 +13,33 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class FoundationTest {
+class FoundationTest extends JwtTestSupport {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.user.repository.UserRepository users;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.user.repository.RoleRepository roles;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.user.repository.UserRoleRepository userRoles;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.auth.repository.RefreshTokenRepository refreshTokens;
     @Autowired MockMvc mvc;
+    @Autowired RoleProbe roleProbe;
+
+    @org.springframework.boot.test.context.TestConfiguration
+    static class RoleTestConfig {
+        @org.springframework.context.annotation.Bean RoleProbe roleProbe() { return new RoleProbe(); }
+    }
+    static class RoleProbe {
+        @org.springframework.security.access.prepost.PreAuthorize("hasRole('SYSTEM_ADMIN')")
+        public String adminOnly() { return "allowed"; }
+    }
+
+    @Test @WithMockUser(roles="CUSTOMER")
+    void roleAuthorizationDeniesUnprivilegedUsers() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(()->roleProbe.adminOnly())
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+    }
+
+    @Test @WithMockUser(roles="SYSTEM_ADMIN")
+    void roleAuthorizationAllowsRequiredRole() {
+        org.assertj.core.api.Assertions.assertThat(roleProbe.adminOnly()).isEqualTo("allowed");
+    }
 
     @Test
     void publicHealthReturnsExactContract() throws Exception {

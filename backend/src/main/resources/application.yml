@@ -15,6 +15,12 @@ spring:
     time-zone: UTC
   flyway:
     enabled: true
+busgo:
+  jwt:
+    secret: ${JWT_SECRET}
+    issuer: busgo
+    access-ttl: ${JWT_ACCESS_TTL:1h}
+    refresh-ttl: ${JWT_REFRESH_TTL:7d}
 server:
   port: ${SERVER_PORT:8080}
   error:

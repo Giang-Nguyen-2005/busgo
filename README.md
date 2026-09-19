@@ -1,7 +1,8 @@
 # BusGo
 
 Bus Ticket Booking & Management System. This repository currently implements
-**Milestone 0 — Project Foundation** and **Milestone 1 — Core Database**. Requirements and future milestone scope
+**Milestone 0 — Project Foundation**, **Milestone 1 — Core Database**, and
+**Milestone 2 — Authentication**. Requirements and future milestone scope
 are defined in [docs/development-plan.md](docs/development-plan.md) and the other
 files under `docs/`.
 
@@ -30,7 +31,11 @@ No accounts, operators, routes, locations, or other demo records are seeded.
 
 ## Start the backend
 
-Export `DB_PASSWORD` with the same value as `MYSQL_PASSWORD`, then from `backend/`:
+Export `DB_PASSWORD` with the same value as `MYSQL_PASSWORD`, and `JWT_SECRET` as
+Base64-encoded cryptographically random bytes (at least 32 bytes). Never commit
+the secret. Optional `JWT_ACCESS_TTL` and `JWT_REFRESH_TTL` default to `1h` and `7d`;
+both must be finite positive durations, with refresh longer than access.
+Then from `backend/`:
 
 ```sh
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
@@ -53,9 +58,15 @@ Expected HTTP 200:
 ```
 
 Health is a process liveness endpoint, not a continuous database readiness check.
-Only `GET /api/v1/health` is publicly accessible. Other requests are denied until
-future milestones define authentication and access rules. No generated login,
-default user, JWT, or business endpoints are provided.
+Public endpoints are health and `POST /api/v1/auth/register`, `/login`, and `/refresh`.
+M2 also implements authenticated `GET`/`PATCH /api/v1/users/me` and
+`POST /api/v1/users/me/change-password`. All other application routes remain denied.
+Public registration assigns CUSTOMER; no privileged or default account is seeded.
+Passwords use BCrypt with a minimum of 8 characters and maximum of 72 UTF-8 bytes,
+without composition rules. Blank passwords are rejected.
+Refresh tokens rotate once, with only SHA-256 hashes persisted. Password changes
+revoke all refresh tokens; existing access tokens remain valid until expiry, subject
+to current account status and roles checked on every request. No HTTP session is used.
 
 ## Start the frontend
 
@@ -95,10 +106,12 @@ mvn verify -Pmysql-integration
 
 This additionally starts the full application with Flyway and Hibernate schema
 validation, checks MySQL connectivity and health over HTTP, and runs M1 repository
-tests for mappings, role seeds, uniqueness, foreign keys, check constraints,
+tests for authentication contracts, token rotation/revocation, account status,
+password handling, mappings, role seeds, uniqueness, foreign keys, check constraints,
 decimal precision, and retained soft-delete relationships. Connection failures
 fail the integration tests; they are not silently skipped. Use a dedicated empty
-MySQL development/test database for a first run. Test records are rolled back;
+MySQL development/test database for a first run. Most test records are rolled back;
+concurrency tests commit isolated fixtures and remove only their own records afterward.
 the migrated schema and role seeds remain. Repeating the command verifies an
 already-migrated database without reapplying versioned migrations.
 
@@ -112,16 +125,16 @@ This runs strict TypeScript checking and creates the Vite production build.
 
 ## Layout
 
-- `backend/`: Spring Boot foundation and M1 user, operator, location, route, and fleet persistence modules
+- `backend/`: Spring Boot foundation, M1 persistence modules, and M2 authentication
 - `frontend/`: React/TypeScript, Router, Axios, TanStack Query, Tailwind;
   React Hook Form and Zod installed for later forms
 - `database/`: reserved for later database support files
-- `docs/`: unchanged requirements, database design, API contract, UI specification,
+- `docs/`: requirements, database design, API contract, UI specification,
   and development plan
 
-M1 contains 13 core tables; trip, inventory, booking, and payment tables are not
-created. Authentication, controllers/business APIs, and business UI remain outside
-the implemented scope.
+M1 contains 13 core tables; M2 adds only `refresh_tokens` in migration V3.
+Trip, inventory, booking, payment, M3 management APIs, and business UI remain outside
+the implemented scope. Tests generate their own ephemeral JWT signing key.
 
 M1 follows the documented fare foreign keys. As agreed, same-route membership and
 forward stop-order validation are deferred to M3; foreign keys alone cannot enforce

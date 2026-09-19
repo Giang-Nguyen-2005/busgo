@@ -48,6 +48,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
     ResponseEntity<ApiError> unauthorized(AuthenticationException ex) {
+        if (ex instanceof com.busgo.common.security.AuthenticationFailure failure)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiError.of(failure.getCode(), failure.getMessage(), null));
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiError.of("UNAUTHORIZED", "Authentication is required.", null));
     }
