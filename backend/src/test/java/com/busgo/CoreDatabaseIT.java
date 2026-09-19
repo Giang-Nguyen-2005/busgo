@@ -57,7 +57,7 @@ class CoreDatabaseIT extends JwtTestSupport {
         assertThat(environment.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
         flyway.validate();
         assertThat(flyway.info().pending()).isEmpty();
-        assertThat(flyway.info().applied()).hasSize(3);
+        assertThat(flyway.info().applied()).hasSize(4);
         assertThat(roles.findAll()).extracting(Role::getCode).containsExactlyInAnyOrder(RoleCode.values());
         assertThat(jdbc.queryForList("""
                 SELECT table_name FROM information_schema.tables
@@ -65,7 +65,9 @@ class CoreDatabaseIT extends JwtTestSupport {
                 """, String.class)).containsExactlyInAnyOrder(
                 "flyway_schema_history", "users", "roles", "user_roles", "transport_operators",
                 "operator_staff", "locations", "routes", "route_stops", "operator_routes",
-                "operator_route_fares", "bus_types", "seat_templates", "buses", "refresh_tokens");
+                "operator_route_fares", "bus_types", "seat_templates", "buses", "refresh_tokens",
+                "trips", "trip_stops", "trip_segments", "trip_seats",
+                "trip_seat_segment_inventory");
     }
 
     @Test

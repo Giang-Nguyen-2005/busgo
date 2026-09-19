@@ -32,6 +32,15 @@ public interface BusRepository extends JpaRepository<Bus, Long> {
             @org.springframework.data.repository.query.Param("id") Long id,
             @org.springframework.data.repository.query.Param("operatorId") Long operatorId);
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("""
+            select b from Bus b join fetch b.busType
+            where b.id = :id and b.operator.id = :operatorId and b.deletedAt is null
+            """)
+    java.util.Optional<Bus> findOwnedByIdForUpdate(
+            @org.springframework.data.repository.query.Param("id") Long id,
+            @org.springframework.data.repository.query.Param("operatorId") Long operatorId);
+
     boolean existsByLicensePlateIgnoreCase(String licensePlate);
     boolean existsByLicensePlateIgnoreCaseAndIdNot(String licensePlate, Long id);
 }

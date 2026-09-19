@@ -480,6 +480,12 @@ trip.departureTime
 routeStop.estimatedOffsetMinutes
 để sinh planned time.
 
+M4 decision:
+Client chỉ gửi OffsetDateTime `departureTime`; backend chuẩn hóa UTC và tính Trip
+estimatedArrivalTime từ offset của active RouteStop cuối. Stop đầu có arrival null,
+stop cuối có departure null, stop giữa có arrival/departure cùng thời điểm offset.
+Không yêu cầu route.estimated_duration_min bằng final stop offset.
+
 Inventory generation
 Ví dụ:
 22 seats
@@ -495,6 +501,11 @@ newStart < existingEnd
 AND
 newEnd > existingStart
 cho cùng bus.
+Khoảng thời gian mới dùng arrival do backend tính. Việc lock bus trước khi kiểm tra và
+tạo aggregate tuần tự hóa các request tạo trip cho cùng một bus.
+
+Inventory V4 có future hold columns nullable và optimistic-lock `version`; M4 chỉ tạo
+AVAILABLE rows với hold fields NULL. `booking_item_id` được hoãn tới booking migration.
 
 Tests
 Bắt buộc:

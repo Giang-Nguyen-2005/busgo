@@ -875,11 +875,14 @@ price > 0
 GET /operator/trips
 Filters:
 date
-routeId
+routeId (global Route ID)
 busId
 status
 page
 size
+
+M3/M4 implementation note: các endpoint này yêu cầu OPERATOR_ADMIN và luôn giới hạn
+dữ liệu theo operator_staff của user đã xác thực. `date` là một ngày UTC.
 
 51. Create Trip
 POST /operator/trips
@@ -888,12 +891,15 @@ POST /operator/trips
   "busId": 12,
   "departureTime": "2026-09-25T18:30:00+07:00"
 }
+Request không nhận `operatorId`, `arrivalTime`, stops, segments, seats hoặc inventory.
+`departureTime` bắt buộc là ISO-8601 có offset. Backend chuẩn hóa instant về UTC;
+datetime không có timezone bị từ chối.
 Backend:
 Validate operator route.
 Validate bus ownership.
 Validate bus status.
-Calculate trip stop times.
-Calculate estimatedArrivalTime.
+Validate active RouteStops và active SeatTemplates.
+Calculate estimatedArrivalTime từ offset của active RouteStop cuối cùng.
 Check schedule conflict.
 
 Create Trip.
@@ -905,18 +911,24 @@ Create inventory.
 52. Trip Creation Response
 {
   "data": {
-    "tripId": 101,
+    "id": 101,
     "status": "SCHEDULED",
 
-    "route": "Đắk Lắk - Hà Nội",
+    "route": {
+      "operatorRouteId": 8,
+      "routeId": 3,
+      "name": "Đắk Lắk - Hà Nội"
+    },
 
     "bus": {
       "id": 12,
-      "licensePlate": "51B-12345"
+      "licensePlate": "51B-12345",
+      "busTypeId": 2,
+      "busTypeName": "Limousine"
     },
 
-    "departureTime": "2026-09-25T18:30:00+07:00",
-    "estimatedArrivalTime": "2026-09-26T10:00:00+07:00",
+    "departureTime": "2026-09-25T11:30:00Z",
+    "estimatedArrivalTime": "2026-09-26T03:00:00Z",
 
     "seatCount": 22,
     "segmentCount": 4
@@ -944,9 +956,13 @@ Bao gồm:
 Trip info
 Stops
 Bus
-Seat occupancy
-Bookings
-Revenue
+Segments
+Seat snapshots
+
+M4 chưa trả seat occupancy, bookings hoặc revenue. TripStop planned time:
+stop đầu có arrival null và departure bằng Trip departure; stop giữa có arrival/departure
+bằng Trip departure cộng offset; stop cuối có arrival bằng thời gian tính toán và departure null.
+Tất cả scheduled datetime trả về là offset-aware UTC (`Z`).
 
 55. Passenger Manifest
 GET /operator/trips/{tripId}/passengers

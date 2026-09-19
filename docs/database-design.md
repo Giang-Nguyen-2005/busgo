@@ -311,13 +311,17 @@ id                      BIGINT PK
 operator_route_id       BIGINT FK
 bus_id                  BIGINT FK
 
-departure_time          DATETIME
-estimated_arrival_time  DATETIME
+departure_time          DATETIME(6)
+estimated_arrival_time  DATETIME(6)
 
 status                  VARCHAR(30)
 
-created_at              DATETIME
-updated_at              DATETIME
+created_at              DATETIME(6)
+updated_at              DATETIME(6)
+Các giá trị scheduled time được chuẩn hóa thành UTC trước khi lưu. Client chỉ gửi
+departureTime có offset; estimated_arrival_time được tính bằng departure_time cộng
+estimated_offset_minutes của active RouteStop cuối cùng. `routes.estimated_duration_min`
+chỉ là metadata và không phải nguồn tính arrival.
 Mình đề xuất trip tham chiếu:
 operator_route_id
 thay vì vừa:
@@ -367,6 +371,12 @@ allow_dropoff           BOOLEAN
 status                  VARCHAR(30)
 Constraint:
 UNIQUE(trip_id, stop_order)
+
+Quy tắc planned time M4:
+    • stop đầu: arrival NULL, departure = trip departure
+    • stop giữa: arrival = departure = trip departure + RouteStop offset
+    • stop cuối: arrival = trip departure + RouteStop offset, departure NULL
+Không tự suy diễn dwell time.
 
 Tại sao phải copy?
 Giả sử hôm nay route:
@@ -463,8 +473,6 @@ hold_token          VARCHAR(100) NULL
 held_by_user_id     BIGINT FK NULL
 hold_expires_at     DATETIME NULL
 
-booking_item_id     BIGINT FK NULL
-
 updated_at          DATETIME
 version             BIGINT
 Constraint cực kỳ quan trọng:
@@ -474,6 +482,12 @@ AVAILABLE
 HELD
 BOOKED
 BLOCKED
+
+V4 tạo sẵn các cột hold nullable và `version`, nhưng M4 không triển khai hành vi hold.
+Inventory mới có status AVAILABLE và toàn bộ hold fields là NULL. `booking_item_id`
+chưa có trong V4 vì bảng booking_items chưa tồn tại; milestone booking sẽ thêm bằng
+migration riêng sau khi tạo booking_items. TripSeat không có availability/booking status
+toàn cục vì availability được quản lý theo từng segment.
 
 19. Ví dụ thực tế
 Trip:
