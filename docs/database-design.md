@@ -1064,3 +1064,11 @@ a new row in one transaction. User-row locking serializes rotation with password
 changes; password changes delete all refresh-token rows for that user. There is
 no session history or token-family subsystem. Expired rows cannot authenticate;
 automatic removal of expired rows is not part of M2.
+
+## M3 shared master-data decision
+
+`bus_types`, `seat_templates`, `routes`, and `route_stops` remain global master data.
+M3 operator APIs expose them read-only. Operator ownership begins at `buses` and
+`operator_routes`; fares are operator-scoped through `operator_routes`. Global
+master-data administration is deferred to SYSTEM_ADMIN/V2, with no M3 ownership
+columns or association tables added.

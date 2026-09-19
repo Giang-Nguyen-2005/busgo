@@ -1,8 +1,9 @@
 # BusGo
 
 Bus Ticket Booking & Management System. This repository currently implements
-**Milestone 0 — Project Foundation**, **Milestone 1 — Core Database**, and
-**Milestone 2 — Authentication**. Requirements and future milestone scope
+**Milestone 0 — Project Foundation**, **Milestone 1 — Core Database**,
+**Milestone 2 — Authentication**, and **Milestone 3 — Operator, Fleet & Route**.
+Requirements and future milestone scope
 are defined in [docs/development-plan.md](docs/development-plan.md) and the other
 files under `docs/`.
 
@@ -58,7 +59,8 @@ Expected HTTP 200:
 ```
 
 Health is a process liveness endpoint, not a continuous database readiness check.
-Public endpoints are health and `POST /api/v1/auth/register`, `/login`, and `/refresh`.
+Public endpoints are health, `GET /api/v1/locations`, and
+`POST /api/v1/auth/register`, `/login`, and `/refresh`.
 M2 also implements authenticated `GET`/`PATCH /api/v1/users/me` and
 `POST /api/v1/users/me/change-password`. All other application routes remain denied.
 Public registration assigns CUSTOMER; no privileged or default account is seeded.
@@ -125,7 +127,7 @@ This runs strict TypeScript checking and creates the Vite production build.
 
 ## Layout
 
-- `backend/`: Spring Boot foundation, M1 persistence modules, and M2 authentication
+- `backend/`: Spring Boot foundation, M1 persistence, M2 authentication, and M3 operator/fleet/route APIs
 - `frontend/`: React/TypeScript, Router, Axios, TanStack Query, Tailwind;
   React Hook Form and Zod installed for later forms
 - `database/`: reserved for later database support files
@@ -133,8 +135,8 @@ This runs strict TypeScript checking and creates the Vite production build.
   and development plan
 
 M1 contains 13 core tables; M2 adds only `refresh_tokens` in migration V3.
-Trip, inventory, booking, payment, M3 management APIs, and business UI remain outside
-the implemented scope. Tests generate their own ephemeral JWT signing key.
+Trip, inventory, booking, payment, and business UI remain outside the implemented
+scope. Tests generate their own ephemeral JWT signing key.
 
 M1 follows the documented fare foreign keys. As agreed, same-route membership and
 forward stop-order validation are deferred to M3; foreign keys alone cannot enforce

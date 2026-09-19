@@ -366,13 +366,10 @@ Trong V1 có thể seed location để giảm scope admin.
 
 Bus Type APIs
 GET    /api/v1/operator/bus-types
-POST   /api/v1/operator/bus-types
-PATCH  /api/v1/operator/bus-types/{id}
+GET    /api/v1/operator/bus-types/{id}
 
-Bus Type create
-Phải hỗ trợ seat templates.
-Backend tự tính:
-seatCount
+BusType và SeatTemplate là global master data chỉ đọc đối với OPERATOR_ADMIN trong
+M3. Quản trị global master data được hoãn cho SYSTEM_ADMIN/V2; V1 dùng seed/test data.
 
 Bus APIs
 GET   /api/v1/operator/buses
@@ -381,10 +378,15 @@ GET   /api/v1/operator/buses/{id}
 PATCH /api/v1/operator/buses/{id}
 
 Route APIs
-GET  /api/v1/operator/routes
-POST /api/v1/operator/routes
-GET  /api/v1/operator/routes/{id}
-PUT  /api/v1/operator/routes/{id}
+GET   /api/v1/operator/route-catalog
+GET   /api/v1/operator/route-catalog/{routeId}
+GET   /api/v1/operator/routes
+POST  /api/v1/operator/routes
+GET   /api/v1/operator/routes/{operatorRouteId}
+PATCH /api/v1/operator/routes/{operatorRouteId}
+
+Route và RouteStop là global master data chỉ đọc đối với OPERATOR_ADMIN. POST chỉ
+attach một global Route hiện có bằng `routeId`; PATCH chỉ cập nhật OperatorRoute status.
 
 Fare APIs
 GET /api/v1/operator/routes/{id}/fares
@@ -424,17 +426,8 @@ Create route fare.
 Invalid stop order rejected.
 
 Definition of Done
-Admin có thể tạo hoàn chỉnh:
-Bus Type
-↓
-Bus
-↓
-Route
-↓
-Stops
-↓
-Fare
-bằng API.
+Admin có thể dùng global BusType/SeatTemplate và Route/RouteStop đã seed, tạo Bus,
+attach OperatorRoute và cấu hình Fare bằng API.
 
 MILESTONE 4
 TRIP GENERATION ENGINE

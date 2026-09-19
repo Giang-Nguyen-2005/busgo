@@ -18,6 +18,15 @@ class FoundationTest extends JwtTestSupport {
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.user.repository.RoleRepository roles;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.user.repository.UserRoleRepository userRoles;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.auth.repository.RefreshTokenRepository refreshTokens;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.operator.repository.OperatorStaffRepository operatorStaff;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.location.repository.LocationRepository locations;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.fleet.repository.BusTypeRepository busTypes;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.fleet.repository.SeatTemplateRepository seatTemplates;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.fleet.repository.BusRepository buses;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.route.repository.RouteRepository routes;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.route.repository.RouteStopRepository routeStops;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.route.repository.OperatorRouteRepository operatorRoutes;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.route.repository.OperatorRouteFareRepository routeFares;
     @Autowired MockMvc mvc;
     @Autowired RoleProbe roleProbe;
 

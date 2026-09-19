@@ -781,29 +781,16 @@ Dữ liệu phải scope theo operator của current user.
 
 41. Operator Bus Types
 GET /operator/bus-types
-POST /operator/bus-types
 OPERATOR_ADMIN.
-Create:
-{
-  "name": "Limousine 22 phòng",
-  "description": "Luxury sleeper",
-  "seats": [
-    {
-      "seatCode": "A01",
-      "row": 1,
-      "column": 1,
-      "floor": 1,
-      "seatType": "STANDARD"
-    }
-  ]
-}
-Backend tự tính seatCount.
-Không tin seatCount do frontend gửi.
+GET /operator/bus-types/{id}
+
+Trong M3, BusType và SeatTemplate là global master data chỉ đọc đối với
+OPERATOR_ADMIN. API chỉ trả BusType ACTIVE và SeatTemplate active. Quản trị master
+data được hoãn cho SYSTEM_ADMIN/V2; dữ liệu V1 dùng seed/test fixtures.
 
 42. Update Bus Type
-PATCH /operator/bus-types/{id}
-Không cho sửa seat layout một cách làm phá các trip lịch sử.
-Trip đã tạo dùng snapshot nên lịch sử an toàn, nhưng admin cần được cảnh báo rằng thay đổi chỉ áp dụng cho trip/bus layout tương lai.
+Không có API OPERATOR_ADMIN cập nhật BusType/SeatTemplate trong M3 vì đây là global
+master data dùng chung giữa các operator.
 
 43. Bus Management
 GET /operator/buses
@@ -829,42 +816,18 @@ PATCH /operator/buses/{id}
 GET /operator/routes
 Routes mà current operator khai thác.
 POST /operator/routes
-Có hai hướng:
-    1. attach route đã tồn tại.
-    2. tạo route mới rồi attach operator.
-Để V1 đơn giản, API có thể tạo cả hai trong một request.
+Body:
+{
+  "routeId": 10
+}
+Chỉ attach global Route đã tồn tại vào current operator. ID dưới
+`/operator/routes/{id}` luôn là OperatorRoute ID.
 
 45. Create Route
-POST /operator/routes
-{
-  "name": "Đắk Lắk - Hà Nội",
-
-  "estimatedDistanceKm": 1250,
-  "estimatedDurationMinutes": 930,
-
-  "stops": [
-    {
-      "locationId": 10,
-      "allowPickup": true,
-      "allowDropoff": false,
-      "estimatedOffsetMinutes": 0
-    },
-    {
-      "locationId": 11,
-      "allowPickup": true,
-      "allowDropoff": true,
-      "estimatedOffsetMinutes": 180
-    },
-    {
-      "locationId": 20,
-      "allowPickup": false,
-      "allowDropoff": true,
-      "estimatedOffsetMinutes": 930
-    }
-  ]
-}
-Backend tự assign:
-stopOrder = array index + 1
+Global Route/RouteStop creation and editing are deferred to SYSTEM_ADMIN/V2.
+OPERATOR_ADMIN can inspect active definitions through:
+GET /operator/route-catalog
+GET /operator/route-catalog/{routeId}
 
 46. Route Validation
 Phải có:
@@ -879,14 +842,12 @@ Không được duplicate location trong cùng route V1.
 estimatedOffsetMinutes phải tăng dần.
 
 47. Route Detail
-GET /operator/routes/{id}
-Response gồm ordered stops.
+GET /operator/routes/{operatorRouteId}
+Response gồm association của current operator và global ordered stops chỉ đọc.
 
 48. Route Update
-PUT /operator/routes/{id}
-Cho phép update cấu hình route tương lai.
-Quan trọng:
-Update RouteStop không làm thay đổi TripStop của các trip đã tồn tại.
+PATCH /operator/routes/{operatorRouteId}
+Chỉ cập nhật association status ACTIVE/INACTIVE. Không cập nhật global Route/RouteStop.
 
 49. Route Fare Management
 GET /operator/routes/{operatorRouteId}/fares
@@ -908,7 +869,7 @@ Request:
 }
 Validation:
 from.stopOrder < to.stopOrder
-price >= 0
+price > 0
 
 50. Trip Management
 GET /operator/trips
