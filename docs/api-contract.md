@@ -205,6 +205,14 @@ departureTo
 sort
 page
 size
+
+M5 time rule: `departureDate` là ngày kinh doanh tại `Asia/Ho_Chi_Minh`.
+Backend chuyển khoảng nửa mở `[00:00 ngày đã chọn, 00:00 ngày kế tiếp)` sang UTC
+và áp dụng khoảng đó cho `plannedDepartureTime` của selected pickup TripStop, không
+phải chỉ `Trip.departureTime`. Response scheduled time tiếp tục dùng ISO-8601 UTC (`Z`).
+
+`departureFrom` và `departureTo` là local time trong cùng ngày kinh doanh;
+hai đầu mút đều inclusive. Nếu truyền cả hai thì `departureFrom <= departureTo`.
 Ví dụ:
 GET /api/v1/trips/search?pickupLocationId=10&dropoffLocationId=20&departureDate=2026-09-25&page=0&size=20
 
@@ -223,6 +231,11 @@ pickup.stopOrder < dropoff.stopOrder
 Trip status = SCHEDULED
 
 Trip chạy phù hợp ngày yêu cầu
+
+Trip chỉ được trả về nếu có exact ACTIVE fare giá > 0 cho OperatorRoute và cặp
+source RouteStop đã chọn, đồng thời có ít nhất một TripSeat AVAILABLE trên mọi
+TripSegment thuộc đoạn pickup → dropoff. Thiếu fare hoặc availableSeats = 0 thì
+loại riêng Trip đó khỏi kết quả, không làm lỗi toàn bộ search.
 
 14. Search Result Response
 {
@@ -275,6 +288,8 @@ availableSeats phải được tính theo:
 pickup → dropoff
 Không được tính toàn bộ trip.
 Một seat AVAILABLE khi mọi SeatSegmentInventory thuộc đoạn yêu cầu đều AVAILABLE.
+Phải đếm số TripSeat thỏa toàn bộ đoạn, không đếm số inventory row AVAILABLE.
+Search chỉ đọc inventory và không reserve ghế.
 
 16. Search Sorting
 Parameter:
@@ -289,11 +304,19 @@ DEPARTURE_ASC
 
 17. Trip Detail
 GET /trips/{tripId}
-Có thể truyền:
+M5 bắt buộc truyền đồng thời:
 pickupLocationId
 dropoffLocationId
 Ví dụ:
 GET /api/v1/trips/101?pickupLocationId=10&dropoffLocationId=20
+
+Thiếu một hoặc cả hai parameter trả 400. Endpoint biểu diễn selected journey và
+validate direction, pickup/dropoff permission, future SCHEDULED pickup, exact fare,
+và segment availability. Trip tồn tại nhưng thiếu exact ACTIVE fare hoặc không còn
+ghế usable trả `TRIP_NOT_BOOKABLE`; search tương ứng chỉ loại Trip đó.
+
+`GET /trips/search` và `GET /trips/{tripId}` là public. Quyền public không áp dụng
+cho `/operator/**`, mutation endpoint, hoặc `/trips/{tripId}/seats` (M6).
 Response:
 {
   "data": {

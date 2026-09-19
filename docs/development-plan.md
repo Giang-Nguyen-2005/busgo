@@ -552,14 +552,20 @@ pickup.order < dropoff.order
 trip status = SCHEDULED
 và thời gian phù hợp ngày tìm kiếm.
 
+M5 decision: `departureDate` là calendar date tại `Asia/Ho_Chi_Minh`, chuyển thành
+UTC half-open interval và đối chiếu với selected pickup TripStop plannedDepartureTime.
+Không dùng JVM default timezone và không chỉ lọc Trip.departureTime.
+
 Fare
 Search service resolve giá theo:
 operator_route_fares
 cho pickup/dropoff.
 Nếu chưa có fare:
-trip không bookable cho cặp stop đó
-hoặc return configuration error.
+search loại Trip đó; customer Trip Detail trả TRIP_NOT_BOOKABLE.
 Không tự cộng giá segment nếu requirement chưa quy định.
+
+availableSeats là số TripSeat có inventory AVAILABLE trên TẤT CẢ required segments.
+Inventory BOOKED ngoài đoạn không ảnh hưởng; M5 chỉ đọc và không reserve inventory.
 
 Search filters
 Implement sau core search:
@@ -570,6 +576,9 @@ maxPrice
 departureFrom
 departureTo
 sort
+
+Customer Trip Detail bắt buộc pickupLocationId và dropoffLocationId theo cặp.
+Search/detail là public GET; operator management vẫn yêu cầu OPERATOR_ADMIN.
 
 Search tests
 Case A

@@ -48,6 +48,17 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     Optional<Trip> findOwnedById(@Param("id") Long id, @Param("operatorId") Long operatorId);
 
     @Query("""
+            select t from Trip t
+            join fetch t.operatorRoute opr
+            join fetch opr.operator
+            join fetch opr.route
+            join fetch t.bus b
+            join fetch b.busType
+            where t.id = :id
+            """)
+    Optional<Trip> findPublicById(@Param("id") Long id);
+
+    @Query("""
             select (count(t) > 0) from Trip t
             where t.bus.id = :busId
               and t.status <> com.busgo.trip.entity.TripStatus.CANCELLED

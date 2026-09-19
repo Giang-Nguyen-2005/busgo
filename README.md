@@ -127,7 +127,7 @@ This runs strict TypeScript checking and creates the Vite production build.
 
 ## Layout
 
-- `backend/`: Spring Boot foundation, M1 persistence, M2 authentication, M3 operator/fleet/route APIs, and M4 trip generation
+- `backend/`: Spring Boot foundation, M1 persistence, M2 authentication, M3 operator/fleet/route APIs, M4 trip generation, and M5 customer trip search
 - `frontend/`: React/TypeScript, Router, Axios, TanStack Query, Tailwind;
   React Hook Form and Zod installed for later forms
 - `database/`: reserved for later database support files
@@ -135,8 +135,9 @@ This runs strict TypeScript checking and creates the Vite production build.
   and development plan
 
 M1 contains 13 core tables; M2 adds `refresh_tokens` in migration V3, and M4 adds the
-transactional trip snapshot and segment-inventory tables in V4. Search, seat hold,
-booking, payment, reporting, and business UI remain outside the implemented scope.
+transactional trip snapshot and segment-inventory tables in V4. M5 adds only
+search-oriented indexes in V5 and public snapshot/segment-based trip discovery.
+Seat maps, holds, booking, payment, reporting, and business UI remain outside the implemented scope.
 Tests generate their own ephemeral JWT signing key.
 
 M1 follows the documented fare foreign keys. As agreed, same-route membership and

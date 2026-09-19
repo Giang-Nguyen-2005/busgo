@@ -825,6 +825,15 @@ INDEX(trip_id)
 INDEX(status)
 INDEX(contact_phone)
 
+M5 query indexes (migration V5):
+
+    • trip_stops(location_id, allow_pickup, planned_departure_time, trip_id, stop_order)
+    • operator_route_fares(operator_route_id, from_route_stop_id, to_route_stop_id, status)
+
+Customer search chọn candidate bằng TripStop snapshot, exact ACTIVE fare và
+`Asia/Ho_Chi_Minh` business-date window đã chuyển sang UTC. Availability được tính
+theo cùng một TripSeat trên mọi required TripSegment; query không thay đổi inventory.
+
 32. ERD tổng quát
 USER
  │
