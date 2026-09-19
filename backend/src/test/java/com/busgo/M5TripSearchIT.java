@@ -2,7 +2,7 @@ package com.busgo;
 
 import static com.busgo.common.time.BusGoTime.BUSINESS_ZONE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.busgo.common.entity.ActiveStatus;
@@ -207,11 +207,15 @@ class M5TripSearchIT extends JwtTestSupport {
     }
 
     @Test
-    void publicReadsDoNotExposeOperatorOrSeatMapEndpoints() throws Exception {
+    void publicReadsIncludeSeatMapButDoNotExposeOperatorOrMutationEndpoints() throws Exception {
         Fixture f = fixture(ORIGIN_DEPARTURE, "Security operator");
         search(f, 0, 2, BUSINESS_DATE).andExpect(status().isOk());
         detail(f, 0, 2).andExpect(status().isOk());
-        mvc.perform(get("/api/v1/trips/{id}/seats", f.trip().getId()))
+        mvc.perform(get("/api/v1/trips/{id}/seats", f.trip().getId())
+                        .param("pickupLocationId", Long.toString(id(f.locations().get(0))))
+                        .param("dropoffLocationId", Long.toString(id(f.locations().get(2)))))
+                .andExpect(status().isOk());
+        mvc.perform(post("/api/v1/trips/{id}/seats", f.trip().getId()))
                 .andExpect(status().isUnauthorized());
 
         User customer = account(RoleCode.CUSTOMER);

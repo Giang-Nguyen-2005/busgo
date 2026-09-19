@@ -615,8 +615,11 @@ Chưa hold ghế.
 API
 GET /api/v1/trips/{tripId}/seats
 Parameters:
-pickupTripStopId
-dropoffTripStopId
+pickupLocationId
+dropoffLocationId
+
+Endpoint là public GET. Backend resolve TripStop từ Trip snapshot; operator API và
+mọi mutation endpoint vẫn được bảo vệ.
 
 Required Segment Resolver
 Tạo reusable service:
@@ -637,12 +640,10 @@ HELD
 BLOCKED
 => seat unavailable.
 
-Public status mapping
-Backend response:
-AVAILABLE
-UNAVAILABLE
-BLOCKED
-Không expose người đang hold.
+Customer response trả layout `TripSeat` snapshot và boolean `available`; không expose
+raw inventory status hoặc dữ liệu hold. Response có exact ACTIVE journey fare theo
+cùng resolution của M5 và `availableSeatCount` bằng số seat true. Journey hợp lệ sold
+out vẫn trả HTTP 200/count 0. Đây chỉ là observational read, không reserve ghế.
 
 Tests
 Non-overlap

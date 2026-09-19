@@ -2,7 +2,9 @@
 
 Bus Ticket Booking & Management System. This repository currently implements
 **Milestone 0 — Project Foundation**, **Milestone 1 — Core Database**,
-**Milestone 2 — Authentication**, and **Milestone 3 — Operator, Fleet & Route**.
+**Milestone 2 — Authentication**, **Milestone 3 — Operator, Fleet & Route**,
+**Milestone 4 — Trip Generation**, **Milestone 5 — Customer Trip Search**, and
+**Milestone 6 — Customer Seat Availability**.
 Requirements and future milestone scope
 are defined in [docs/development-plan.md](docs/development-plan.md) and the other
 files under `docs/`.
@@ -59,7 +61,8 @@ Expected HTTP 200:
 ```
 
 Health is a process liveness endpoint, not a continuous database readiness check.
-Public endpoints are health, `GET /api/v1/locations`, and
+Public endpoints are health, `GET /api/v1/locations`, customer trip search/detail,
+`GET /api/v1/trips/{tripId}/seats`, and
 `POST /api/v1/auth/register`, `/login`, and `/refresh`.
 M2 also implements authenticated `GET`/`PATCH /api/v1/users/me` and
 `POST /api/v1/users/me/change-password`. All other application routes remain denied.
@@ -127,7 +130,8 @@ This runs strict TypeScript checking and creates the Vite production build.
 
 ## Layout
 
-- `backend/`: Spring Boot foundation, M1 persistence, M2 authentication, M3 operator/fleet/route APIs, M4 trip generation, and M5 customer trip search
+- `backend/`: Spring Boot foundation through M6, including trip snapshots, customer
+  trip search, and journey-specific seat availability
 - `frontend/`: React/TypeScript, Router, Axios, TanStack Query, Tailwind;
   React Hook Form and Zod installed for later forms
 - `database/`: reserved for later database support files
@@ -136,8 +140,12 @@ This runs strict TypeScript checking and creates the Vite production build.
 
 M1 contains 13 core tables; M2 adds `refresh_tokens` in migration V3, and M4 adds the
 transactional trip snapshot and segment-inventory tables in V4. M5 adds only
-search-oriented indexes in V5 and public snapshot/segment-based trip discovery.
-Seat maps, holds, booking, payment, reporting, and business UI remain outside the implemented scope.
+search-oriented indexes in V5 and public snapshot/segment-based trip discovery. M6
+adds no migration: it returns the snapshotted seat layout and marks a seat available
+only when that same seat is AVAILABLE on every required journey segment. The seat map
+is observational, does not reserve inventory, and returns a successful sold-out map
+with count zero. Holds, booking, payment, reporting, and business UI remain outside
+the implemented scope.
 Tests generate their own ephemeral JWT signing key.
 
 M1 follows the documented fare foreign keys. As agreed, same-route membership and

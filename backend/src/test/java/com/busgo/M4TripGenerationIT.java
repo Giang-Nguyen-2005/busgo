@@ -189,7 +189,11 @@ class M4TripGenerationIT extends JwtTestSupport {
     @Test
     void invalidTimePayloadAndInvalidRouteOffsetsLeaveNoAggregate() throws Exception {
         Fixture f = fixture();
-        long before = trips.count();
+        long tripCount = trips.count();
+        long stopCount = tripStops.count();
+        long segmentCount = segments.count();
+        long seatCount = tripSeats.count();
+        long inventoryCount = inventory.count();
         mvc.perform(post("/api/v1/operator/trips").header("Authorization", bearer(f.admin().token()))
                         .contentType("application/json").content(json.writeValueAsBytes(Map.of(
                                 "operatorRouteId", f.operatorRoute().getId(), "busId", f.bus().getId(),
@@ -207,11 +211,11 @@ class M4TripGenerationIT extends JwtTestSupport {
         routeStops.saveAndFlush(f.routeStops().get(2));
         postTrip(f.admin().token(), f.operatorRoute().getId(), f.bus().getId(), DEPARTURE)
                 .andExpect(status().isConflict()).andExpect(jsonPath("code").value("INVALID_ROUTE"));
-        assertThat(trips.count()).isEqualTo(before);
-        assertThat(tripStops.count()).isZero();
-        assertThat(segments.count()).isZero();
-        assertThat(tripSeats.count()).isZero();
-        assertThat(inventory.count()).isZero();
+        assertThat(trips.count()).isEqualTo(tripCount);
+        assertThat(tripStops.count()).isEqualTo(stopCount);
+        assertThat(segments.count()).isEqualTo(segmentCount);
+        assertThat(tripSeats.count()).isEqualTo(seatCount);
+        assertThat(inventory.count()).isEqualTo(inventoryCount);
     }
 
     @Test

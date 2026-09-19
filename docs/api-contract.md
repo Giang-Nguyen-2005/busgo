@@ -315,8 +315,8 @@ validate direction, pickup/dropoff permission, future SCHEDULED pickup, exact fa
 và segment availability. Trip tồn tại nhưng thiếu exact ACTIVE fare hoặc không còn
 ghế usable trả `TRIP_NOT_BOOKABLE`; search tương ứng chỉ loại Trip đó.
 
-`GET /trips/search` và `GET /trips/{tripId}` là public. Quyền public không áp dụng
-cho `/operator/**`, mutation endpoint, hoặc `/trips/{tripId}/seats` (M6).
+`GET /trips/search`, `GET /trips/{tripId}` và `GET /trips/{tripId}/seats` là public.
+Quyền public không áp dụng cho `/operator/**` hoặc bất kỳ mutation endpoint nào.
 Response:
 {
   "data": {
@@ -361,17 +361,36 @@ Response:
 18. Seat Map
 GET /trips/{tripId}/seats
 Parameters bắt buộc:
-pickupTripStopId
-dropoffTripStopId
+pickupLocationId
+dropoffLocationId
 Ví dụ:
-GET /api/v1/trips/101/seats?pickupTripStopId=1002&dropoffTripStopId=1006
+GET /api/v1/trips/101/seats?pickupLocationId=10&dropoffLocationId=20
+
+Backend resolve hai `TripStop` từ snapshot bất biến của Trip, validate quyền đón/trả,
+hướng đi, trạng thái SCHEDULED, thời gian pickup trong tương lai, chuỗi segment liên
+tiếp và exact ACTIVE fare giống M5. Endpoint là read-only và không reserve ghế.
 
 19. Seat Map Response
 {
   "data": {
     "tripId": 101,
-    "pickupTripStopId": 1002,
-    "dropoffTripStopId": 1006,
+
+    "pickup": {
+      "tripStopId": 1002,
+      "locationId": 10,
+      "name": "Đắk Lắk",
+      "departureTime": "2026-09-25T18:30:00+07:00"
+    },
+
+    "dropoff": {
+      "tripStopId": 1006,
+      "locationId": 20,
+      "name": "Hà Nội",
+      "arrivalTime": "2026-09-26T10:00:00+07:00"
+    },
+
+    "price": 650000,
+    "availableSeatCount": 1,
 
     "seats": [
       {
@@ -381,8 +400,7 @@ GET /api/v1/trips/101/seats?pickupTripStopId=1002&dropoffTripStopId=1006
         "column": 1,
         "floor": 1,
         "seatType": "STANDARD",
-        "status": "AVAILABLE",
-        "price": 650000
+        "available": true
       },
       {
         "tripSeatId": 502,
@@ -391,8 +409,7 @@ GET /api/v1/trips/101/seats?pickupTripStopId=1002&dropoffTripStopId=1006
         "column": 2,
         "floor": 1,
         "seatType": "STANDARD",
-        "status": "BOOKED",
-        "price": 650000
+        "available": false
       }
     ]
   }
@@ -400,18 +417,15 @@ GET /api/v1/trips/101/seats?pickupTripStopId=1002&dropoffTripStopId=1006
 Frontend chỉ render.
 Frontend không tự suy luận availability.
 
-20. Seat Availability Status
-API có thể trả:
-AVAILABLE
-HELD_BY_ME
-UNAVAILABLE
-BLOCKED
-Không nên expose trực tiếp HELD của customer khác.
-Ví dụ nếu seat đang được người khác giữ:
-{
-  "seatCode": "A03",
-  "status": "UNAVAILABLE"
-}
+20. Seat Availability Semantics
+`available = true` chỉ khi cùng một `TripSeat` có inventory `AVAILABLE` trên mọi
+required `TripSegment` của journey. `HELD`, `BOOKED`, `BLOCKED`, hoặc thiếu inventory
+row trên bất kỳ required segment nào đều cho `available = false`. Inventory ngoài
+journey không ảnh hưởng. API không expose raw inventory status hoặc dữ liệu hold.
+
+`availableSeatCount` luôn bằng số phần tử `seats` có `available = true`. Journey hợp
+lệ nhưng sold out vẫn trả HTTP 200, count 0 và toàn bộ seat false. Đây là quan sát
+tại thời điểm đọc, không giữ ghế và không bảo đảm ghế vẫn còn ở request M7 sau đó.
 
 21. Create Seat Hold
 POST /seat-holds

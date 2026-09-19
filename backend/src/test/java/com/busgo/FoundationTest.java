@@ -33,6 +33,7 @@ class FoundationTest extends JwtTestSupport {
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.trip.repository.TripSeatRepository tripSeats;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.trip.repository.TripSeatSegmentInventoryRepository tripInventory;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.trip.search.TripSearchRepository tripSearch;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.trip.search.SeatAvailabilityQueryRepository seatAvailability;
     @Autowired MockMvc mvc;
     @Autowired RoleProbe roleProbe;
 

@@ -11,7 +11,6 @@ import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import org.springframework.data.domain.*;
-import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -57,39 +56,13 @@ public class TripSearchRepository {
               and (:departureTo is null or pickup.plannedDepartureTime <= :departureTo)
             """;
 
-    private static final String AVAILABILITY = """
-            SELECT seat.trip_id, COUNT(*) AS available_seats
-            FROM trip_seats seat
-            JOIN trip_stops pickup
-              ON pickup.trip_id = seat.trip_id AND pickup.location_id = :pickupLocationId
-            JOIN trip_stops dropoff
-              ON dropoff.trip_id = seat.trip_id AND dropoff.location_id = :dropoffLocationId
-            WHERE seat.trip_id IN (:tripIds)
-              AND (SELECT COUNT(*) FROM trip_segments required_segment
-                   WHERE required_segment.trip_id = seat.trip_id
-                     AND required_segment.segment_order >= pickup.stop_order
-                     AND required_segment.segment_order < dropoff.stop_order)
-                    = dropoff.stop_order - pickup.stop_order
-              AND NOT EXISTS (
-                  SELECT 1
-                  FROM trip_segments segment
-                  LEFT JOIN trip_seat_segment_inventory inventory
-                    ON inventory.trip_segment_id = segment.id
-                   AND inventory.trip_seat_id = seat.id
-                  WHERE segment.trip_id = seat.trip_id
-                    AND segment.segment_order >= pickup.stop_order
-                    AND segment.segment_order < dropoff.stop_order
-                    AND (inventory.id IS NULL OR inventory.status <> 'AVAILABLE')
-              )
-            GROUP BY seat.trip_id
-            """;
-
     private final EntityManager entityManager;
-    private final NamedParameterJdbcTemplate jdbc;
+    private final SeatAvailabilityQueryRepository availability;
 
-    public TripSearchRepository(EntityManager entityManager, NamedParameterJdbcTemplate jdbc) {
+    public TripSearchRepository(EntityManager entityManager,
+            SeatAvailabilityQueryRepository availability) {
         this.entityManager = entityManager;
-        this.jdbc = jdbc;
+        this.availability = availability;
     }
 
     public Page<SearchResult> search(Criteria criteria, Pageable pageable) {
@@ -116,7 +89,8 @@ public class TripSearchRepository {
         }
         if (unique.isEmpty()) return new PageImpl<>(List.of(), pageable, 0);
 
-        Map<Long, Long> available = availability(unique.keySet(), criteria);
+        Map<Long, Long> available = availability.availableCounts(unique.keySet(),
+                criteria.pickupLocationId(), criteria.dropoffLocationId());
         List<SearchResult> matched = unique.values().stream()
                 .filter(candidate -> available.getOrDefault(candidate.tripId(), 0L) > 0)
                 .map(candidate -> response(candidate, available.get(candidate.tripId())))
@@ -125,18 +99,6 @@ public class TripSearchRepository {
         int from = pageable.getOffset() >= matched.size() ? matched.size() : (int) pageable.getOffset();
         int to = Math.min(from + pageable.getPageSize(), matched.size());
         return new PageImpl<>(matched.subList(from, to), pageable, matched.size());
-    }
-
-    private Map<Long, Long> availability(Set<Long> tripIds, Criteria criteria) {
-        var parameters = new MapSqlParameterSource()
-                .addValue("tripIds", tripIds)
-                .addValue("pickupLocationId", criteria.pickupLocationId())
-                .addValue("dropoffLocationId", criteria.dropoffLocationId());
-        Map<Long, Long> result = new HashMap<>();
-        jdbc.query(AVAILABILITY, parameters, (rs, rowNumber) -> Map.entry(
-                rs.getLong("trip_id"), rs.getLong("available_seats")))
-                .forEach(entry -> result.put(entry.getKey(), entry.getValue()));
-        return result;
     }
 
     private static RawCandidate raw(Object[] row) {
