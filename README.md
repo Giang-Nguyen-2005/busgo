@@ -1,7 +1,7 @@
 # BusGo
 
 Bus Ticket Booking & Management System. This repository currently implements
-**Milestone 0 — Project Foundation** only. Requirements and future milestone scope
+**Milestone 0 — Project Foundation** and **Milestone 1 — Core Database**. Requirements and future milestone scope
 are defined in [docs/development-plan.md](docs/development-plan.md) and the other
 files under `docs/`.
 
@@ -23,9 +23,10 @@ localhost port **3307** to avoid common conflicts with existing MySQL installati
 The named volume retains data when running `docker compose down`. Changing the
 passwords in `.env` does not change accounts in an already initialized volume.
 
-No business schema or seed data is installed in M0. Flyway is configured with an
-empty `backend/src/main/resources/db/migration/` directory for later milestones.
-Flyway may create its own schema history table on startup.
+Flyway applies the M1 core schema and four role seeds from
+`backend/src/main/resources/db/migration/` on backend startup. Hibernate remains
+configured with `ddl-auto=validate`; it never creates or mutates the schema.
+No accounts, operators, routes, locations, or other demo records are seeded.
 
 ## Start the backend
 
@@ -92,10 +93,14 @@ With MySQL running and the database environment variables configured, run:
 mvn verify -Pmysql-integration
 ```
 
-This additionally starts the full application with JPA/Flyway, executes `SELECT 1`
-against MySQL, and checks the health endpoint over HTTP. Connection failures fail
-the integration test; it is not silently skipped. Use a dedicated development/test
-database for this check.
+This additionally starts the full application with Flyway and Hibernate schema
+validation, checks MySQL connectivity and health over HTTP, and runs M1 repository
+tests for mappings, role seeds, uniqueness, foreign keys, check constraints,
+decimal precision, and retained soft-delete relationships. Connection failures
+fail the integration tests; they are not silently skipped. Use a dedicated empty
+MySQL development/test database for a first run. Test records are rolled back;
+the migrated schema and role seeds remain. Repeating the command verifies an
+already-migrated database without reapplying versioned migrations.
 
 From `frontend/`:
 
@@ -107,11 +112,19 @@ This runs strict TypeScript checking and creates the Vite production build.
 
 ## Layout
 
-- `backend/`: Spring Boot modular monolith foundation under `com.busgo.common`
+- `backend/`: Spring Boot foundation and M1 user, operator, location, route, and fleet persistence modules
 - `frontend/`: React/TypeScript, Router, Axios, TanStack Query, Tailwind;
   React Hook Form and Zod installed for later forms
 - `database/`: reserved for later database support files
 - `docs/`: unchanged requirements, database design, API contract, UI specification,
   and development plan
 
-Business entities, schema migrations, authentication, and booking UI are outside M0.
+M1 contains 13 core tables; trip, inventory, booking, and payment tables are not
+created. Authentication, controllers/business APIs, and business UI remain outside
+the implemented scope.
+
+M1 follows the documented fare foreign keys. As agreed, same-route membership and
+forward stop-order validation are deferred to M3; foreign keys alone cannot enforce
+those cross-table rules. Phone uniqueness and fare-pair uniqueness are not imposed
+because the database design does not specify them. Unspecified lifecycle statuses
+use `ACTIVE`/`INACTIVE`; the only documented seat type is `STANDARD`.
