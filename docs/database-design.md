@@ -839,6 +839,14 @@ seat × required-segment matrix. GET suy ra immutable journey boundary từ orde
 TripSegment rows khi token metadata còn tồn tại. Release/cleanup xóa metadata, nên hệ thống
 không giữ lifecycle history sau đó.
 
+M8 migration V7 tạo `bookings` và `booking_items`, rồi mới thêm nullable FK
+`trip_seat_segment_inventory.booking_item_id`. Booking snapshot contact, journey boundary,
+total và status; mỗi item snapshot `seat_code` và exact backend `unit_price`. Conversion giữ
+row locks theo thứ tự `(trip_seat_id, segment_order, inventory.id)`, đổi đúng matrix HELD thành
+BOOKED, gắn từng row vào item của cùng TripSeat và xóa toàn bộ hold metadata trong một transaction.
+V7 chỉ thêm indexes phục vụ lookup code, customer history, trip và item/inventory FKs; payment,
+ticket và booking history chưa được tạo trong M8.
+
 Customer search chọn candidate bằng TripStop snapshot, exact ACTIVE fare và
 `Asia/Ho_Chi_Minh` business-date window đã chuyển sang UTC. Availability được tính
 theo cùng một TripSeat trên mọi required TripSegment; query không thay đổi inventory.

@@ -1,5 +1,6 @@
 package com.busgo.trip.entity;
 
+import com.busgo.booking.entity.BookingItem;
 import com.busgo.common.entity.BaseEntity;
 import com.busgo.user.entity.User;
 import jakarta.persistence.*;
@@ -35,6 +36,10 @@ public class TripSeatSegmentInventory extends BaseEntity {
 
     @Column(name = "hold_expires_at")
     private LocalDateTime holdExpiresAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_item_id")
+    private BookingItem bookingItem;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;

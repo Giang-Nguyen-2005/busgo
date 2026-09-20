@@ -733,7 +733,8 @@ Tables
 Migration:
 bookings
 booking_items
-booking_status_history
+
+M8 không tạo payment, ticket hoặc booking_status_history; các phần lifecycle đó thuộc M9+.
 
 APIs
 POST /api/v1/bookings
@@ -741,7 +742,7 @@ POST /api/v1/bookings
 GET /api/v1/bookings/me
 GET /api/v1/bookings/{id}
 
-POST /api/v1/bookings/{id}/cancel
+Cancellation chưa thuộc M8.
 
 Booking code
 Generate server-side.
@@ -769,22 +770,13 @@ create booking
 ↓
 create booking items
 ↓
-create status history
+convert HELD inventory → BOOKED, link booking item, clear hold metadata
 
 Booking price
 Backend tính:
 fare × numberOfSeats
 nếu mọi seat cùng giá trong V1.
 Không lấy total từ frontend.
-
-Cancellation
-Implement:
-customer cancellation threshold = 6 hours
-Khi cancel:
-Booking → CANCELLED
-
-BOOKED/HELD inventory owned by booking
-→ AVAILABLE
 
 Tests
 expired hold cannot create booking
@@ -793,12 +785,13 @@ foreign hold cannot create booking
 
 booking total is calculated server side
 
-cancel releases only relevant segments
+same hold can create exactly one booking under concurrent requests
 
-booking history created
+non-overlapping segments remain reusable
 
 Definition of Done
-Booking lifecycle chạy đúng trước payment.
+Active owned hold được chuyển atomically thành PENDING booking với BOOKED inventory.
+Payment, confirmation, cancellation và ticket được giữ cho M9.
 
 MILESTONE 9
 PAYMENT & TICKET

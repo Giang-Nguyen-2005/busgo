@@ -565,31 +565,15 @@ active HELD. Correctness không phụ thuộc scheduler: create vẫn reclaim ex
 dưới pessimistic lock. M5/M6 tiếp tục read-only; stale expired HELD có thể hiện unavailable
 cho đến cleanup hoặc locked reclamation.
 
-28. Create Booking
-POST /bookings
+28. Create Booking (M8)
+POST /api/v1/bookings
 CUSTOMER.
 Request
 {
   "holdToken": "29fc9351-f941-4dd9-a1d6-abc123",
-
-  "contact": {
-    "fullName": "Nguyen Van A",
-    "phone": "0901234567",
-    "email": "user@example.com"
-  },
-
-  "passengers": [
-    {
-      "tripSeatId": 501,
-      "fullName": "Nguyen Van A"
-    },
-    {
-      "tripSeatId": 503,
-      "fullName": "Nguyen Van B"
-    }
-  ],
-
-  "paymentMethod": "MOCK_QR"
+  "contactName": "Nguyen Van A",
+  "contactPhone": "0901234567",
+  "contactEmail": "user@example.com"
 }
 
 29. Booking Creation Rules
@@ -601,11 +585,15 @@ Backend phải:
 5. Recalculate fare.
 6. Create Booking.
 7. Create BookingItems.
-8. Create Payment.
+8. Chuyển đúng inventory matrix HELD → BOOKED, clear hold metadata và link booking item.
 Không lấy:
 totalAmount
 price
 từ frontend làm giá trị tin cậy.
+
+M8 tạo booking `PENDING`. Payment, confirm, cancellation và ticket thuộc M9. Foreign/nonexistent
+hold trả `404 SEAT_HOLD_NOT_FOUND`; expired trả `409 SEAT_HOLD_EXPIRED`; matrix hỏng trả
+`409 SEAT_NOT_AVAILABLE`; thiếu exact active fare trả `409 TRIP_NOT_BOOKABLE`.
 
 30. Create Booking Response
 {
@@ -637,11 +625,7 @@ từ frontend làm giá trị tin cậy.
 
     "totalAmount": 1300000,
 
-    "payment": {
-      "id": 801,
-      "method": "MOCK_QR",
-      "status": "PENDING"
-    }
+    "createdAt": "2026-09-18T10:00:00Z"
   }
 }
 
@@ -681,7 +665,7 @@ và payment được STAFF xác nhận khi khách trả tiền.
 Điều này sát thực tế hơn việc bắt CASH phải PAID ngay.
 
 34. My Bookings
-GET /bookings/me
+GET /api/v1/bookings/me
 CUSTOMER.
 Parameters:
 status
@@ -713,7 +697,7 @@ Response:
 }
 
 35. Booking Detail
-GET /bookings/{bookingId}
+GET /api/v1/bookings/{bookingId}
 Owner hoặc STAFF/ADMIN có quyền tương ứng.
 Response:
 {
