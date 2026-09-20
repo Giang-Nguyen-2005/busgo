@@ -684,6 +684,8 @@ PAID
 FAILED
 REFUNDED
 Không xóa payment cũ khi booking bị cancel.
+M9 dùng `transaction_reference` unique và generated column `paid_booking_id` với unique constraint
+để database cho phép lưu lịch sử attempt nhưng không bao giờ có hơn một Payment PAID cho một booking.
 
 27. booking_status_history
 booking_status_history
@@ -707,6 +709,17 @@ CONFIRMED
 ↓
 CANCELLED
 đều giữ lại.
+
+27A. tickets
+M9 lưu một ticket cho mỗi BookingItem:
+
+    • ticket_code unique, server-generated
+    • booking_id FK
+    • booking_item_id FK và unique
+    • payment_id FK
+    • passenger_name và seat_code snapshot
+
+`UNIQUE(booking_item_id)` bảo đảm retry/concurrency không thể tạo vé trùng cho cùng ghế.
 
 28. Giá vé
 Đây là phần mình muốn thiết kế để không khóa đường tương lai.
@@ -846,6 +859,11 @@ row locks theo thứ tự `(trip_seat_id, segment_order, inventory.id)`, đổi 
 BOOKED, gắn từng row vào item của cùng TripSeat và xóa toàn bộ hold metadata trong một transaction.
 V7 chỉ thêm indexes phục vụ lookup code, customer history, trip và item/inventory FKs; payment,
 ticket và booking history chưa được tạo trong M8.
+
+M9 migration V8 tạo `payments` trước, sau đó `booking_status_history`, rồi `tickets` để mọi FK
+tham chiếu bảng đã tồn tại. Payment confirmation không thay đổi inventory: nó lock booking, kiểm tra
+đúng matrix BOOKED đã link tới BookingItem từ M8, rồi atomically ghi Payment PAID, history,
+Booking CONFIRMED và một Ticket cho mỗi BookingItem.
 
 Customer search chọn candidate bằng TripStop snapshot, exact ACTIVE fare và
 `Asia/Ho_Chi_Minh` business-date window đã chuyển sang UTC. Availability được tính
@@ -1055,7 +1073,8 @@ Mình chốt phiên bản đầu với 19 bảng chính:
 20. booking_items
 21. payments
 22. booking_status_history
-Thực tế là 22 bảng, nhưng mỗi bảng có trách nhiệm rất rõ và nhiều bảng chỉ là bảng mapping/snapshot.
+23. tickets
+Thực tế là 23 bảng, nhưng mỗi bảng có trách nhiệm rất rõ và nhiều bảng chỉ là bảng mapping/snapshot.
 Không nên cố giảm xuống còn 8–10 bảng chỉ để nhìn đơn giản; làm vậy phần booking sau này sẽ trở nên khó xử lý hơn.
 
 Kiến trúc dữ liệu mình sẽ chốt ở mức này

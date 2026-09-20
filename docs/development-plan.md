@@ -801,9 +801,14 @@ Hoàn thành full customer business flow.
 Table
 payments
 
+tickets
+
+booking_status_history
+
 Payment methods
 MOCK_QR
-CASH
+
+CASH và real gateway để milestone sau.
 
 APIs
 POST /api/v1/bookings/{id}/payments/mock-confirm
@@ -812,24 +817,18 @@ GET /api/v1/bookings/{id}/ticket
 
 MOCK_QR flow
 Booking PENDING
-Payment PENDING
-Inventory HELD
+Inventory BOOKED từ M8
 
 ↓ confirm
 
 Payment PAID
 Booking CONFIRMED
 Inventory BOOKED
-Hold CONSUMED
-phải transaction.
+Booking status history và một Ticket/BookingItem được tạo
 
-CASH flow
-Có thể:
-Booking CONFIRMED
-Payment PENDING
-Inventory BOOKED
-sau booking nếu business rule chốt như vậy.
-Staff xác nhận tiền sau.
+Toàn bộ phải nằm trong một transaction có booking row lock, inventory consistency check,
+database uniqueness và idempotent retry. Hai confirm đồng thời cùng booking đều có thể trả cùng
+kết quả đã commit, nhưng chỉ một Payment PAID và một ticket cho mỗi item tồn tại.
 
 Ticket
 Response chứa:
@@ -845,8 +844,11 @@ qrValue
 
 QR
 Frontend generate QR từ:
-bookingCode
-Không cần lưu image QR trong DB.
+ticketCode (`qrData`)
+Không lưu image QR/PDF trong DB.
+
+Deferred
+Real gateway, CASH settlement, cancellation/refund, email và SMS.
 
 Definition of Done
 Flow:

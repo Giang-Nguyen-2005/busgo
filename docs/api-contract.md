@@ -630,28 +630,32 @@ hold trả `404 SEAT_HOLD_NOT_FOUND`; expired trả `409 SEAT_HOLD_EXPIRED`; mat
 }
 
 31. Mock Payment
-POST /bookings/{bookingId}/payments/mock-confirm
+POST /api/v1/bookings/{bookingId}/payments/mock-confirm
 CUSTOMER.
 Chỉ owner booking.
-Request có thể để trống:
-{}
+Request để trống; amount, customer và status luôn do server suy ra.
 Backend:
-Payment PENDING → PAID
-
-Booking PENDING → CONFIRMED
-
-Seat inventories:
-HELD → BOOKED
-
-hold → CONSUMED
-Tất cả trong cùng transaction.
+    • lock Booking bằng database row lock
+    • kiểm tra inventory đã BOOKED và link đúng BookingItem từ M8
+    • tạo Payment MOCK_QR/PAID với Booking.totalAmount
+    • Booking PENDING → CONFIRMED
+    • ghi booking_status_history
+    • tạo đúng một Ticket cho mỗi BookingItem
+Tất cả trong cùng transaction. Gọi lại sau khi thành công trả cùng kết quả và không tạo bản ghi trùng.
+Lần confirm đầu tiên và các lần retry thành công đều trả HTTP 200.
 
 32. Mock Payment Response
 {
   "data": {
+    "paymentId": 801,
+    "bookingId": 701,
     "bookingCode": "BG2609180001",
+    "method": "MOCK_QR",
+    "amount": 650000,
     "bookingStatus": "CONFIRMED",
-    "paymentStatus": "PAID"
+    "paymentStatus": "PAID",
+    "transactionReference": "MOCK-...",
+    "paidAt": "2026-09-18T10:05:00Z"
   }
 }
 
@@ -783,35 +787,36 @@ trong V1.
 Ghi booking_status_history.
 
 39. Ticket API
-GET /bookings/{bookingId}/ticket
+GET /api/v1/bookings/{bookingId}/ticket
 Owner.
+Booking phải CONFIRMED và có Payment PAID cùng bộ Ticket đầy đủ; nếu chưa thanh toán trả
+`TICKET_NOT_AVAILABLE`. Foreign booking trả `BOOKING_NOT_FOUND`.
 Response:
 {
   "data": {
+    "bookingId": 701,
     "bookingCode": "BG2609180001",
-
-    "operator": "GiangBus",
-
-    "passenger": "Nguyen Van A",
-
-    "route": {
-      "pickup": "Đắk Lắk",
-      "dropoff": "Hà Nội"
-    },
-
-    "departureTime": "2026-09-25T18:30:00+07:00",
-
-    "seatCodes": [
-      "A01"
-    ],
-
+    "status": "CONFIRMED",
     "paymentStatus": "PAID",
-
-    "qrValue": "BG2609180001"
+    "paymentMethod": "MOCK_QR",
+    "amount": 650000,
+    "operator": { "id": 1, "name": "GiangBus" },
+    "route": { "id": 1, "name": "Đắk Lắk - Hà Nội" },
+    "pickup": { "tripStopId": 1002, "locationId": 1, "name": "Đắk Lắk", "time": "2026-09-25T18:30:00Z" },
+    "dropoff": { "tripStopId": 1006, "locationId": 2, "name": "Hà Nội", "time": "2026-09-26T10:00:00Z" },
+    "departureTime": "2026-09-25T18:30:00+07:00",
+    "arrivalTime": "2026-09-26T10:00:00+07:00",
+    "tickets": [{
+      "ticketId": 901,
+      "ticketCode": "TKT-...",
+      "passengerName": "Nguyen Van A",
+      "seatCode": "A01",
+      "qrData": "TKT-..."
+    }]
   }
 }
-Frontend có thể render QR.
-PDF ticket là optional.
+Một BookingItem/ghế có đúng một ticket. Nếu passengerName của item null thì dùng contactName.
+Frontend render QR từ `qrData`; backend không tạo QR image hoặc PDF trong M9.
 
 40. Operator Dashboard
 GET /operator/dashboard
@@ -1264,6 +1269,10 @@ Payment
 PAYMENT_NOT_FOUND
 PAYMENT_ALREADY_PAID
 INVALID_PAYMENT_STATE
+BOOKING_NOT_PAYABLE
+PAYMENT_ALREADY_INVALID
+BOOKING_INVENTORY_INCONSISTENT
+TICKET_NOT_AVAILABLE
 
 72. Idempotency
 Một điểm quan trọng cho booking/payment.

@@ -131,7 +131,7 @@ This runs strict TypeScript checking and creates the Vite production build.
 
 ## Layout
 
-- `backend/`: Spring Boot foundation through M8, including trip snapshots, customer
+- `backend/`: Spring Boot foundation through M9, including trip snapshots, customer
   trip search, journey-specific seat availability, temporary holds, and customer bookings
 - `frontend/`: React/TypeScript, Router, Axios, TanStack Query, Tailwind;
   React Hook Form and Zod installed for later forms
@@ -152,10 +152,14 @@ minute-scale predicate cleanup releases expired HELD rows; create also reclaims 
 expired rows while locked. M5/M6 remain observational, so stale expired HELD rows can remain
 unavailable until cleanup/reclamation. M8 migration V7 adds `bookings`, `booking_items`, and
 the nullable inventory-to-item link. Authenticated customers can atomically convert an active
-owned hold to a server-priced PENDING booking and read only their own paginated history/detail.
-The conversion marks only the held journey segments BOOKED and clears hold metadata, preserving
-non-overlapping reuse of the same physical seat. Payment, confirmation, cancellation, ticketing,
-reporting, and business UI remain outside the implemented scope and are deferred to M9 or later.
+  owned hold to a server-priced PENDING booking and read only their own paginated history/detail.
+  The conversion marks only the held journey segments BOOKED and clears hold metadata, preserving
+  non-overlapping reuse of the same physical seat. M9 adds an idempotent mock QR payment transaction:
+  it locks the owned booking, verifies that its segment inventory remains BOOKED and correctly linked,
+  records a PAID payment and status history, changes the booking to CONFIRMED, and creates one e-ticket
+  per booking item. Ticket QR values are stable text data for frontend rendering; no image or PDF is
+  generated. Real gateways, cash settlement, cancellation/refund, notifications, reporting, and the
+  business UI remain deferred.
 Tests generate their own ephemeral JWT signing key.
 
 M1 follows the documented fare foreign keys. As agreed, same-route membership and
