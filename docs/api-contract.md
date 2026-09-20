@@ -428,14 +428,14 @@ lệ nhưng sold out vẫn trả HTTP 200, count 0 và toàn bộ seat false. Đ
 tại thời điểm đọc, không giữ ghế và không bảo đảm ghế vẫn còn ở request M7 sau đó.
 
 21. Create Seat Hold
-POST /seat-holds
+POST /api/v1/seat-holds
 Role:
 CUSTOMER
 Request
 {
   "tripId": 101,
-  "pickupTripStopId": 1002,
-  "dropoffTripStopId": 1006,
+  "pickupLocationId": 10,
+  "dropoffLocationId": 20,
   "tripSeatIds": [
     501,
     503
@@ -444,14 +444,18 @@ Request
 
 22. Seat Hold Processing
 Backend:
-1. Validate trip.
-2. Validate pickup/dropoff.
-3. Determine required segments.
-4. Lock inventory rows.
-5. Check every seat on every segment.
-6. Create hold.
-7. Set HELD.
-Tất cả trong transaction.
+1. Resolve TripStop snapshots, future SCHEDULED Trip, complete segments và exact ACTIVE fare
+   bằng cùng `CustomerJourneyResolver`/`TripSegmentResolver` của M5/M6.
+2. Reject empty, duplicate, over-five, malformed seat lists; every TripSeat must belong to Trip.
+3. Normalize seat IDs and segment IDs, then lock the complete inventory matrix in
+   `(trip_seat_id, trip_segment_id)` order with `SELECT ... FOR UPDATE`.
+4. While those rows remain locked, require the exact expected row count and require every row
+   to be AVAILABLE or an expired HELD row (`hold_expires_at <= capturedNow`).
+5. Atomically set the whole matrix to HELD with one UUID token, authenticated owner ID, and
+   one server-derived expiry. Any unavailable or missing row rolls back the entire request.
+
+The lock, check, expired-row reclamation, and update run in one MySQL transaction. The same
+physical seat remains reusable for non-overlapping segment sets.
 
 23. Seat Hold Response
 {
@@ -459,6 +463,19 @@ Tất cả trong transaction.
     "holdToken": "29fc9351-f941-4dd9-a1d6-abc123",
     "tripId": 101,
 
+    "pickup": {
+      "tripStopId": 1002,
+      "locationId": 10,
+      "name": "Đắk Lắk",
+      "departureTime": "2026-09-18T12:00:00Z"
+    },
+    "dropoff": {
+      "tripStopId": 1006,
+      "locationId": 20,
+      "name": "Hà Nội",
+      "arrivalTime": "2026-09-19T03:00:00Z"
+    },
+    "tripSeatIds": [501, 503],
     "seats": [
       {
         "tripSeatId": 501,
@@ -470,20 +487,21 @@ Tất cả trong transaction.
       }
     ],
 
-    "expiresAt": "2026-09-18T21:40:00+07:00",
-    "remainingSeconds": 600,
-
-    "totalAmount": 1300000
+    "pricePerSeat": 650000,
+    "totalPrice": 1300000,
+    "expiresAt": "2026-09-18T14:40:00Z",
+    "status": "ACTIVE"
   }
 }
 
 24. Seat Hold Errors
 SEAT_NOT_AVAILABLE
-INVALID_TRIP_STOP
+INVALID_PICKUP_STOP
+INVALID_DROPOFF_STOP
 INVALID_ROUTE_DIRECTION
 TRIP_ALREADY_DEPARTED
 TRIP_NOT_BOOKABLE
-TOO_MANY_SEATS
+VALIDATION_ERROR
 Ví dụ:
 {
   "code": "SEAT_NOT_AVAILABLE",
@@ -500,10 +518,12 @@ Ví dụ:
 V1:
 MAX_SEATS_PER_BOOKING = 5
 HOLD_DURATION = 10 minutes
-Nên để trong configuration thay vì hard-code service.
+Configuration dùng `busgo.booking.max-seats-per-hold=5` và
+`busgo.booking.seat-hold-duration=PT10M`. Client không được gửi owner, token, expiry,
+status hoặc price. Một non-expired HELD row không thể bị giữ lại, kể cả bởi cùng user.
 
 26. Get Current Hold
-GET /seat-holds/{holdToken}
+GET /api/v1/seat-holds/{holdToken}
 Authenticated.
 Chỉ chủ hold mới xem được.
 Response:
@@ -512,26 +532,38 @@ Response:
     "holdToken": "...",
     "status": "ACTIVE",
     "expiresAt": "...",
-    "remainingSeconds": 450,
-    "seatCodes": [
-      "A01",
-      "A03"
+    "tripId": 101,
+    "pickup": { "tripStopId": 1002, "locationId": 10, "name": "Đắk Lắk", "departureTime": "..." },
+    "dropoff": { "tripStopId": 1006, "locationId": 20, "name": "Hà Nội", "arrivalTime": "..." },
+    "tripSeatIds": [501, 503],
+    "seats": [
+      { "tripSeatId": 501, "seatCode": "A01" },
+      { "tripSeatId": 503, "seatCode": "A03" }
     ],
-    "totalAmount": 1300000
+    "pricePerSeat": 650000,
+    "totalPrice": 1300000
   }
 }
 Possible status:
 ACTIVE
 EXPIRED
-CONSUMED
-CANCELLED
+
+GET không extend/refresh expiry. Token của user khác và token đã release/cleanup đều trả
+`404 SEAT_HOLD_NOT_FOUND`; stale expired metadata chưa cleanup có thể trả `EXPIRED`.
 
 27. Release Hold
-DELETE /seat-holds/{holdToken}
+DELETE /api/v1/seat-holds/{holdToken}
 Role CUSTOMER.
 Response:
 204 No Content
-Backend release HELD inventory thuộc hold.
+Backend chỉ release row có đồng thời token, authenticated owner và status HELD. DELETE là
+idempotent và không leak token của user khác: unknown, already released và foreign token đều 204.
+
+Cleanup chạy khoảng mỗi phút bằng một transactional database UPDATE có predicate
+`status = 'HELD' AND hold_expires_at <= capturedNow`. Nó không chạm BOOKED/BLOCKED hoặc
+active HELD. Correctness không phụ thuộc scheduler: create vẫn reclaim expired relevant rows
+dưới pessimistic lock. M5/M6 tiếp tục read-only; stale expired HELD có thể hiện unavailable
+cho đến cleanup hoặc locked reclamation.
 
 28. Create Booking
 POST /bookings
@@ -1344,8 +1376,9 @@ GET /trips/search
 GET /trips/{id}
 GET /trips/{id}/seats
 Milestone 3
-POST /seat-holds
-DELETE /seat-holds/{token}
+POST /api/v1/seat-holds
+GET /api/v1/seat-holds/{token}
+DELETE /api/v1/seat-holds/{token}
 
 POST /bookings
 GET /bookings/me
@@ -1387,7 +1420,7 @@ GET /trips/search
 GET /trips/101/seats
 
 5.
-POST /seat-holds
+POST /api/v1/seat-holds
     A01
 
 6.

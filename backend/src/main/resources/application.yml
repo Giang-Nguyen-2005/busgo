@@ -21,6 +21,11 @@ busgo:
     issuer: busgo
     access-ttl: ${JWT_ACCESS_TTL:1h}
     refresh-ttl: ${JWT_REFRESH_TTL:7d}
+  booking:
+    seat-hold-duration: ${SEAT_HOLD_DURATION:PT10M}
+    max-seats-per-hold: ${MAX_SEATS_PER_HOLD:5}
+    seat-hold-cleanup-interval: ${SEAT_HOLD_CLEANUP_INTERVAL:PT1M}
+    seat-hold-cleanup-initial-delay: ${SEAT_HOLD_CLEANUP_INITIAL_DELAY:PT1M}
 server:
   port: ${SERVER_PORT:8080}
   error:

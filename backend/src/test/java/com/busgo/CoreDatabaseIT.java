@@ -57,7 +57,7 @@ class CoreDatabaseIT extends JwtTestSupport {
         assertThat(environment.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
         flyway.validate();
         assertThat(flyway.info().pending()).isEmpty();
-        assertThat(flyway.info().applied()).hasSize(5);
+        assertThat(flyway.info().applied()).hasSize(6);
         assertThat(roles.findAll()).extracting(Role::getCode).containsExactlyInAnyOrder(RoleCode.values());
         assertThat(jdbc.queryForList("""
                 SELECT table_name FROM information_schema.tables

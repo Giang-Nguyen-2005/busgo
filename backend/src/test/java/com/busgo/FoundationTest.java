@@ -8,6 +8,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -34,6 +36,7 @@ class FoundationTest extends JwtTestSupport {
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.trip.repository.TripSeatSegmentInventoryRepository tripInventory;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.trip.search.TripSearchRepository tripSearch;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.trip.search.SeatAvailabilityQueryRepository seatAvailability;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.hold.SeatHoldInventoryRepository seatHoldInventory;
     @Autowired MockMvc mvc;
     @Autowired RoleProbe roleProbe;
 
@@ -71,6 +74,16 @@ class FoundationTest extends JwtTestSupport {
                 .andExpect(jsonPath("code").value("UNAUTHORIZED"))
                 .andExpect(jsonPath("timestamp").isString())
                 .andExpect(header().doesNotExist("Location"));
+    }
+
+    @Test
+    void seatHoldEndpointsRequireAuthentication() throws Exception {
+        mvc.perform(post("/api/v1/seat-holds"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/v1/seat-holds/token"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(delete("/api/v1/seat-holds/token"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

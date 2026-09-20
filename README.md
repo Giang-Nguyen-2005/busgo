@@ -4,7 +4,7 @@ Bus Ticket Booking & Management System. This repository currently implements
 **Milestone 0 — Project Foundation**, **Milestone 1 — Core Database**,
 **Milestone 2 — Authentication**, **Milestone 3 — Operator, Fleet & Route**,
 **Milestone 4 — Trip Generation**, **Milestone 5 — Customer Trip Search**, and
-**Milestone 6 — Customer Seat Availability**.
+**Milestone 6 — Customer Seat Availability**, and **Milestone 7 — Seat Hold**.
 Requirements and future milestone scope
 are defined in [docs/development-plan.md](docs/development-plan.md) and the other
 files under `docs/`.
@@ -130,8 +130,8 @@ This runs strict TypeScript checking and creates the Vite production build.
 
 ## Layout
 
-- `backend/`: Spring Boot foundation through M6, including trip snapshots, customer
-  trip search, and journey-specific seat availability
+- `backend/`: Spring Boot foundation through M7, including trip snapshots, customer
+  trip search, journey-specific seat availability, and authenticated temporary seat holds
 - `frontend/`: React/TypeScript, Router, Axios, TanStack Query, Tailwind;
   React Hook Form and Zod installed for later forms
 - `database/`: reserved for later database support files
@@ -144,8 +144,13 @@ search-oriented indexes in V5 and public snapshot/segment-based trip discovery. 
 adds no migration: it returns the snapshotted seat layout and marks a seat available
 only when that same seat is AVAILABLE on every required journey segment. The seat map
 is observational, does not reserve inventory, and returns a successful sold-out map
-with count zero. Holds, booking, payment, reporting, and business UI remain outside
-the implemented scope.
+with count zero. M7 adds a hold-token lookup index in V6 and authenticated create/get/delete
+hold endpoints. Holds are server-priced, expire after ten minutes, support up to five seats,
+and atomically lock the complete seat × journey-segment matrix in deterministic order. A
+minute-scale predicate cleanup releases expired HELD rows; create also reclaims relevant
+expired rows while locked. M5/M6 remain observational, so stale expired HELD rows can remain
+unavailable until cleanup/reclamation. Booking, payment, ticketing, reporting, and business UI
+remain outside the implemented scope.
 Tests generate their own ephemeral JWT signing key.
 
 M1 follows the documented fare foreign keys. As agreed, same-route membership and

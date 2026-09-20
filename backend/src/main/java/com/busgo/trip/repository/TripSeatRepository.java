@@ -6,5 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TripSeatRepository extends JpaRepository<TripSeat, Long> {
     List<TripSeat> findByTripIdOrderByFloorAscRowAscColumnAsc(Long tripId);
+    List<TripSeat> findByTripIdAndIdInOrderByIdAsc(Long tripId, List<Long> ids);
     long countByTripId(Long tripId);
 }

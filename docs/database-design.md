@@ -830,6 +830,15 @@ M5 query indexes (migration V5):
     • trip_stops(location_id, allow_pickup, planned_departure_time, trip_id, stop_order)
     • operator_route_fares(operator_route_id, from_route_stop_id, to_route_stop_id, status)
 
+M7 query index (migration V6):
+
+    • trip_seat_segment_inventory(hold_token)
+
+V6 không thêm bảng hold. Một logical hold dùng cùng opaque UUID, owner và expiry trên toàn bộ
+seat × required-segment matrix. GET suy ra immutable journey boundary từ ordered consecutive
+TripSegment rows khi token metadata còn tồn tại. Release/cleanup xóa metadata, nên hệ thống
+không giữ lifecycle history sau đó.
+
 Customer search chọn candidate bằng TripStop snapshot, exact ACTIVE fare và
 `Asia/Ho_Chi_Minh` business-date window đã chuyển sang UTC. Availability được tính
 theo cùng một TripSeat trên mọi required TripSegment; query không thay đổi inventory.

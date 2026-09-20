@@ -676,30 +676,10 @@ POST   /api/v1/seat-holds
 GET    /api/v1/seat-holds/{token}
 DELETE /api/v1/seat-holds/{token}
 
-Có thể cần entity mới
-Mặc dù inventory đã chứa:
-holdToken
-heldBy
-expiresAt
-khuyến nghị thêm table:
-seat_holds
-để quản lý lifecycle hold rõ hơn.
-Schema gợi ý:
-id
-hold_token
-user_id
-trip_id
-pickup_trip_stop_id
-dropoff_trip_stop_id
-status
-expires_at
-created_at
-Status:
-ACTIVE
-EXPIRED
-CONSUMED
-CANCELLED
-Đây là một điều chỉnh database hợp lý trước khi code milestone này.
+M7 decision: không thêm `seat_holds`. V4 inventory fields đủ biểu diễn active/stale-expired
+logical hold vì một token bao phủ complete seat × consecutive-segment matrix; boundaries được
+khôi phục từ first/last TripSegment snapshot. Release/cleanup xóa metadata nên token lịch sử
+trả 404. V6 chỉ thêm index `trip_seat_segment_inventory(hold_token)` cho GET/release.
 
 Hold transaction
 BEGIN
@@ -707,25 +687,26 @@ BEGIN
 resolve segments
 
 SELECT inventory
+ORDER BY trip_seat_id, trip_segment_id
 FOR UPDATE
 
-verify every row AVAILABLE
-
-create hold
+verify exact expected row count and every row AVAILABLE or expired HELD
 
 update rows:
 AVAILABLE → HELD
+with one UUID, authenticated owner, and captured expiry
 
 COMMIT
 
 Configuration
-seat-hold.duration-minutes=10
-booking.max-seats=5
+busgo.booking.seat-hold-duration=PT10M
+busgo.booking.max-seats-per-hold=5
 
 Expiration job
 Scheduled job:
 every 1 minute
-release expired hold.
+release expired hold bằng predicate UPDATE tại database. Create vẫn reclaim expired relevant
+rows dưới lock; M5/M6 không mutate và có thể xem stale expired HELD là unavailable đến cleanup.
 
 Concurrency Test
 Bắt buộc chạy test:
@@ -736,6 +717,9 @@ attempt same seat simultaneously
 
 exactly one succeeds.
 Đây là test không được bỏ.
+
+M7 còn verify multi-seat all-or-nothing, missing inventory fail-closed, active hold không bị
+steal (kể cả same user), và cùng physical seat có thể giữ đồng thời trên non-overlapping segments.
 
 Definition of Done
 Không thể giữ cùng một seat trên cùng overlapping segment bởi hai customer cùng lúc.
