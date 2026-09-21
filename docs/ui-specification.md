@@ -1,4 +1,46 @@
 BUSGO – PAGE FLOW & UI SCREEN SPECIFICATION v1
+
+M10 implementation addendum (2026-09-20)
+The current M2–M9 Java DTOs and controllers are authoritative. The older design
+examples below describe future scope where they differ from these M10 rules:
+
+- All eleven customer routes are implemented; operator pages remain M11.
+- Search URL uses pickupLocationId, dropoffLocationId, departureDate. Both location
+  IDs are required for trip detail and seat availability. Autocomplete uses GET
+  /locations; no location catalogue is hardcoded.
+- Seat state is available/unavailable plus local selection. The public API does
+  not expose a blocked-versus-booked distinction. Positions come from snapshots.
+- M7 allows 1–5 seats, returns pricePerSeat/totalPrice/expiresAt/status, and provides
+  GET /seat-holds/{token} for backend revalidation. Expiry returns to seat choice.
+- M8 accepts only holdToken, contactName, contactPhone, contactEmail. Passenger
+  editing and CASH are not supported in this customer implementation.
+- Payment is explicitly labeled “Thanh toán QR giả lập”. Confirmation sends no
+  amount. The payment page fetches booking detail; ticket page fetches the ticket
+  bundle. Both use bookingId in the URL for reload-safe navigation.
+- Ticket QR graphics encode exactly the backend qrData. One digital ticket per
+  returned ticket; no PDF. Booking details have no cancellation controls.
+- Booking filters use backend PENDING/CONFIRMED/CANCELLED/COMPLETED status values.
+  UI does not infer payment status from booking detail; it comes from M9 responses.
+- Price/time filters and four sorts run on the backend. Operator/bus-type filter
+  controls await a public options catalogue; there are no invented choices.
+- Profile edits fullName/phone; password change signs out after backend success.
+
+Visual system: teal primary/hover, warm neutral surfaces, subtle borders/shadows,
+compact sticky navigation, a search-focused travel hero, timetable result cards,
+snapshot seat floors, checkout summaries and perforated-style electronic tickets.
+Design tokens are in frontend/src/styles.css. Desktop uses filter/sidebar and
+checkout columns; tablet reflows search; mobile stacks checkout and ticket cards,
+keeps seat maps internally scrollable, and offers scrollable booking status tabs.
+Forms use React Hook Form + Zod. Shared loading/error/empty states, disabled submit
+buttons, focus indicators, keyboard autocomplete and Vietnamese copy apply across
+the customer flow. Times display in Asia/Ho_Chi_Minh, amounts in VND.
+Run/environment setup and complete flow: README.md → M10 customer frontend.
+Dedicated browser review and verification: docs/m10-verification.md.
+Final polish: journey-bound seat drafts survive login and are restored only after
+fresh availability. Customer date/time text uses dd/MM/yyyy and HH:mm • dd/MM/yyyy.
+Mobile price/time filters use a modal bottom sheet. The home hero is shorter and
+search-first; tickets use Vietnamese payment labels and selectable wrapping codes.
+
 1. Mục tiêu
 Tài liệu này xác định:
     • Các màn hình của Customer.

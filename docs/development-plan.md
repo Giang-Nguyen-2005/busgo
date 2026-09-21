@@ -862,6 +862,15 @@ hoàn thành bằng API.
 
 MILESTONE 10
 CUSTOMER FRONTEND
+Implementation status (2026-09-20): customer flow implemented in `frontend/`.
+Includes all eleven customer routes, server-backed location/trip search,
+snapshot seat selection (1–5 seats), verified holds, contact booking, mock payment,
+QR tickets, booking history/detail, profile and password change.
+Vietnamese responsive layouts target 1440px, 1024px and 390px.
+API settings/run commands and route map: README.md, section M10 customer frontend.
+Audit and verification evidence: docs/m10-verification.md.
+Operator frontend remains M11; cancellation, refund, real payment and PDF are
+outside this M10 implementation.
 Objective
 Xây toàn bộ flow khách hàng.
 

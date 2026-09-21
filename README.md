@@ -5,7 +5,8 @@ Bus Ticket Booking & Management System. This repository currently implements
 **Milestone 2 — Authentication**, **Milestone 3 — Operator, Fleet & Route**,
 **Milestone 4 — Trip Generation**, **Milestone 5 — Customer Trip Search**, and
 **Milestone 6 — Customer Seat Availability**, **Milestone 7 — Seat Hold**, and
-**Milestone 8 — Booking**.
+**Milestone 8 — Booking**, **Milestone 9 — Mock Payment & Ticket**, and
+**Milestone 10 — Customer Frontend**.
 Requirements and future milestone scope
 are defined in [docs/development-plan.md](docs/development-plan.md) and the other
 files under `docs/`.
@@ -83,8 +84,8 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:5173. The foundation page checks the backend connection and
-offers a retry if unavailable. Vite proxies `/api` to http://localhost:8080.
+Open http://localhost:5173 for the Vietnamese customer booking website.
+Vite proxies `/api` to http://localhost:8080.
 Optional overrides are shown in `frontend/.env.example`; copy it to
 `frontend/.env.local` to use them. `VITE_*` values are public browser configuration,
 so never put secrets in them. A production host must proxy `/api` to the backend
@@ -133,8 +134,8 @@ This runs strict TypeScript checking and creates the Vite production build.
 
 - `backend/`: Spring Boot foundation through M9, including trip snapshots, customer
   trip search, journey-specific seat availability, temporary holds, and customer bookings
-- `frontend/`: React/TypeScript, Router, Axios, TanStack Query, Tailwind;
-  React Hook Form and Zod installed for later forms
+- `frontend/`: Vietnamese customer UI with React/TypeScript, Router, Axios,
+  TanStack Query, Tailwind, React Hook Form + Zod, Lucide icons and QR rendering
 - `database/`: reserved for later database support files
 - `docs/`: requirements, database design, API contract, UI specification,
   and development plan
@@ -159,7 +160,7 @@ the nullable inventory-to-item link. Authenticated customers can atomically conv
   records a PAID payment and status history, changes the booking to CONFIRMED, and creates one e-ticket
   per booking item. Ticket QR values are stable text data for frontend rendering; no image or PDF is
   generated. Real gateways, cash settlement, cancellation/refund, notifications, reporting, and the
-  business UI remain deferred.
+  operator UI remain deferred to later milestones.
 Tests generate their own ephemeral JWT signing key.
 
 M1 follows the documented fare foreign keys. As agreed, same-route membership and
@@ -167,3 +168,49 @@ forward stop-order validation are deferred to M3; foreign keys alone cannot enfo
 those cross-table rules. Phone uniqueness and fare-pair uniqueness are not imposed
 because the database design does not specify them. Unspecified lifecycle statuses
 use `ACTIVE`/`INACTIVE`; the only documented seat type is `STANDARD`.
+
+## M10 customer frontend
+
+Public routes: `/`, `/login`, `/register`, `/search`, `/trips/:tripId`.
+Customer routes: `/booking`, `/payment`, `/booking-success`, `/profile`,
+`/my-bookings`, `/my-bookings/:bookingId`. Accounts with CUSTOMER plus other roles
+can use the customer flow; no operator navigation is implemented.
+
+Copy `frontend/.env.example` to `frontend/.env.local` when configuring the API.
+`VITE_API_BASE_URL=/api/v1` uses the development proxy; `API_PROXY_TARGET` selects
+the backend origin. A separate API deployment can supply a full
+`VITE_API_BASE_URL`, but must configure its origin policy. Production hosting must
+serve `index.html` for SPA routes and proxy `/api/v1` to the backend when using
+the default relative URL. Vite variables are public and contain no secrets.
+
+Register → login → search backend locations and trips → select up to five seats
+→ create a server-priced hold → enter contact details → create booking → confirm
+mock QR payment → view one QR ticket per seat. History/detail and profile editing
+are available from the header. Search uses `pickupLocationId`, `dropoffLocationId`
+and `departureDate`; trip links preserve both location IDs. Payment/ticket links
+use `bookingId`, then fetch the owned resource from the server on every visit.
+
+Authentication uses tab-scoped session storage, a shared refresh request with
+single-use rotation, and a single retry per failed request. Local logout clears
+tokens, the active hold reference and the query cache; it does not revoke already
+issued backend tokens. Password changes sign out locally because the backend
+revokes refresh tokens. Closing the tab normally ends this browser session.
+Use HTTPS in deployment; JavaScript-accessible storage is not an HttpOnly cookie.
+
+Seat maps use backend floor/row/column snapshots. A hold is fetched again on the
+booking page and polled until conversion/expiry; its countdown is informational.
+Expired holds return to seat selection without automatic replacement. Booking
+submission sends only holdToken and contact fields; payment sends no amount.
+Do not automatically retry booking creation after a lost response: check history
+first. The backend does not provide booking-create idempotency; mock payment is
+idempotent and a confirmed booking can reopen its existing tickets.
+
+Price/time filters and all four backend sorts are supported. Operator/bus-type
+filter controls are deferred because there is no public catalogue endpoint;
+no option list is fabricated from one page of results. UI timestamps use
+Asia/Ho_Chi_Minh. No production IDs, locations or seat layouts are hardcoded.
+
+Run `npm run build` in `frontend/` for strict TypeScript and production bundling.
+No frontend lint or test script existed at the start of M10; no large testing
+framework was added. See [M10 verification](docs/m10-verification.md) for the
+audit, browser checks, exact commands/results and remaining limitations.
