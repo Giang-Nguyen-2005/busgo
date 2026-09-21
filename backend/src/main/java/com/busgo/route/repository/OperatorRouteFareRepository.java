@@ -5,6 +5,9 @@ import com.busgo.common.entity.ActiveStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface OperatorRouteFareRepository extends JpaRepository<OperatorRouteFare, Long> {
+    java.util.Optional<OperatorRouteFare> findFirstByOperatorRouteIdAndFromRouteStopIdAndToRouteStopId(
+            Long operatorRouteId, Long fromRouteStopId, Long toRouteStopId);
+
     java.util.List<OperatorRouteFare> findByOperatorRouteIdOrderByFromRouteStopStopOrderAscToRouteStopStopOrderAsc(Long operatorRouteId);
 
     @org.springframework.data.jpa.repository.Query("""

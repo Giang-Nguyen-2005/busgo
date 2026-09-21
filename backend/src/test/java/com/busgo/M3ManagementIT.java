@@ -50,14 +50,15 @@ class M3ManagementIT extends JwtTestSupport {
 
     @Test
     void publicLocationLookupReturnsOnlyActiveMatchingLocations() throws Exception {
-        location("Da Nang Station", "Da Nang", "Hai Chau", ActiveStatus.ACTIVE);
-        location("Da Lat Station", "Lam Dong", "Da Lat", ActiveStatus.INACTIVE);
+        String marker = "lookup-" + UUID.randomUUID();
+        location(marker + " active", "Da Nang", "Hai Chau", ActiveStatus.ACTIVE);
+        location(marker + " inactive", "Lam Dong", "Da Lat", ActiveStatus.INACTIVE);
         location("Ha Noi Station", "Ha Noi", "Hoang Mai", ActiveStatus.ACTIVE);
 
-        mvc.perform(get("/api/v1/locations").param("q", "da"))
+        mvc.perform(get("/api/v1/locations").param("q", marker))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("data.length()").value(1))
-                .andExpect(jsonPath("data[0].name").value("Da Nang Station"));
+                .andExpect(jsonPath("data[0].name").value(marker + " active"));
     }
 
     @Test

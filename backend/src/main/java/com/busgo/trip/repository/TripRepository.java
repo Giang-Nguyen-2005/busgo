@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 public interface TripRepository extends JpaRepository<Trip, Long> {
+    Optional<Trip> findByOperatorRouteIdAndBusIdAndDepartureTime(
+            Long operatorRouteId, Long busId, LocalDateTime departureTime);
+
     @Query(value = """
             select t from Trip t
             join fetch t.operatorRoute opr

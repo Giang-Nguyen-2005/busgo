@@ -4,6 +4,8 @@ import com.busgo.fleet.entity.Bus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface BusRepository extends JpaRepository<Bus, Long> {
+    java.util.Optional<Bus> findByLicensePlateIgnoreCase(String licensePlate);
+
     @org.springframework.data.jpa.repository.Query(value = """
             select b from Bus b join fetch b.busType bt
             where b.operator.id = :operatorId and b.deletedAt is null

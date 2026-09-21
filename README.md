@@ -32,7 +32,9 @@ passwords in `.env` does not change accounts in an already initialized volume.
 Flyway applies the M1 core schema and four role seeds from
 `backend/src/main/resources/db/migration/` on backend startup. Hibernate remains
 configured with `ddl-auto=validate`; it never creates or mutates the schema.
-No accounts, operators, routes, locations, or other demo records are seeded.
+No accounts, operators, routes, locations, or demo records are seeded by the normal
+`dev` or production profiles. The separate, explicit `demo` profile can add the
+fictional portfolio dataset described in [Demo data](docs/demo-data.md).
 
 ## Start the backend
 
@@ -45,6 +47,16 @@ Then from `backend/`:
 ```sh
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
+
+For the realistic, repeatable customer demo dataset, enable both profiles:
+
+```sh
+mvn spring-boot:run -Dspring-boot.run.profiles=dev,demo
+```
+
+The log prints the current recommended search date. It is always tomorrow in
+`Asia/Ho_Chi_Minh`; search **Bến xe TP. Hồ Chí Minh → Bến xe Đà Lạt** for six trips.
+The `demo` profile is never implied by `dev` and must not be enabled in production.
 
 The `dev` profile defaults to `jdbc:mysql://localhost:3307/busgo_db?connectionTimeZone=UTC`
 and username `busgo`. Set `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` to override.
@@ -214,3 +226,14 @@ Run `npm run build` in `frontend/` for strict TypeScript and production bundling
 No frontend lint or test script existed at the start of M10; no large testing
 framework was added. See [M10 verification](docs/m10-verification.md) for the
 audit, browser checks, exact commands/results and remaining limitations.
+
+## M10.5 realistic demo data
+
+M10.5 adds an opt-in application seeder rather than a production Flyway migration.
+It creates three fictional operators, six Vietnamese locations, nine directional
+or multi-stop routes, three real seat layouts (22/34/40), six buses, varied fares,
+and a rolling three-day trip window. Trip creation reuses the production aggregate
+builder, including stop and seat snapshots and the full seat × segment inventory.
+Selected rows are legitimately `BLOCKED`; the seeder never fabricates holds,
+bookings, payments, tickets, or users. See [docs/demo-data.md](docs/demo-data.md) for
+idempotency, reset, route/fare details, and the browser verification checklist.
