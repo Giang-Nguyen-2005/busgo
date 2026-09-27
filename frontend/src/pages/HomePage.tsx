@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   Armchair,
+  MapPin,
   Search,
   ShieldCheck,
   Ticket,
@@ -24,16 +25,8 @@ export function HomePage() {
           </p>
         </div>
         <div className="hero-art" aria-hidden="true">
-          <div className="road" />
-          <div className="bus-art">
-            <div className="bus-window" />
-            <div className="bus-name">
-              BusGo <ArrowRight />
-            </div>
-            <i />
-            <i />
-          </div>
-          <span className="art-caption">HÀNH TRÌNH CỦA BẠN</span>
+          <img src="/images/busgo/hero-coach.jpg" alt="" />
+          <div className="hero-image-shade" />
         </div>
       </section>
       <div className="home-search">
@@ -41,6 +34,36 @@ export function HomePage() {
         <div className="search-note">
           <ShieldCheck size={16} />
           Thông tin chuyến và chỗ trống được cập nhật từ hệ thống.
+        </div>
+      </div>
+      <section className="featured-destinations" aria-labelledby="featured-title">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">HÀNH TRÌNH NỔI BẬT</span>
+            <h2 id="featured-title">Khám phá những cung đường quen thuộc</h2>
+          </div>
+          <p className="muted">Các tuyến đang có trong dữ liệu chuyến xe BusGo.</p>
+        </div>
+        <div className="destination-grid">
+          {[
+            ["TP. Hồ Chí Minh", "Đà Lạt", "Lâm Đồng"],
+            ["TP. Hồ Chí Minh", "Nha Trang", "Khánh Hòa"],
+            ["Đà Nẵng", "Huế", "Thừa Thiên Huế"],
+          ].map(([from, to, province]) => (
+            <article className="destination-card" key={`${from}-${to}`}>
+              <span className="destination-icon"><MapPin size={20} /></span>
+              <div>
+                <h3>{from} <ArrowRight size={16} /> {to}</h3>
+                <p>{province}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+      <div className="section-heading benefits-heading">
+        <div>
+          <span className="eyebrow">VÌ SAO CHỌN BUSGO?</span>
+          <h2>Đặt vé rõ ràng từ tìm chuyến đến lên xe</h2>
         </div>
       </div>
       <section className="benefits">
@@ -59,6 +82,11 @@ export function HomePage() {
             icon: Ticket,
             title: "Vé luôn trong tầm tay",
             text: "Xem vé điện tử và lịch sử đặt vé ngay trên tài khoản.",
+          },
+          {
+            icon: ShieldCheck,
+            title: "Giá vé minh bạch",
+            text: "Chi phí theo ghế và tổng thanh toán được hiển thị rõ ràng.",
           },
         ].map((item) => (
           <article key={item.title}>

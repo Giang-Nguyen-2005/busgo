@@ -57,7 +57,7 @@ class CoreDatabaseIT extends JwtTestSupport {
         assertThat(environment.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
         flyway.validate();
         assertThat(flyway.info().pending()).isEmpty();
-        assertThat(flyway.info().applied()).hasSize(8);
+        assertThat(flyway.info().applied()).hasSize(9);
         assertThat(roles.findAll()).extracting(Role::getCode).containsExactlyInAnyOrder(RoleCode.values());
         assertThat(jdbc.queryForList("""
                 SELECT table_name FROM information_schema.tables
@@ -84,6 +84,8 @@ class CoreDatabaseIT extends JwtTestSupport {
         assertThat(stops.findByRouteIdOrderByStopOrderAsc(f.route().getId()))
                 .extracting(RouteStop::getStopOrder).containsExactly(1, 2);
         assertThat(userRoles.findById(new UserRoleId(f.user().getId(), f.role().getId()))).isPresent();
+        assertThat(buses.findById(f.bus().getId()).orElseThrow().getImageUrl())
+                .isEqualTo("/images/busgo/test-bus.jpg");
         assertThat(staff.findById(f.staff().getId()).orElseThrow().getOperator().getId()).isEqualTo(f.operator().getId());
         var seat = templates.findById(f.template().getId()).orElseThrow();
         assertThat(seat.getBusType().getId()).isEqualTo(f.busType().getId());
@@ -267,7 +269,8 @@ class CoreDatabaseIT extends JwtTestSupport {
         templates.saveAndFlush(template);
         var bus = new Bus();
         bus.setOperator(operator); bus.setBusType(type);
-        bus.setLicensePlate(UUID.randomUUID().toString().substring(0, 20)); bus.setStatus(BusStatus.AVAILABLE);
+        bus.setLicensePlate(UUID.randomUUID().toString().substring(0, 20));
+        bus.setImageUrl("/images/busgo/test-bus.jpg"); bus.setStatus(BusStatus.AVAILABLE);
         buses.saveAndFlush(bus);
         return new Fixture(user, role, operator, employee, origin, destination, route, fare, type, template, bus);
     }

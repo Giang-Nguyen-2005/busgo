@@ -38,6 +38,7 @@ export interface Trip {
   operator: Named;
   route: Named;
   busType: Named;
+  busImageUrl: string | null;
   pickup: Pickup;
   dropoff: Dropoff;
   durationMinutes: number;

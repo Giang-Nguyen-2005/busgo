@@ -24,6 +24,9 @@ public class Bus extends AuditedEntity {
     @Column(name = "license_plate", length = 30, nullable = false)
     private String licensePlate;
 
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
     @Enumerated(EnumType.STRING)
     @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.VARCHAR)
     @Column(name = "status", length = 30, nullable = false)

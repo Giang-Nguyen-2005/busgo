@@ -5,13 +5,14 @@
   color: #1c2c35;
   background: #f5f7f8;
   font-synthesis: none;
-  --primary: #087f79;
-  --primary-hover: #05655f;
-  --background: #f5f7f8;
+  --primary: #087b75;
+  --primary-hover: #05625d;
+  --background: #f6f7f5;
   --surface: #fff;
-  --text: #1c2c35;
-  --muted: #657780;
-  --border: #dfe6e8;
+  --text: #142b3a;
+  --muted: #61727c;
+  --border: #dbe3e4;
+  --accent: #e86f45;
   --success: #137854;
   --warning: #916009;
   --danger: #b63535;
@@ -2196,5 +2197,333 @@ select {
   }
   .profile-layout {
     gap: 20px;
+  }
+}
+
+/* M10.6 customer polish: image-led home and backend-driven vehicle previews. */
+body {
+  min-width: 320px;
+  background: var(--background);
+}
+.card {
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 5px 18px #163b4510;
+}
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 1.35px;
+}
+.hero {
+  min-height: 390px;
+  padding: 58px 54px 110px;
+  border-color: #cfe0dc;
+  background: #dcece7;
+  isolation: isolate;
+}
+.hero-copy {
+  max-width: 570px;
+}
+.hero h1 {
+  max-width: 520px;
+  font-size: clamp(40px, 4.2vw, 50px);
+  line-height: 1.08;
+  color: #102d3b;
+}
+.hero h1 br {
+  display: block;
+}
+.hero h1 em {
+  display: inline;
+  margin-left: 0;
+  color: #08736d;
+}
+.hero p {
+  max-width: 470px;
+  color: #365d5c;
+  font-size: 16px;
+}
+.hero-art {
+  inset: 0 0 0 auto;
+  width: 59%;
+  height: 100%;
+  opacity: 1;
+  z-index: -1;
+}
+.hero-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 66% center;
+}
+.hero-image-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #dcece7 0%, #dcece7e8 15%, transparent 63%);
+}
+.home-search {
+  margin-top: -62px;
+}
+.search-form {
+  border-radius: 16px;
+  box-shadow: 0 14px 36px #173d461a;
+}
+.featured-destinations {
+  padding: 42px 10px 22px;
+}
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 28px;
+  margin-bottom: 22px;
+}
+.section-heading h2 {
+  margin: 0;
+  font-size: 27px;
+  color: var(--text);
+}
+.section-heading p {
+  max-width: 360px;
+  margin: 0;
+  text-align: right;
+}
+.destination-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.destination-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 4px 14px #173d460b;
+}
+.destination-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 11px;
+  border-radius: 12px;
+  background: #e7f2ef;
+  color: var(--primary);
+}
+.destination-card h3 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--text);
+}
+.destination-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.benefits-heading {
+  margin: 28px 10px 0;
+}
+.benefits {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding-top: 22px;
+}
+.benefits h3 {
+  font-size: 16px;
+}
+.benefits p {
+  font-size: 14px;
+}
+.trip-card {
+  overflow: hidden;
+}
+.trip-card-content {
+  display: grid;
+  grid-template-columns: 162px minmax(0, 1fr);
+  gap: 22px;
+  align-items: stretch;
+}
+.trip-thumbnail-wrap {
+  align-self: start;
+  height: 108px;
+  min-height: 108px;
+  overflow: hidden;
+  border: 1px solid #d8e2e1;
+  border-radius: 12px;
+  background: #edf3f2;
+}
+.trip-thumbnail {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 108px;
+  object-fit: cover;
+  object-position: center;
+}
+.trip-card-details {
+  min-width: 0;
+}
+.trip-top h2 {
+  font-size: 19px;
+  color: var(--text);
+}
+.trip-top .muted {
+  font-size: 15px;
+}
+.operator-icon {
+  padding: 10px;
+}
+.trip-main {
+  margin: 16px 0 4px;
+}
+.trip-times strong {
+  font-size: 22px;
+  color: var(--text);
+}
+.trip-times > div:not(.trip-line) {
+  font-size: 14px;
+}
+.trip-price strong {
+  color: var(--accent);
+  font-size: 22px;
+}
+.trip-bottom {
+  margin-top: 16px;
+}
+.trip-bottom > .muted {
+  font-size: 14px;
+}
+.green {
+  color: #11704e;
+}
+.checkout-layout > * {
+  min-width: 0;
+}
+
+@media (min-width: 761px) and (max-width: 1050px) {
+  .hero {
+    min-height: 350px;
+    padding: 46px 38px 92px;
+  }
+  .hero-art {
+    width: 54%;
+    right: 0;
+  }
+  .hero h1 {
+    max-width: 470px;
+    font-size: 40px;
+  }
+  .hero h1 em {
+    display: inline;
+  }
+  .destination-grid,
+  .benefits {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .trip-card-content {
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 16px;
+  }
+  .trip-thumbnail-wrap,
+  .trip-thumbnail {
+    height: 100px;
+    min-height: 100px;
+  }
+  .trip-top .operator-icon {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero {
+    min-height: 330px;
+    padding: 32px 24px 82px;
+  }
+  .hero-copy {
+    max-width: 290px;
+  }
+  .hero h1 {
+    font-size: 38px;
+  }
+  .hero p {
+    max-width: 275px;
+    font-size: 15px;
+  }
+  .hero-art {
+    width: 100%;
+    right: 0;
+    opacity: 1;
+  }
+  .hero-art img {
+    object-position: 69% center;
+  }
+  .hero-image-shade {
+    background: linear-gradient(90deg, #dcece7 0%, #dcece7f2 36%, #dcece788 75%, transparent 100%);
+  }
+  .home-search {
+    margin-top: -56px;
+  }
+  .featured-destinations {
+    padding: 34px 2px 16px;
+  }
+  .section-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .section-heading h2 {
+    font-size: 23px;
+  }
+  .section-heading p {
+    text-align: left;
+  }
+  .destination-grid,
+  .benefits {
+    grid-template-columns: 1fr;
+  }
+  .destination-card {
+    padding: 17px;
+  }
+  .benefits-heading {
+    margin: 24px 4px 0;
+  }
+  .trip-card-content {
+    grid-template-columns: 1fr;
+    gap: 17px;
+  }
+  .trip-thumbnail-wrap {
+    aspect-ratio: 16 / 7;
+    height: auto;
+    min-height: 0;
+  }
+  .trip-thumbnail {
+    min-height: 0;
+  }
+  .trip-top h2 {
+    font-size: 18px;
+  }
+  .trip-top .muted {
+    font-size: 14px;
+  }
+  .trip-times strong {
+    font-size: 22px;
+  }
+  .trip-bottom {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .trip-bottom > .muted {
+    max-width: none;
+    font-size: 14px;
+  }
+  .trip-bottom .button {
+    width: 100%;
+    font-size: 14px;
   }
 }

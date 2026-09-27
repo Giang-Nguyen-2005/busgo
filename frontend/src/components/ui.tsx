@@ -161,47 +161,64 @@ export function PriceSummary({
   );
 }
 export function TripCard({ trip }: { trip: Trip }) {
+  const fallbackImage = "/images/busgo/bus-standard.jpg";
   return (
     <article className="card trip-card">
-      <div className="trip-top">
-        <div className="operator-icon">
-          <BusFront />
+      <div className="trip-card-content">
+        <div className="trip-thumbnail-wrap">
+          <img
+            className="trip-thumbnail"
+            src={trip.busImageUrl || fallbackImage}
+            alt={`Xe ${trip.busType.name} của ${trip.operator.name}`}
+            loading="lazy"
+            onError={(event) => {
+              if (event.currentTarget.src.endsWith(fallbackImage)) return;
+              event.currentTarget.src = fallbackImage;
+            }}
+          />
         </div>
-        <div>
-          <h2>{trip.operator.name}</h2>
-          <span className="muted">{trip.busType.name}</span>
-        </div>
-        <span className="badge">{trip.route.name}</span>
-      </div>
-      <div className="trip-main">
-        <div className="trip-times">
-          <div>
-            <small className="time-label">Khởi hành</small>
-            <strong>{time(trip.pickup.departureTime)}</strong>
-            <span>{trip.pickup.name}</span>
+        <div className="trip-card-details">
+          <div className="trip-top">
+            <div className="operator-icon">
+              <BusFront />
+            </div>
+            <div>
+              <h2>{trip.operator.name}</h2>
+              <span className="muted">{trip.busType.name}</span>
+            </div>
+            <span className="badge">{trip.route.name}</span>
           </div>
-          <div className="trip-line">
-            <small>{duration(trip.durationMinutes)}</small>
-            <span>
-              ○<i />
-              <ArrowRight size={15} />
-            </span>
+          <div className="trip-main">
+            <div className="trip-times">
+              <div>
+                <small className="time-label">Khởi hành</small>
+                <strong>{time(trip.pickup.departureTime)}</strong>
+                <span>{trip.pickup.name}</span>
+              </div>
+              <div className="trip-line">
+                <small>{duration(trip.durationMinutes)}</small>
+                <span>
+                  ○<i />
+                  <ArrowRight size={15} />
+                </span>
+              </div>
+              <div>
+                <small className="time-label">Đến nơi</small>
+                <strong>{time(trip.dropoff.arrivalTime)}</strong>
+                <span>{trip.dropoff.name}</span>
+                {date(trip.pickup.departureTime) !==
+                  date(trip.dropoff.arrivalTime) && (
+                  <small className="arrival-date">
+                    {date(trip.dropoff.arrivalTime)}
+                  </small>
+                )}
+              </div>
+            </div>
+            <div className="trip-price">
+              <strong>{money(trip.price)}</strong>
+              <small>/ ghế</small>
+            </div>
           </div>
-          <div>
-            <small className="time-label">Đến nơi</small>
-            <strong>{time(trip.dropoff.arrivalTime)}</strong>
-            <span>{trip.dropoff.name}</span>
-            {date(trip.pickup.departureTime) !==
-              date(trip.dropoff.arrivalTime) && (
-              <small className="arrival-date">
-                {date(trip.dropoff.arrivalTime)}
-              </small>
-            )}
-          </div>
-        </div>
-        <div className="trip-price">
-          <strong>{money(trip.price)}</strong>
-          <small>/ ghế</small>
         </div>
       </div>
       <div className="trip-bottom">

@@ -21,7 +21,7 @@ public final class TripSearchDtos {
             OffsetDateTime arrivalTime) {}
 
     public record SearchResult(Long tripId, OperatorSummary operator, RouteSummary route,
-            BusTypeSummary busType, PickupSummary pickup, DropoffSummary dropoff,
+            BusTypeSummary busType, String busImageUrl, PickupSummary pickup, DropoffSummary dropoff,
             long durationMinutes, BigDecimal price, long availableSeats, TripStatus status) {}
 
     public record CustomerTripStop(Long tripStopId, Long locationId, String name, Integer stopOrder,
@@ -29,7 +29,7 @@ public final class TripSearchDtos {
             OffsetDateTime departureTime) {}
 
     public record CustomerTripDetail(Long tripId, OperatorSummary operator, RouteSummary route,
-            BusTypeSummary busType, PickupSummary pickup, DropoffSummary dropoff,
+            BusTypeSummary busType, String busImageUrl, PickupSummary pickup, DropoffSummary dropoff,
             long durationMinutes, BigDecimal price, long availableSeats, TripStatus status,
             List<CustomerTripStop> stops) {}
 }

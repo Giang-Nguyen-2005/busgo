@@ -25,7 +25,7 @@ export function CustomerLayout() {
             <NavLink to="/" end>
               Trang chủ
             </NavLink>
-            <NavLink to="/my-bookings">Vé của tôi</NavLink>
+            {auth.authenticated && <NavLink to="/my-bookings">Vé của tôi</NavLink>}
           </nav>
           <div className="account-nav">
             {auth.authenticated ? (
@@ -75,8 +75,14 @@ export function CustomerLayout() {
           </div>
           <div>
             <Link to="/">Tìm chuyến xe</Link>
-            <Link to="/my-bookings">Vé của tôi</Link>
-            <Link to="/profile">Tài khoản</Link>
+            {auth.authenticated ? (
+              <>
+                <Link to="/my-bookings">Vé của tôi</Link>
+                <Link to="/profile">Tài khoản</Link>
+              </>
+            ) : (
+              <Link to="/login">Đăng nhập</Link>
+            )}
           </div>
         </div>
       </footer>

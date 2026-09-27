@@ -260,16 +260,17 @@ public class DemoDataSeeder implements ApplicationRunner {
     private Map<String, Bus> seedBuses(Map<String, TransportOperator> operator, Map<String, BusType> type) {
         Map<String, Bus> result = new LinkedHashMap<>();
         for (BusSpec spec : List.of(
-                new BusSpec("51B-770.01", "DEMO-ANPHU", "SLEEPER34"),
-                new BusSpec("51B-770.02", "DEMO-ANPHU", "STANDARD40"),
-                new BusSpec("50F-880.01", "DEMO-MINHTHANH", "LIMO22"),
-                new BusSpec("50F-880.02", "DEMO-MINHTHANH", "SLEEPER34"),
-                new BusSpec("47B-660.01", "DEMO-TAYNGUYEN", "STANDARD40"),
-                new BusSpec("47B-660.02", "DEMO-TAYNGUYEN", "LIMO22"))) {
+                new BusSpec("51B-770.01", "DEMO-ANPHU", "SLEEPER34", "/images/busgo/bus-sleeper.jpg"),
+                new BusSpec("51B-770.02", "DEMO-ANPHU", "STANDARD40", "/images/busgo/bus-standard.jpg"),
+                new BusSpec("50F-880.01", "DEMO-MINHTHANH", "LIMO22", "/images/busgo/bus-limousine.jpg"),
+                new BusSpec("50F-880.02", "DEMO-MINHTHANH", "SLEEPER34", "/images/busgo/bus-sleeper.jpg"),
+                new BusSpec("47B-660.01", "DEMO-TAYNGUYEN", "STANDARD40", "/images/busgo/bus-standard.jpg"),
+                new BusSpec("47B-660.02", "DEMO-TAYNGUYEN", "LIMO22", "/images/busgo/bus-limousine.jpg"))) {
             Bus value = buses.findByLicensePlateIgnoreCase(spec.plate()).orElseGet(Bus::new);
             value.setLicensePlate(spec.plate());
             value.setOperator(operator.get(spec.operatorCode()));
             value.setBusType(type.get(spec.busTypeKey()));
+            value.setImageUrl(spec.imageUrl());
             value.setStatus(BusStatus.AVAILABLE);
             result.put(spec.plate(), buses.save(value));
         }
@@ -439,7 +440,7 @@ public class DemoDataSeeder implements ApplicationRunner {
             int distanceKm, int durationMinutes, List<StopSpec> stops) {}
     private record RouteBundle(Route route, List<RouteStop> stops) {}
     private record BusTypeSpec(String key, String name, String description, List<SeatSpec> seats) {}
-    private record BusSpec(String plate, String operatorCode, String busTypeKey) {}
+    private record BusSpec(String plate, String operatorCode, String busTypeKey, String imageUrl) {}
     private record FarePlan(String operatorCode, String routeKey, long directPrice) {}
     private record TripSpec(String operatorCode, String routeKey, String plate,
             int dayOffset, LocalTime time, int blockedSeats) {}

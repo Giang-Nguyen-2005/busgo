@@ -71,6 +71,7 @@ public class TripSearchService {
                 new OperatorSummary(operator.getId(), operator.getName()),
                 new RouteSummary(route.getId(), route.getName()),
                 new BusTypeSummary(busType.getId(), busType.getName()),
+                trip.getBus().getImageUrl(),
                 new PickupSummary(pickup.getId(), pickup.getLocation().getId(),
                         pickup.getLocation().getName(), api(pickup.getPlannedDepartureTime())),
                 new DropoffSummary(dropoff.getId(), dropoff.getLocation().getId(),

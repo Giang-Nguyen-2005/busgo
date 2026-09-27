@@ -16,7 +16,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class TripSearchRepository {
     private static final String CANDIDATES = """
-            select t.id, op.id, op.name, r.id, r.name, bt.id, bt.name,
+            select t.id, op.id, op.name, r.id, r.name, bt.id, bt.name, b.imageUrl,
                    pickup.id, pickup.location.id, pickup.location.name,
                    pickup.plannedDepartureTime,
                    dropoff.id, dropoff.location.id, dropoff.location.name,
@@ -103,10 +103,10 @@ public class TripSearchRepository {
 
     private static RawCandidate raw(Object[] row) {
         return new RawCandidate((Long) row[0], (Long) row[1], (String) row[2], (Long) row[3],
-                (String) row[4], (Long) row[5], (String) row[6], (Long) row[7], (Long) row[8],
-                (String) row[9], (LocalDateTime) row[10], (Long) row[11], (Long) row[12],
-                (String) row[13], (LocalDateTime) row[14], (BigDecimal) row[15],
-                (TripStatus) row[16], (Integer) row[17], (Integer) row[18]);
+                (String) row[4], (Long) row[5], (String) row[6], (String) row[7],
+                (Long) row[8], (Long) row[9], (String) row[10], (LocalDateTime) row[11],
+                (Long) row[12], (Long) row[13], (String) row[14], (LocalDateTime) row[15],
+                (BigDecimal) row[16], (TripStatus) row[17], (Integer) row[18], (Integer) row[19]);
     }
 
     private static SearchResult response(RawCandidate candidate, long available) {
@@ -114,6 +114,7 @@ public class TripSearchRepository {
                 new OperatorSummary(candidate.operatorId(), candidate.operatorName()),
                 new RouteSummary(candidate.routeId(), candidate.routeName()),
                 new BusTypeSummary(candidate.busTypeId(), candidate.busTypeName()),
+                candidate.busImageUrl(),
                 new PickupSummary(candidate.pickupStopId(), candidate.pickupLocationId(),
                         candidate.pickupName(), api(candidate.pickupDeparture())),
                 new DropoffSummary(candidate.dropoffStopId(), candidate.dropoffLocationId(),
@@ -140,7 +141,7 @@ public class TripSearchRepository {
             LocalDateTime departureFrom, LocalDateTime departureTo, SearchSort sort) {}
 
     private record RawCandidate(Long tripId, Long operatorId, String operatorName,
-            Long routeId, String routeName, Long busTypeId, String busTypeName,
+            Long routeId, String routeName, Long busTypeId, String busTypeName, String busImageUrl,
             Long pickupStopId, Long pickupLocationId, String pickupName, LocalDateTime pickupDeparture,
             Long dropoffStopId, Long dropoffLocationId, String dropoffName, LocalDateTime dropoffArrival,
             BigDecimal price, TripStatus status, Integer pickupOrder, Integer dropoffOrder) {}

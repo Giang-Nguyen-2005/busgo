@@ -71,7 +71,8 @@ class M5TripSearchIT extends JwtTestSupport {
         Fixture f = fixture(ORIGIN_DEPARTURE, "Segment operator");
 
         search(f, 0, 3, BUSINESS_DATE).andExpect(status().isOk())
-                .andExpect(jsonPath("data[0].availableSeats").value(2));
+                .andExpect(jsonPath("data[0].availableSeats").value(2))
+                .andExpect(jsonPath("data[0].busImageUrl").value("/images/busgo/test-bus.jpg"));
 
         setInventoryStatus(f, 0, 0, InventoryStatus.BOOKED);
         setInventoryStatus(f, 1, 2, InventoryStatus.BOOKED);
@@ -170,6 +171,7 @@ class M5TripSearchIT extends JwtTestSupport {
 
         detail(f, 1, 3).andExpect(status().isOk())
                 .andExpect(jsonPath("data.tripId").value(f.trip().getId()))
+                .andExpect(jsonPath("data.busImageUrl").value("/images/busgo/test-bus.jpg"))
                 .andExpect(jsonPath("data.pickup.departureTime").value("2030-09-20T17:30:00Z"))
                 .andExpect(jsonPath("data.dropoff.arrivalTime").value("2030-09-20T19:30:00Z"))
                 .andExpect(jsonPath("data.price").value(200.00))
@@ -328,6 +330,7 @@ class M5TripSearchIT extends JwtTestSupport {
         Bus bus = new Bus();
         bus.setOperator(operator); bus.setBusType(type);
         bus.setLicensePlate("M5-" + UUID.randomUUID().toString().substring(0, 16));
+        bus.setImageUrl("/images/busgo/test-bus.jpg");
         bus.setStatus(BusStatus.AVAILABLE);
         return buses.saveAndFlush(bus);
     }
