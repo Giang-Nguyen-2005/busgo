@@ -15,7 +15,9 @@ import com.busgo.fleet.repository.SeatTemplateRepository;
 import com.busgo.location.entity.Location;
 import com.busgo.location.repository.LocationRepository;
 import com.busgo.operator.entity.OperatorStatus;
+import com.busgo.operator.entity.OperatorStaff;
 import com.busgo.operator.entity.TransportOperator;
+import com.busgo.operator.repository.OperatorStaffRepository;
 import com.busgo.operator.repository.TransportOperatorRepository;
 import com.busgo.route.entity.OperatorRoute;
 import com.busgo.route.entity.OperatorRouteFare;
@@ -29,6 +31,14 @@ import com.busgo.route.repository.RouteStopRepository;
 import com.busgo.trip.TripAggregateCreator;
 import com.busgo.trip.entity.Trip;
 import com.busgo.trip.repository.TripRepository;
+import com.busgo.user.entity.Role;
+import com.busgo.user.entity.RoleCode;
+import com.busgo.user.entity.User;
+import com.busgo.user.entity.UserRole;
+import com.busgo.user.entity.UserStatus;
+import com.busgo.user.repository.RoleRepository;
+import com.busgo.user.repository.UserRepository;
+import com.busgo.user.repository.UserRoleRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -45,6 +55,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,6 +65,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("demo & !prod & !production")
 public class DemoDataSeeder implements ApplicationRunner {
     public static final List<String> OPERATOR_CODES = List.of("DEMO-ANPHU", "DEMO-MINHTHANH", "DEMO-TAYNGUYEN");
+    public static final String OPERATOR_ADMIN_EMAIL = "operator.admin@anphu-demo.example";
+    public static final String OPERATOR_ADMIN_PASSWORD = "DemoOperator!2026";
+    private static final String OPERATOR_ADMIN_NAME = "Demo An Phu Operator Admin";
+    private static final String OPERATOR_ADMIN_PHONE = "0900001101";
     private static final Logger log = LoggerFactory.getLogger(DemoDataSeeder.class);
 
     private final TransportOperatorRepository operators;
@@ -67,6 +82,11 @@ public class DemoDataSeeder implements ApplicationRunner {
     private final BusRepository buses;
     private final TripRepository trips;
     private final TripAggregateCreator aggregateCreator;
+    private final UserRepository users;
+    private final RoleRepository roles;
+    private final UserRoleRepository userRoles;
+    private final OperatorStaffRepository operatorStaff;
+    private final PasswordEncoder passwords;
     private final JdbcTemplate jdbc;
     private final Clock clock;
     private final boolean reset;
@@ -76,6 +96,8 @@ public class DemoDataSeeder implements ApplicationRunner {
             OperatorRouteRepository operatorRoutes, OperatorRouteFareRepository fares,
             BusTypeRepository busTypes, SeatTemplateRepository seatTemplates,
             BusRepository buses, TripRepository trips, TripAggregateCreator aggregateCreator,
+            UserRepository users, RoleRepository roles, UserRoleRepository userRoles,
+            OperatorStaffRepository operatorStaff, PasswordEncoder passwords,
             JdbcTemplate jdbc, Clock clock,
             @Value("${busgo.demo.reset-unbooked-trips:false}") boolean reset) {
         this.operators = operators;
@@ -89,6 +111,11 @@ public class DemoDataSeeder implements ApplicationRunner {
         this.buses = buses;
         this.trips = trips;
         this.aggregateCreator = aggregateCreator;
+        this.users = users;
+        this.roles = roles;
+        this.userRoles = userRoles;
+        this.operatorStaff = operatorStaff;
+        this.passwords = passwords;
         this.jdbc = jdbc;
         this.clock = clock;
         this.reset = reset;
@@ -106,6 +133,7 @@ public class DemoDataSeeder implements ApplicationRunner {
 
     SeedResult seed() {
         Map<String, TransportOperator> operator = seedOperators();
+        seedOperatorAdmin(operator.get("DEMO-ANPHU"));
         Map<String, Location> location = seedLocations();
         Map<String, RouteBundle> route = seedRoutes(location);
         Map<String, BusType> type = seedBusTypes();
@@ -131,6 +159,63 @@ public class DemoDataSeeder implements ApplicationRunner {
             applyAvailability(trip.getId(), spec.blockedSeats(), spec.routeKey().equals("COASTAL"));
         }
         return new SeedResult(searchDate, location.get("HCM"), location.get("DALAT"), created, reused);
+    }
+
+    /**
+     * The reserved .example address identifies this fixture only.  It is never
+     * looked up or changed outside the explicit demo profile.
+     */
+    private void seedOperatorAdmin(TransportOperator demoOperator) {
+        User user = users.findByEmail(OPERATOR_ADMIN_EMAIL).orElseGet(User::new);
+        boolean newUser = user.getId() == null;
+        if (newUser) {
+            user.setEmail(OPERATOR_ADMIN_EMAIL);
+            user.setFullName(OPERATOR_ADMIN_NAME);
+            user.setPhone(OPERATOR_ADMIN_PHONE);
+        } else if (!OPERATOR_ADMIN_NAME.equals(user.getFullName())
+                || !OPERATOR_ADMIN_PHONE.equals(user.getPhone())
+                || user.getDeletedAt() != null) {
+            throw new IllegalStateException("Reserved demo operator admin email belongs to a non-demo user.");
+        }
+        if (newUser) {
+            user.setPasswordHash(passwords.encode(OPERATOR_ADMIN_PASSWORD));
+            user.setStatus(UserStatus.ACTIVE);
+            user = users.saveAndFlush(user);
+        }
+
+        List<RoleCode> roleCodes = userRoles.findRoleCodesByUserId(user.getId());
+        if (roleCodes.contains(RoleCode.OPERATOR_STAFF)) {
+            throw new IllegalStateException("Reserved demo operator admin must not have OPERATOR_STAFF access.");
+        }
+        if (!roleCodes.contains(RoleCode.OPERATOR_ADMIN)) {
+            Role adminRole = roles.findByCode(RoleCode.OPERATOR_ADMIN)
+                    .orElseThrow(() -> new IllegalStateException("OPERATOR_ADMIN role seed missing."));
+            userRoles.saveAndFlush(new UserRole(user, adminRole));
+        }
+
+        List<OperatorStaff> memberships = operatorStaff.findByUserId(user.getId());
+        long activeMemberships = memberships.stream()
+                .filter(membership -> membership.getStatus() == ActiveStatus.ACTIVE)
+                .count();
+        if (activeMemberships > 1 || (activeMemberships == 1 && memberships.stream()
+                .filter(membership -> membership.getStatus() == ActiveStatus.ACTIVE)
+                .anyMatch(membership -> !membership.getOperator().getId().equals(demoOperator.getId())))) {
+            throw new IllegalStateException("Reserved demo operator admin already has a different active membership.");
+        }
+
+        if (!newUser) {
+            user.setPasswordHash(passwords.encode(OPERATOR_ADMIN_PASSWORD));
+            user.setStatus(UserStatus.ACTIVE);
+            user = users.saveAndFlush(user);
+        }
+        OperatorStaff membership = memberships.stream()
+                .filter(value -> value.getOperator().getId().equals(demoOperator.getId()))
+                .findFirst().orElseGet(OperatorStaff::new);
+        membership.setOperator(demoOperator);
+        membership.setUser(user);
+        membership.setStaffCode("DEMO-ANPHU-ADMIN");
+        membership.setStatus(ActiveStatus.ACTIVE);
+        operatorStaff.saveAndFlush(membership);
     }
 
     private Map<String, TransportOperator> seedOperators() {

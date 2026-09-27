@@ -25,6 +25,39 @@ when operator route, bus, and UTC departure snapshot already match. Starting the
 same demo date twice creates no duplicate records. On a later day the seeder adds
 only the missing rolling future window; it keeps past trips as useful history.
 
+## Demo operator login (local demo only)
+
+The explicit `dev,demo` startup also provisions this fixed fictional account for
+M11 manual testing. It belongs only to the active **An Phú Express** demo operator
+(`DEMO-ANPHU`), has the **OPERATOR_ADMIN** role, and has no `OPERATOR_STAFF` role:
+
+- Email: `operator.admin@anphu-demo.example`
+- Password: `DemoOperator!2026`
+
+The `.example` address and account are a local demo fixture, not a production
+credential. On repeated demo startups the same user, role and membership are
+reused; the password is reset to the documented value. The seeder refuses to
+continue if that reserved fixture has been given `OPERATOR_STAFF` or another active
+operator membership, or if the reserved address belongs to a non-demo user, rather
+than silently broadening its access or changing a real account.
+
+Manual API verification after startup:
+
+1. In PowerShell, run the following against the local backend. The first response
+   must include `OPERATOR_ADMIN`; the last two requests must succeed (HTTP 200):
+
+   ```powershell
+   $login = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/v1/auth/login -ContentType application/json -Body '{"email":"operator.admin@anphu-demo.example","password":"DemoOperator!2026"}'
+   $login.data.user.roles
+   $token = $login.data.accessToken
+   $headers = @{ Authorization = "Bearer $token" }
+   Invoke-RestMethod -Uri http://localhost:8080/api/v1/users/me -Headers $headers
+   Invoke-RestMethod -Uri 'http://localhost:8080/api/v1/operator/buses?page=0&size=10' -Headers $headers
+   ```
+
+2. For the M11 browser flow, start the frontend, sign in with those credentials,
+   then open `/operator` or return there through the login `returnTo` parameter.
+
 ## Recommended browser search
 
 Search:
@@ -121,3 +154,6 @@ history.
    payment → ticket. The seeder intentionally creates no customer account.
 6. On the coastal trip (tomorrow + 2), compare TP.HCM → Nha Trang with
    Nha Trang → Huế to observe L01 segment reuse.
+7. Log in with the documented demo operator account and perform the three API
+   checks above; repeat the startup once and confirm the same credentials still
+   work without duplicate memberships.

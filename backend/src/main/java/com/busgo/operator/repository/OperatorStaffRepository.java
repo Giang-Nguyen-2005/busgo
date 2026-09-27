@@ -4,6 +4,8 @@ import com.busgo.operator.entity.OperatorStaff;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface OperatorStaffRepository extends JpaRepository<OperatorStaff, Long> {
+    java.util.List<OperatorStaff> findByUserId(Long userId);
+
     @org.springframework.data.jpa.repository.Query("""
             select s from OperatorStaff s
             join fetch s.operator o

@@ -172,7 +172,8 @@ the nullable inventory-to-item link. Authenticated customers can atomically conv
   records a PAID payment and status history, changes the booking to CONFIRMED, and creates one e-ticket
   per booking item. Ticket QR values are stable text data for frontend rendering; no image or PDF is
   generated. Real gateways, cash settlement, cancellation/refund, notifications, reporting, and the
-  operator UI remain deferred to later milestones.
+  advanced operator analytics remain deferred to later milestones. The supported
+  operator management frontend is implemented in M11 (see below).
 Tests generate their own ephemeral JWT signing key.
 
 M1 follows the documented fare foreign keys. As agreed, same-route membership and
@@ -186,7 +187,7 @@ use `ACTIVE`/`INACTIVE`; the only documented seat type is `STANDARD`.
 Public routes: `/`, `/login`, `/register`, `/search`, `/trips/:tripId`.
 Customer routes: `/booking`, `/payment`, `/booking-success`, `/profile`,
 `/my-bookings`, `/my-bookings/:bookingId`. Accounts with CUSTOMER plus other roles
-can use the customer flow; no operator navigation is implemented.
+can use the customer flow. Operator management is a separate route tree at `/operator`.
 
 Copy `frontend/.env.example` to `frontend/.env.local` when configuring the API.
 `VITE_API_BASE_URL=/api/v1` uses the development proxy; `API_PROXY_TARGET` selects
@@ -237,3 +238,46 @@ builder, including stop and seat snapshots and the full seat × segment inventor
 Selected rows are legitimately `BLOCKED`; the seeder never fabricates holds,
 bookings, payments, tickets, or users. See [docs/demo-data.md](docs/demo-data.md) for
 idempotency, reset, route/fare details, and the browser verification checklist.
+
+## M11 operator frontend
+
+Open `/operator` with an authenticated **OPERATOR_ADMIN** account. The backend
+also requires exactly one active operator membership. CUSTOMER, OPERATOR_STAFF
+and SYSTEM_ADMIN without OPERATOR_ADMIN are rejected by the operator guard.
+Unauthenticated requests redirect to login with the requested path/query in
+`returnTo`. Registration and the demo seeder do not create operator accounts.
+Provision the account/membership through your existing administrative process;
+the frontend never fabricates roles, tokens or operator IDs.
+
+| Routes | Supported features |
+| --- | --- |
+| `/operator` | Quick actions, responsive sidebar/topbar, profile disclosure and logout |
+| `/operator/trips`, `/operator/trips/new`, `/operator/trips/:tripId` | Paginated list, date/route/bus/status filters, creation, stop timeline, segments and snapshot seat layout |
+| `/operator/buses`, `/operator/buses/new`, `/operator/buses/:busId` | Paginated plate search, status/type filters, creation, plate/type/status edits |
+| `/operator/bus-types`, `/operator/bus-types/:busTypeId` | Read-only active bus types and seat templates |
+| `/operator/routes`, `/operator/routes/catalog`, `/operator/routes/:operatorRouteId` | Owned routes, active global catalog, attach/reactivate, association activation/deactivation, ordered stops and fare editor |
+
+Filters and pagination are URL-backed. New trips use only active owned routes
+and AVAILABLE buses; selectors fetch every page of real responses. Creation
+time is entered in Vietnam time (UTC+7) and sent as an ISO timestamp with offset.
+The operator list's date filter uses a **UTC day**, matching `TripService`;
+display times remain Vietnam time. Snapshot seats are **not live occupancy**.
+
+Fare saving uses `PUT /api/v1/operator/routes/{operatorRouteId}/fares` with
+`{ fares: [...] }`, replacing the **complete active fare set**. All retained rows
+are sent together. Omitted rows become inactive; an empty list clears the active
+set. The UI validates forward stop order, duplicate pairs and positive prices
+with at most two decimal places, and requires review/confirmation before saving.
+Bus maintenance/inactivation and route deactivation also require confirmation.
+
+Deferred: bookings/actions, passenger manifests, analytics, live occupancy,
+seat blocking, trip edit/cancel/status transitions, bus type/seat-template/global
+route/stop editors, staff, customers, reports, refunds, CMS and system admin.
+The operator home has no invented metrics. Existing customer routes and the
+shared Axios client/token refresh implementation are preserved.
+
+Run `npm run build` and `npm test` from `frontend/` (Node >=22.12).
+Verification evidence, file inventory and the authenticated acceptance checklist:
+[M11 verification](docs/m11-verification.md). Live operator acceptance testing
+requires a provisioned account; the build and static checks do not substitute
+for that test.

@@ -939,32 +939,40 @@ Không cần Postman để hoàn thành toàn bộ customer flow.
 
 MILESTONE 11
 OPERATOR FRONTEND
-Objective
-Cho admin vận hành hệ thống hoàn toàn bằng UI.
+Implementation status (2026-09-27): supported frontend scope implemented;
+production build and focused tests pass. Authenticated live acceptance testing
+is pending provision of an OPERATOR_ADMIN account with active operator membership.
+See docs/m11-verification.md for exact checks, limitations and follow-up steps.
 
-Pages priority
-11A
-Operator Layout
-Dashboard
-11B
-Bus Types
-Seat Template Editor
-Buses
-11C
-Routes
-Route Stops
-Fare Editor
-11D
-Trips
-Trip Create
-Trip Detail
-11E
-Bookings
-Booking Detail
-Passenger Manifest
+The current Java controllers/DTOs define the M11 scope and supersede the broader
+original UI wishlist. No backend changes, database changes or new API contracts.
 
-DoD
-Admin demo không cần sửa DB bằng MySQL Workbench.
+11A: Separate lazy /operator route tree, OPERATOR_ADMIN-only guard, responsive
+sidebar/topbar, read-only profile disclosure, logout and quick-action home.
+Unauthenticated navigation preserves returnTo; authenticated users without
+OPERATOR_ADMIN (including OPERATOR_STAFF) receive an explicit 403 state.
+
+11B: Paginated bus search/filter, create and partial edit of plate/type/status.
+Read-only active bus types and seat-template preview. No master-data editor.
+
+11C: Owned route list/detail, global active catalog, attach/reactivate and
+activate/deactivate association, ordered stops and complete fare-set replacement.
+Fare saving explicitly reviews every intended row; omitted rows become inactive.
+An empty replacement is supported with an explicit confirmation warning.
+
+11D: Paginated trips with date/routeId/busId/status filters, create and read-only
+detail with stop timeline, segment summary and snapshot seats. The operator date
+filter is UTC per TripService; creation input/display use Vietnam time. Snapshot
+seats do not represent live availability or occupancy.
+
+Deferred: operator bookings/actions, passenger manifests, analytics, seat blocking,
+trip edit/cancellation/status transitions, bus type/seat-template/global route/stop
+editors, staff, customers, reports, refunds, CMS and system administration.
+These require later supported backend scope. Final UI polish is a later milestone.
+
+DoD for this supported scope: frontend build/tests pass, customer routes remain
+registered, operator contracts match Java DTOs, and operator workflows are checked
+against real authenticated API responses once a suitable account is available.
 
 MILESTONE 12
 STAFF, CUSTOMERS & REPORTS

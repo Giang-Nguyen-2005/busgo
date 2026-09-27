@@ -7,6 +7,120 @@ import { Empty } from "../components/ui";
 
 export const router = createBrowserRouter([
   {
+    path: "/operator",
+    lazy: async () => ({
+      Component: (await import("../features/auth/OperatorGuard")).OperatorGuard,
+    }),
+    errorElement: (
+      <Empty title="Không thể hiển thị khu vực nhà xe">
+        <a href="/operator">Tải lại khu vực nhà xe</a>
+      </Empty>
+    ),
+    children: [
+      {
+        lazy: async () => ({
+          Component: (await import("../layouts/OperatorLayout")).OperatorLayout,
+        }),
+        children: [
+          {
+            index: true,
+            lazy: async () => ({
+              Component: (await import("../pages/operator/OperatorHomePage"))
+                .OperatorHomePage,
+            }),
+          },
+          {
+            path: "trips",
+            lazy: async () => ({
+              Component: (await import("../pages/operator/OperatorTripsPages"))
+                .OperatorTripsPage,
+            }),
+          },
+          {
+            path: "trips/new",
+            lazy: async () => ({
+              Component: (await import("../pages/operator/OperatorTripsPages"))
+                .OperatorTripCreatePage,
+            }),
+          },
+          {
+            path: "trips/:tripId",
+            lazy: async () => ({
+              Component: (await import("../pages/operator/OperatorTripsPages"))
+                .OperatorTripDetailPage,
+            }),
+          },
+          {
+            path: "buses",
+            lazy: async () => ({
+              Component: (await import("../pages/operator/OperatorBusesPages"))
+                .OperatorBusesPage,
+            }),
+          },
+          {
+            path: "buses/new",
+            lazy: async () => ({
+              Component: (await import("../pages/operator/OperatorBusesPages"))
+                .OperatorBusCreatePage,
+            }),
+          },
+          {
+            path: "buses/:busId",
+            lazy: async () => ({
+              Component: (await import("../pages/operator/OperatorBusesPages"))
+                .OperatorBusDetailPage,
+            }),
+          },
+          {
+            path: "bus-types",
+            lazy: async () => ({
+              Component: (
+                await import("../pages/operator/OperatorBusTypesPages")
+              ).OperatorBusTypesPage,
+            }),
+          },
+          {
+            path: "bus-types/:busTypeId",
+            lazy: async () => ({
+              Component: (
+                await import("../pages/operator/OperatorBusTypesPages")
+              ).OperatorBusTypeDetailPage,
+            }),
+          },
+          {
+            path: "routes",
+            lazy: async () => ({
+              Component: (await import("../pages/operator/OperatorRoutesPages"))
+                .OperatorRoutesPage,
+            }),
+          },
+          {
+            path: "routes/catalog",
+            lazy: async () => ({
+              Component: (await import("../pages/operator/OperatorRoutesPages"))
+                .OperatorRouteCatalogPage,
+            }),
+          },
+          {
+            path: "routes/:operatorRouteId",
+            lazy: async () => ({
+              Component: (await import("../pages/operator/OperatorRoutesPages"))
+                .OperatorRouteDetailPage,
+            }),
+          },
+          {
+            path: "*",
+            element: (
+              <Empty title="Không tìm thấy trang nhà xe">
+                <Link to="/operator">Về khu vực nhà xe</Link>
+              </Empty>
+            ),
+          },
+        ],
+      },
+    ],
+  },
+  {
     element: <CustomerLayout />,
     errorElement: (
       <Empty title="Không thể hiển thị trang">
