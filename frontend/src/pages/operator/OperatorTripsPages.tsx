@@ -24,6 +24,7 @@ import {
 import { TripTimeline } from "../../features/operator/TripTimeline";
 import { SeatLayoutPreview } from "../../features/operator/SeatLayoutPreview";
 import { dateTime } from "../../utils/format";
+import { TripStatusAction } from "../../features/operator/TripStatusAction";
 export function OperatorTripsPage() {
   const { params, page, size, set } = useOperatorFilters();
   const routes = useRouteChoices();
@@ -282,12 +283,16 @@ export function OperatorTripDetailPage() {
     <>
       <OperatorPageHeader title={`Chi tiết chuyến #${id}`}>
         <Link to="/operator/trips">Danh sách chuyến</Link>
+        <Link to={`/operator/trips/${id}/passengers`}>Hành khách</Link>
+        <Link to={`/operator/trips/${id}/occupancy`}>Tình trạng ghế</Link>
+        <Link to={`/operator/bookings?tripId=${id}`}>Đặt vé của chuyến</Link>
       </OperatorPageHeader>
       <QueryState query={query}>
         {(t) => (
           <>
             <section className="card">
               <h2>{t.route.name}</h2>
+              <TripStatusAction key={id} id={id} status={t.status} />
               <p>
                 <OperatorStatusBadge status={t.status} /> ·{" "}
                 <Link to={`/operator/buses/${t.bus.id}`}>

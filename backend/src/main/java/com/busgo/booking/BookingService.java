@@ -59,11 +59,13 @@ public class BookingService {
     @Transactional
     public BookingResponse create(CurrentUser currentUser, CreateBookingRequest request) {
         LocalDateTime now = utc(clock.instant());
+        Long tripId = inventory.findOwnedHoldTripId(request.holdToken(), currentUser.id());
+        if (tripId == null) throw holdNotFound();
+        Trip trip = trips.lockById(tripId).orElseThrow(BookingService::holdCorrupt);
         List<LockedHoldRow> rows = inventory.lockOwnedHold(request.holdToken(), currentUser.id());
         if (rows.isEmpty()) throw holdNotFound();
         HoldShape hold = validateHold(rows, request.holdToken(), currentUser.id(), now);
-
-        Trip trip = trips.findPublicById(hold.tripId()).orElseThrow(BookingService::holdCorrupt);
+        if (!trip.getId().equals(hold.tripId())) throw holdCorrupt();
         TripStop pickup = stops.findById(hold.pickupTripStopId())
                 .orElseThrow(BookingService::holdCorrupt);
         TripStop dropoff = stops.findById(hold.dropoffTripStopId())

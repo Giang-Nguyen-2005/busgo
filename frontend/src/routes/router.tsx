@@ -23,6 +23,22 @@ export const router = createBrowserRouter([
         }),
         children: [
           {
+            path: "bookings",
+            lazy: async () => ({ Component: (await import("../pages/operator/OperatorBookingsPages")).OperatorBookingsPage }),
+          },
+          {
+            path: "bookings/:bookingId",
+            lazy: async () => ({ Component: (await import("../pages/operator/OperatorBookingsPages")).OperatorBookingDetailPage }),
+          },
+          {
+            path: "trips/:tripId/passengers",
+            lazy: async () => ({ Component: (await import("../pages/operator/OperatorTripOperationsPages")).OperatorPassengersPage }),
+          },
+          {
+            path: "trips/:tripId/occupancy",
+            lazy: async () => ({ Component: (await import("../pages/operator/OperatorTripOperationsPages")).OperatorOccupancyPage }),
+          },
+          {
             index: true,
             lazy: async () => ({
               Component: (await import("../pages/operator/OperatorHomePage"))

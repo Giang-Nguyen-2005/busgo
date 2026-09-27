@@ -51,6 +51,14 @@ public class SeatHoldService {
         List<Long> seatIds = normalizeSeatIds(request.tripSeatIds());
         var journey = journeys.resolve(request.tripId(), request.pickupLocationId(),
                 request.dropoffLocationId());
+        Trip lockedTrip = trips.lockById(request.tripId())
+                .orElseThrow(SeatHoldService::notFound);
+        LocalDateTime now = utc(clock.instant());
+        if (lockedTrip.getStatus() != TripStatus.SCHEDULED
+                || journey.pickup().getPlannedDepartureTime() == null
+                || !journey.pickup().getPlannedDepartureTime().isAfter(now)) {
+            throw tripNotBookable();
+        }
         List<TripSeat> requestedSeats = seats.findByTripIdAndIdInOrderByIdAsc(
                 request.tripId(), seatIds);
         if (requestedSeats.size() != seatIds.size()) throw unavailable();
@@ -58,7 +66,6 @@ public class SeatHoldService {
         List<Long> segmentIds = journey.requiredSegments().stream()
                 .sorted(Comparator.comparing(TripSegment::getSegmentOrder))
                 .map(TripSegment::getId).toList();
-        LocalDateTime now = utc(clock.instant());
         LocalDateTime expiresAt = now.plus(properties.seatHoldDuration());
         List<LockedInventory> locked = inventory.lockRequired(seatIds, segmentIds);
         int expected = Math.multiplyExact(seatIds.size(), segmentIds.size());
@@ -183,6 +190,11 @@ public class SeatHoldService {
     private static BusinessException unavailable() {
         return new BusinessException("SEAT_NOT_AVAILABLE",
                 "One or more selected seats are no longer available.", HttpStatus.CONFLICT, null);
+    }
+
+    private static BusinessException tripNotBookable() {
+        return new BusinessException("TRIP_NOT_BOOKABLE",
+                "Trip is not bookable for the requested journey.", HttpStatus.CONFLICT, null);
     }
 
     private static ResourceNotFoundException notFound() {

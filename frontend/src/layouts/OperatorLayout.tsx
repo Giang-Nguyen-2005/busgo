@@ -27,6 +27,7 @@ export function OperatorLayout() {
           {[
             ["", "Tổng quan"],
             ["/trips", "Chuyến xe"],
+            ["/bookings", "Đặt vé"],
             ["/buses", "Đội xe"],
             ["/bus-types", "Loại xe"],
             ["/routes", "Tuyến vận hành"],

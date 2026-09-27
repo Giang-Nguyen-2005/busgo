@@ -3,6 +3,7 @@ package com.busgo.trip.repository;
 import com.busgo.trip.entity.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
@@ -60,6 +61,20 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
             where t.id = :id
             """)
     Optional<Trip> findPublicById(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select t from Trip t where t.id = :id")
+    Optional<Trip> lockById(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select t from Trip t
+            join fetch t.operatorRoute opr
+            join fetch opr.route
+            where t.id = :id and opr.operator.id = :operatorId
+            """)
+    Optional<Trip> lockOwnedById(@Param("id") Long id,
+            @Param("operatorId") Long operatorId);
 
     @Query("""
             select (count(t) > 0) from Trip t

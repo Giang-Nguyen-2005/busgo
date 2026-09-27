@@ -1525,3 +1525,54 @@ retains the foundation's HTTP 401 UNAUTHORIZED response. Denied authorization
 returns HTTP 403 ACCESS_DENIED. Duplicate email returns HTTP 409 EMAIL_ALREADY_EXISTS.
 Password policy violations return HTTP 400 INVALID_PASSWORD; other field validation
 retains VALIDATION_ERROR. All errors retain the common API error envelope.
+
+## M12 operator operations backend (P0)
+
+All endpoints below require `OPERATOR_ADMIN`. The operator is resolved from the
+authenticated staff membership; no endpoint accepts an `operatorId`. A resource
+owned by another operator returns the same 404 as a missing resource.
+
+### `GET /api/v1/operator/bookings`
+
+Query parameters: `q` (maximum 100 characters), `tripId`, `status`,
+`paymentStatus`, `date`, `page` (default 0), and `size` (default 20, maximum 100).
+Results sort by `createdAt DESC, id DESC`. `date` is the booking creation date in
+`Asia/Ho_Chi_Minh`; the backend converts its midnight boundaries to UTC before
+querying. A booking with no payment row has the derived payment status `PENDING`.
+API timestamps remain UTC offset date-times.
+
+### `GET /api/v1/operator/bookings/{bookingId}`
+
+Returns the booking/trip/route/customer/contact/stops, exact nullable
+`BookingItem.passengerName`, item-level ticket summary, complete payment history,
+amount, and timestamps. `ticket.passengerName` is a ticket snapshot and may be a
+copy of the booking contact; it is not a verified passenger identity.
+
+### `GET /api/v1/operator/trips/{tripId}/passengers`
+
+Returns one row per booking item for `CONFIRMED` and `COMPLETED` bookings only.
+Rows retain booking/item/seat IDs, journey stops, exact nullable item passenger
+name, nullable ticket snapshot name/code, contact, and derived payment status.
+No check-in, boarding, no-show, or identity-verification state is inferred.
+
+### `GET /api/v1/operator/trips/{tripId}/occupancy`
+
+Returns trip status, seat/segment counts, a derived whole-trip available-seat
+count, per-segment `AVAILABLE`/`HELD`/`BOOKED`/`BLOCKED` counts, and every
+seat-by-segment inventory state. `BOOKED` cells may include booking ID/code/status;
+`HELD` cells include only expiry and never the hold owner's identity. No single
+whole-trip status is assigned to a seat.
+
+### `PATCH /api/v1/operator/trips/{tripId}/status`
+
+Body: `{ "status": "BOARDING" }`. Allowed transitions are strictly
+`SCHEDULED -> BOARDING -> DEPARTED -> COMPLETED`. Repeating the current status is
+an idempotent success. Backward/skipped transitions, entering/leaving `CANCELLED`,
+and leaving `COMPLETED` return HTTP 409 `INVALID_TRIP_STATUS_TRANSITION`.
+
+### Mock payment operational guard
+
+New confirmation is allowed only while the trip is `SCHEDULED` or `BOARDING` and
+the booking pickup departure is in the future. Otherwise it returns HTTP 409
+`PAYMENT_WINDOW_CLOSED`. A previously valid confirmed payment remains idempotently
+readable after departure.

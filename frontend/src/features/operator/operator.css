@@ -3,6 +3,16 @@
   grid-template-columns: 230px minmax(0, 1fr);
   min-height: 100vh;
 }
+.operator-contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 20px; overflow-wrap: anywhere; }
+.operator-stop-time { display: block; }
+.operator-status-dialog { max-width: min(540px, calc(100vw - 32px)); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+.operator-status-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+.operator-trip-action { margin: 16px 0; }
+.operator-occupancy td { min-width: 180px; }
+.operator-occupancy th:first-child { position: sticky; left: 0; z-index: 1; }
+.operator-status-HELD { background: #fff0d1; color: #815300; }
+.operator-status-BOOKED, .operator-status-CONFIRMED { background: #deebff; color: #234b81; }
+.operator-status-BLOCKED { background: #f4e3e3; color: #973333; }
 .operator-sidebar {
   background: #143d3d;
   color: white;

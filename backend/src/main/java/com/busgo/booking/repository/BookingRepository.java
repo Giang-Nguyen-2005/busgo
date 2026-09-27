@@ -53,4 +53,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("select b from Booking b where b.id = :id and b.customer.id = :customerId")
     Optional<Booking> lockOwnedById(@Param("id") Long id,
             @Param("customerId") Long customerId);
+
+    @Query("select b.trip.id from Booking b where b.id = :id and b.customer.id = :customerId")
+    Optional<Long> findOwnedTripId(@Param("id") Long id,
+            @Param("customerId") Long customerId);
 }

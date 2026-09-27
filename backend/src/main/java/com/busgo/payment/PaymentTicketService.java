@@ -15,6 +15,7 @@ import com.busgo.payment.repository.PaymentRepository;
 import com.busgo.ticket.entity.Ticket;
 import com.busgo.ticket.repository.TicketRepository;
 import com.busgo.trip.entity.*;
+import com.busgo.trip.repository.TripRepository;
 import com.busgo.trip.search.TripSegmentResolver;
 import com.busgo.user.entity.User;
 import jakarta.persistence.EntityManager;
@@ -35,6 +36,7 @@ public class PaymentTicketService {
     private final BookingStatusHistoryRepository histories;
     private final BookingPaymentInventoryRepository inventory;
     private final TripSegmentResolver segments;
+    private final TripRepository trips;
     private final EntityManager entityManager;
     private final Clock clock;
 
@@ -42,7 +44,7 @@ public class PaymentTicketService {
             BookingItemRepository bookingItems, PaymentRepository payments,
             TicketRepository tickets, BookingStatusHistoryRepository histories,
             BookingPaymentInventoryRepository inventory, TripSegmentResolver segments,
-            EntityManager entityManager, Clock clock) {
+            TripRepository trips, EntityManager entityManager, Clock clock) {
         this.bookings = bookings;
         this.bookingItems = bookingItems;
         this.payments = payments;
@@ -50,6 +52,7 @@ public class PaymentTicketService {
         this.histories = histories;
         this.inventory = inventory;
         this.segments = segments;
+        this.trips = trips;
         this.entityManager = entityManager;
         this.clock = clock;
     }
@@ -57,16 +60,21 @@ public class PaymentTicketService {
     @Transactional
     public PaymentConfirmation confirm(CurrentUser currentUser, Long bookingId) {
         LocalDateTime now = utc(clock.instant());
+        Long tripId = bookings.findOwnedTripId(bookingId, currentUser.id())
+                .orElseThrow(PaymentTicketService::bookingNotFound);
+        Trip lockedTrip = trips.lockById(tripId)
+                .orElseThrow(PaymentTicketService::bookingNotFound);
         Booking booking = bookings.lockOwnedById(bookingId, currentUser.id())
                 .orElseThrow(PaymentTicketService::bookingNotFound);
+        if (!lockedTrip.getId().equals(booking.getTrip().getId())) throw invalidPayment();
         List<BookingItem> items = bookingItems.findDetailedByBookingId(booking.getId());
         validateInventory(booking, items);
 
-        Optional<Payment> paid = payments.findByBookingIdAndStatus(
+        Optional<Payment> paid = payments.findLockedByBookingIdAndStatus(
                 booking.getId(), PaymentStatus.PAID);
         if (booking.getStatus() == BookingStatus.CONFIRMED) {
             Payment existing = paid.orElseThrow(PaymentTicketService::invalidPayment);
-            List<Ticket> existingTickets = tickets.findDetailedByBookingId(booking.getId());
+            List<Ticket> existingTickets = tickets.findDetailedLockedByBookingId(booking.getId());
             if (!completeTicketSet(booking, items, existing, existingTickets)) {
                 throw invalidPayment();
             }
@@ -74,6 +82,12 @@ public class PaymentTicketService {
         }
         if (booking.getStatus() != BookingStatus.PENDING) throw notPayable();
         if (paid.isPresent()) throw invalidPayment();
+        if ((lockedTrip.getStatus() != TripStatus.SCHEDULED
+                && lockedTrip.getStatus() != TripStatus.BOARDING)
+                || booking.getPickupTripStop().getPlannedDepartureTime() == null
+                || !booking.getPickupTripStop().getPlannedDepartureTime().isAfter(now)) {
+            throw paymentWindowClosed();
+        }
 
         Payment payment = new Payment();
         payment.setBooking(booking);
@@ -225,6 +239,12 @@ public class PaymentTicketService {
     private static BusinessException invalidPayment() {
         return new BusinessException("PAYMENT_ALREADY_INVALID",
                 "The booking payment state is inconsistent.", HttpStatus.CONFLICT, null);
+    }
+
+    private static BusinessException paymentWindowClosed() {
+        return new BusinessException("PAYMENT_WINDOW_CLOSED",
+                "Payment confirmation is no longer allowed for this journey.",
+                HttpStatus.CONFLICT, null);
     }
 
     private static BusinessException inconsistentInventory() {

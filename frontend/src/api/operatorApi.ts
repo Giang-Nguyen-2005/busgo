@@ -22,6 +22,16 @@ const paged = async <T>(path: string, params: object, signal?: AbortSignal) =>
 const patch = async <T>(path: string, body: object) =>
   (await apiClient.patch<ApiResponse<T>>(base + path, body)).data.data;
 export const operatorApi = {
+  bookings: (params: O.BookingFilters, signal?: AbortSignal) =>
+    paged<O.OperatorBookingListItem>("/bookings", params, signal),
+  booking: (id: number, signal?: AbortSignal) =>
+    get<O.OperatorBookingDetail>(`${base}/bookings/${id}`, undefined, signal),
+  passengers: (id: number, signal?: AbortSignal) =>
+    get<O.PassengerManifest>(`${base}/trips/${id}/passengers`, undefined, signal),
+  occupancy: (id: number, signal?: AbortSignal) =>
+    get<O.TripOccupancy>(`${base}/trips/${id}/occupancy`, undefined, signal),
+  updateTripStatus: (id: number, status: O.TripStatus) =>
+    patch<{ tripId: number; status: O.TripStatus }>(`/trips/${id}/status`, { status }),
   trips: (params: TripFilters, signal?: AbortSignal) =>
     paged<O.TripSummaryResponse>("/trips", params, signal),
   trip: (id: number, signal?: AbortSignal) =>

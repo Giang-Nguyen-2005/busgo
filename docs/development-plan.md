@@ -1345,3 +1345,39 @@ Codex
 sửa
 Agent là người triển khai.
 Requirement, architecture và quyết định scope vẫn được kiểm soát bên ngoài agent.
+
+## M12 backend P0 implementation
+
+Implemented operator booking list/detail, confirmed passenger manifest,
+segment-aware occupancy, and the forward-only trip operations state machine.
+Customer hold, booking, and mock-payment mutations now share the lock order
+`Trip -> Booking (when applicable) -> inventory rows`. This serializes operational
+status transitions against new customer mutations while retaining the existing
+inventory `FOR UPDATE` protection.
+
+M12 P0 intentionally does not include frontend work, cancellation/refund flows,
+seat block mutations, check-in/boarding state, passenger editing, automatic trip
+transitions, dashboard analytics, or trip status history. No schema migration is
+required for this scope.
+
+## M12 operator operations frontend implementation
+
+Implemented booking list/detail, passenger manifest, seat-by-segment occupancy,
+and next-step trip lifecycle actions within the M11 operator architecture.
+The sidebar now includes Đặt vé; trip detail links to bookings, passengers and
+occupancy. Filters persist in the URL and use backend pagination. All new
+timestamps display in Vietnam time; booking creation-date filtering follows
+the backend Vietnam business date.
+
+Seat passenger identity remains separate from ticket names and booking contacts.
+Lifecycle confirmation explains closure of sales/payment windows and terminal
+completion. New errors use Vietnamese messages; queries refresh after mutations
+and conflicts. Responsive tables retain horizontal scrolling where needed.
+
+Frontend verification: 17 tests passed; TypeScript/Vite build passed;
+`git diff --check` passed. Browser/manual end-to-end QA remains outstanding;
+see `docs/m12-verification.md` for precise coverage and the remaining checklist.
+Existing backend changes were preserved. Customer source files were unchanged.
+No commit or push was performed. M14 polish and unsupported operational domains
+(check-in, no-show, passenger editing, refunds, seat blocking, analytics) remain
+deferred.

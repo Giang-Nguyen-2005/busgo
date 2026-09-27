@@ -150,3 +150,60 @@ export interface TripDetailResponse extends Omit<
   segments: TripSegmentResponse[];
   seats: TripSeatResponse[];
 }
+
+// M12: OperatorBookingDtos and OperatorTripOperationsDtos.
+export type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+export type InventoryStatus = "AVAILABLE" | "HELD" | "BOOKED" | "BLOCKED";
+export interface BookingContact { name: string; phone: string; email: string | null }
+export interface BookingStop { tripStopId: number; locationId: number; name: string; time: string | null }
+export interface OperatorBookingListItem {
+  bookingId: number; bookingCode: string; status: BookingStatus; paymentStatus: PaymentStatus;
+  tripId: number; route: { id: number; name: string }; contact: BookingContact;
+  pickup: BookingStop; dropoff: BookingStop; seatCount: number; totalAmount: number; createdAt: string;
+}
+export interface OperatorTicket {
+  id: number; ticketCode: string; passengerName: string | null; seatCode: string;
+  paymentId: number; createdAt: string;
+}
+export interface OperatorBookingItem {
+  bookingItemId: number; tripSeatId: number; seatCode: string; passengerName: string | null;
+  unitPrice: number; ticket: OperatorTicket | null;
+}
+export interface OperatorPayment {
+  id: number; method: "MOCK_QR"; amount: number; status: PaymentStatus;
+  transactionReference: string | null; paidAt: string | null; createdAt: string;
+}
+export interface OperatorBookingDetail extends Omit<OperatorBookingListItem, "paymentStatus" | "tripId" | "seatCount"> {
+  trip: { id: number; status: TripStatus; departureTime: string; estimatedArrivalTime: string };
+  customer: { id: number; fullName: string; email: string; phone: string | null };
+  items: OperatorBookingItem[]; payments: OperatorPayment[]; updatedAt: string;
+}
+export interface PassengerManifestRow {
+  bookingId: number; bookingCode: string; bookingStatus: BookingStatus; bookingItemId: number;
+  tripSeatId: number; seatCode: string; pickup: BookingStop; dropoff: BookingStop;
+  passengerName: string | null; ticketPassengerName: string | null; contact: BookingContact;
+  paymentStatus: PaymentStatus; ticketCode: string | null;
+}
+export interface PassengerManifest { tripId: number; tripStatus: TripStatus; passengers: PassengerManifestRow[] }
+export interface OccupancySegment {
+  tripSegmentId: number; segmentOrder: number; fromTripStopId: number; toTripStopId: number;
+  fromName: string; toName: string;
+  counts: { available: number; held: number; booked: number; blocked: number };
+}
+export interface SeatSegmentState {
+  tripSegmentId: number; segmentOrder: number; status: InventoryStatus; holdExpiresAt: string | null;
+  bookingId: number | null; bookingCode: string | null; bookingStatus: BookingStatus | null;
+}
+export interface OccupancySeat {
+  tripSeatId: number; seatCode: string; row: number; column: number; floor: number;
+  seatType: SeatType; segments: SeatSegmentState[];
+}
+export interface TripOccupancy {
+  tripId: number; tripStatus: TripStatus; seatCount: number; segmentCount: number;
+  wholeTripAvailableSeatCount: number; segments: OccupancySegment[]; seats: OccupancySeat[];
+}
+export interface BookingFilters {
+  q?: string; tripId?: number; status?: BookingStatus; paymentStatus?: PaymentStatus;
+  date?: string; page: number; size: number;
+}

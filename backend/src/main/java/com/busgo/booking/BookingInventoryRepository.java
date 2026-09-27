@@ -30,6 +30,19 @@ public class BookingInventoryRepository {
         this.jdbc = jdbc;
     }
 
+    public Long findOwnedHoldTripId(String holdToken, Long userId) {
+        List<Long> tripIds = jdbc.query("""
+                SELECT DISTINCT seat.trip_id
+                FROM trip_seat_segment_inventory inventory
+                JOIN trip_seats seat ON seat.id = inventory.trip_seat_id
+                WHERE inventory.hold_token = :holdToken
+                  AND inventory.held_by_user_id = :userId
+                """, new MapSqlParameterSource()
+                .addValue("holdToken", holdToken).addValue("userId", userId),
+                (rs, rowNumber) -> rs.getLong("trip_id"));
+        return tripIds.size() == 1 ? tripIds.get(0) : null;
+    }
+
     public List<LockedHoldRow> lockOwnedHold(String holdToken, Long userId) {
         return jdbc.query(LOCK_OWNED_HOLD, new MapSqlParameterSource()
                         .addValue("holdToken", holdToken).addValue("userId", userId),
