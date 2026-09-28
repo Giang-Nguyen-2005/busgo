@@ -1381,3 +1381,34 @@ Existing backend changes were preserved. Customer source files were unchanged.
 No commit or push was performed. M14 polish and unsupported operational domains
 (check-in, no-show, passenger editing, refunds, seat blocking, analytics) remain
 deferred.
+
+## M13 backend P0 implementation
+
+Implemented secure opt-in `SYSTEM_ADMIN` bootstrap, explicit `/api/v1/admin/**`
+operator administration, operator staff account/membership management, read-only
+`OPERATOR_STAFF` operational access, operator-scoped staff-code uniqueness, and
+inactive-operator commerce suspension. `SYSTEM_ADMIN` never inherits operator
+access, and operator-owned queries continue to derive ownership from membership.
+
+M13 backend P0 deliberately excludes frontend work, customer administration,
+reports/analytics, cancellation/refund, invitations/email, existing-account
+linking, arbitrary role editing, global master-data editing, and persisted audit
+events. Verification evidence is in `docs/m13-verification.md`.
+
+## M13 frontend P0 implementation
+
+Implemented the separate SYSTEM_ADMIN layout/guard and operator list, onboarding,
+contact editing, status confirmations and read-only staff view. Added operator
+admin staff list/create/update with restricted roles and URL-backed filters.
+OPERATOR_STAFF now has a read-only operational surface with route-level denial
+of management pages and hidden mutation actions. Login redirects respect role
+and authorized return paths while retaining customer behavior. Vietnamese
+contract-error mappings, null-safe DTOs and responsive forms reuse the existing
+HTTP/auth, query, layout and table infrastructure.
+
+Verification: all 26 frontend tests passed (including the 17 existing operator
+regressions); TypeScript/Vite production build passed; git diff --check passed.
+Manual browser, mobile visual QA and live backend end-to-end checks remain
+outstanding. Full file inventory, evidence and checklist: docs/m13-verification.md.
+Backend changes were preserved without modification. No commit or push performed.
+M13 deferred domains and M14 redesign remain out of scope.

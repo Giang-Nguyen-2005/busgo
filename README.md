@@ -78,6 +78,25 @@ Health is a process liveness endpoint, not a continuous database readiness check
 Public endpoints are health, `GET /api/v1/locations`, customer trip search/detail,
 `GET /api/v1/trips/{tripId}/seats`, and
 `POST /api/v1/auth/register`, `/login`, and `/refresh`.
+
+### Initial system administrator
+
+The initial `SYSTEM_ADMIN` bootstrap is disabled by default and has no HTTP
+endpoint. To provision it, set all five variables for one application start:
+
+```text
+BUSGO_SYSTEM_ADMIN_BOOTSTRAP_ENABLED=true
+BUSGO_SYSTEM_ADMIN_FULL_NAME=Platform Administrator
+BUSGO_SYSTEM_ADMIN_EMAIL=admin@example.com
+BUSGO_SYSTEM_ADMIN_PHONE=0900000000
+BUSGO_SYSTEM_ADMIN_PASSWORD=<a secret satisfying the normal password policy>
+```
+
+The password is BCrypt-hashed and never logged. Repeating startup with the exact
+same identity, sole `SYSTEM_ADMIN` role, active status, and password is a no-op.
+If the email already belongs to any different account or configuration, startup
+fails rather than modifying it or granting a role. After successful provisioning,
+disable the bootstrap again. The account signs in through `/api/v1/auth/login`.
 M2 also implements authenticated `GET`/`PATCH /api/v1/users/me` and
 `POST /api/v1/users/me/change-password`. All other application routes remain denied.
 Public registration assigns CUSTOMER; no privileged or default account is seeded.

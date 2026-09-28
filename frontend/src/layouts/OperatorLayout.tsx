@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthProvider";
 import "../features/operator/operator.css";
+import { canManageOperator, operatorNavigation } from "../features/auth/access";
 export function OperatorLayout() {
   const auth = useAuth();
   const [open, setOpen] = useState(false);
@@ -24,14 +25,7 @@ export function OperatorLayout() {
           className={open ? "operator-nav is-open" : "operator-nav"}
           aria-label="Quản lý nhà xe"
         >
-          {[
-            ["", "Tổng quan"],
-            ["/trips", "Chuyến xe"],
-            ["/bookings", "Đặt vé"],
-            ["/buses", "Đội xe"],
-            ["/bus-types", "Loại xe"],
-            ["/routes", "Tuyến vận hành"],
-          ].map(([path, label]) => (
+          {operatorNavigation(auth.user?.roles).map(([path, label]) => (
             <NavLink
               key={path}
               end={!path}
@@ -50,7 +44,7 @@ export function OperatorLayout() {
             <summary>{auth.user?.fullName} · Hồ sơ</summary>
             <p>{auth.user?.email}</p>
             <p>{auth.user?.phone || "Chưa có số điện thoại"}</p>
-            <p>OPERATOR_ADMIN</p>
+            <p>{canManageOperator(auth.user?.roles) ? "Quản trị viên nhà xe" : "Nhân viên · Chỉ xem"}</p>
             <button onClick={auth.logout}>Đăng xuất</button>
           </details>
         </header>

@@ -31,13 +31,13 @@ export const useBusTypes = () =>
     queryKey: ["operator", "bus-types"],
     queryFn: ({ signal }) => operatorApi.busTypes(signal),
   });
-export const useRouteChoices = () =>
+export const useRouteChoices = (enabled = true) =>
   useQuery({
-    queryKey: ["operator", "routes", "choices"],
+    queryKey: ["operator", "routes", "choices"], enabled,
     queryFn: ({ signal }) => allPages((p) => operatorApi.routes(p, signal)),
   });
-export const useBusChoices = () =>
+export const useBusChoices = (enabled = true) =>
   useQuery({
-    queryKey: ["operator", "buses", "choices"],
+    queryKey: ["operator", "buses", "choices"], enabled,
     queryFn: ({ signal }) => allPages((p) => operatorApi.buses(p, signal)),
   });

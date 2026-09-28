@@ -18,6 +18,8 @@ import com.busgo.trip.entity.*;
 import com.busgo.trip.repository.TripRepository;
 import com.busgo.trip.search.TripSegmentResolver;
 import com.busgo.user.entity.User;
+import com.busgo.operator.entity.OperatorStatus;
+import com.busgo.operator.repository.TransportOperatorRepository;
 import jakarta.persistence.EntityManager;
 import java.time.*;
 import java.util.*;
@@ -39,12 +41,14 @@ public class PaymentTicketService {
     private final TripRepository trips;
     private final EntityManager entityManager;
     private final Clock clock;
+    private final TransportOperatorRepository operators;
 
     public PaymentTicketService(BookingRepository bookings,
             BookingItemRepository bookingItems, PaymentRepository payments,
             TicketRepository tickets, BookingStatusHistoryRepository histories,
             BookingPaymentInventoryRepository inventory, TripSegmentResolver segments,
-            TripRepository trips, EntityManager entityManager, Clock clock) {
+            TripRepository trips, EntityManager entityManager, Clock clock,
+            TransportOperatorRepository operators) {
         this.bookings = bookings;
         this.bookingItems = bookingItems;
         this.payments = payments;
@@ -55,6 +59,7 @@ public class PaymentTicketService {
         this.trips = trips;
         this.entityManager = entityManager;
         this.clock = clock;
+        this.operators = operators;
     }
 
     @Transactional
@@ -64,8 +69,13 @@ public class PaymentTicketService {
                 .orElseThrow(PaymentTicketService::bookingNotFound);
         Trip lockedTrip = trips.lockById(tripId)
                 .orElseThrow(PaymentTicketService::bookingNotFound);
+        var operator=operators.lockById(lockedTrip.getOperatorRoute().getOperator().getId())
+                .orElseThrow(PaymentTicketService::bookingNotFound);
         Booking booking = bookings.lockOwnedById(bookingId, currentUser.id())
                 .orElseThrow(PaymentTicketService::bookingNotFound);
+        if (operator.getStatus()!=OperatorStatus.ACTIVE
+                || lockedTrip.getOperatorRoute().getStatus()!=com.busgo.common.entity.ActiveStatus.ACTIVE)
+            throw paymentWindowClosed();
         if (!lockedTrip.getId().equals(booking.getTrip().getId())) throw invalidPayment();
         List<BookingItem> items = bookingItems.findDetailedByBookingId(booking.getId());
         validateInventory(booking, items);

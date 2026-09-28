@@ -21,13 +21,27 @@ public class OperatorContextService {
     @PreAuthorize("hasRole('OPERATOR_ADMIN')")
     @Transactional(readOnly = true)
     public TransportOperator requireAdminOperator(CurrentUser user) {
-        if (user == null || !user.roles().contains(RoleCode.OPERATOR_ADMIN)) {
+        if (user == null || user.roles().contains(RoleCode.SYSTEM_ADMIN)
+                || !user.roles().contains(RoleCode.OPERATOR_ADMIN)) {
             throw denied();
         }
         var memberships = staff.findActiveByUserId(user.id());
         if (memberships.size() != 1) {
             throw denied();
         }
+        return memberships.get(0).getOperator();
+    }
+
+    @PreAuthorize("hasAnyRole('OPERATOR_STAFF','OPERATOR_ADMIN')")
+    @Transactional(readOnly = true)
+    public TransportOperator requireOperatorMember(CurrentUser user) {
+        if (user == null || user.roles().contains(RoleCode.SYSTEM_ADMIN)
+                || (!user.roles().contains(RoleCode.OPERATOR_STAFF)
+                && !user.roles().contains(RoleCode.OPERATOR_ADMIN))) {
+            throw denied();
+        }
+        var memberships = staff.findActiveByUserId(user.id());
+        if (memberships.size() != 1) throw denied();
         return memberships.get(0).getOperator();
     }
 

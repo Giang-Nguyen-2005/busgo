@@ -17,6 +17,8 @@ import com.busgo.route.repository.OperatorRouteFareRepository;
 import com.busgo.trip.entity.*;
 import com.busgo.trip.repository.*;
 import com.busgo.trip.search.TripSegmentResolver;
+import com.busgo.operator.entity.OperatorStatus;
+import com.busgo.operator.repository.TransportOperatorRepository;
 import com.busgo.user.entity.User;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
@@ -40,11 +42,13 @@ public class BookingService {
     private final OperatorRouteFareRepository fares;
     private final EntityManager entityManager;
     private final Clock clock;
+    private final TransportOperatorRepository operators;
 
     public BookingService(BookingRepository bookings, BookingItemRepository items,
             BookingInventoryRepository inventory, TripRepository trips,
             TripStopSnapshotRepository stops, TripSegmentResolver segmentResolver,
-            OperatorRouteFareRepository fares, EntityManager entityManager, Clock clock) {
+            OperatorRouteFareRepository fares, EntityManager entityManager, Clock clock,
+            TransportOperatorRepository operators) {
         this.bookings = bookings;
         this.items = items;
         this.inventory = inventory;
@@ -54,6 +58,7 @@ public class BookingService {
         this.fares = fares;
         this.entityManager = entityManager;
         this.clock = clock;
+        this.operators = operators;
     }
 
     @Transactional
@@ -62,6 +67,10 @@ public class BookingService {
         Long tripId = inventory.findOwnedHoldTripId(request.holdToken(), currentUser.id());
         if (tripId == null) throw holdNotFound();
         Trip trip = trips.lockById(tripId).orElseThrow(BookingService::holdCorrupt);
+        var operator=operators.lockById(trip.getOperatorRoute().getOperator().getId())
+                .orElseThrow(BookingService::holdCorrupt);
+        if(operator.getStatus()!=OperatorStatus.ACTIVE
+                || trip.getOperatorRoute().getStatus()!=ActiveStatus.ACTIVE) throw tripNotBookable();
         List<LockedHoldRow> rows = inventory.lockOwnedHold(request.holdToken(), currentUser.id());
         if (rows.isEmpty()) throw holdNotFound();
         HoldShape hold = validateHold(rows, request.holdToken(), currentUser.id(), now);
@@ -268,6 +277,11 @@ public class BookingService {
     private static BusinessException missingFare() {
         return new BusinessException("TRIP_NOT_BOOKABLE",
                 "The held journey has no exact active fare.", HttpStatus.CONFLICT, null);
+    }
+
+    private static BusinessException tripNotBookable() {
+        return new BusinessException("TRIP_NOT_BOOKABLE", "Trip is not bookable because its operator is inactive.",
+                HttpStatus.CONFLICT, null);
     }
 
     private static ResourceNotFoundException bookingNotFound() {

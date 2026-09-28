@@ -25,10 +25,13 @@ import { TripTimeline } from "../../features/operator/TripTimeline";
 import { SeatLayoutPreview } from "../../features/operator/SeatLayoutPreview";
 import { dateTime } from "../../utils/format";
 import { TripStatusAction } from "../../features/operator/TripStatusAction";
+import { useAuth } from "../../features/auth/AuthProvider";
+import { canManageOperator } from "../../features/auth/access";
 export function OperatorTripsPage() {
+  const manage = canManageOperator(useAuth().user?.roles);
   const { params, page, size, set } = useOperatorFilters();
-  const routes = useRouteChoices();
-  const buses = useBusChoices();
+  const routes = useRouteChoices(manage);
+  const buses = useBusChoices(manage);
   const status = tripStatuses.find((s) => s === params.get("status"));
   const rawDate = params.get("date") || "";
   const date = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : undefined;
@@ -47,9 +50,9 @@ export function OperatorTripsPage() {
   return (
     <>
       <OperatorPageHeader title="Chuyến xe">
-        <Link className="button" to="/operator/trips/new">
+        {manage && <Link className="button" to="/operator/trips/new">
           Tạo chuyến
-        </Link>
+        </Link>}
       </OperatorPageHeader>
       <div className="operator-filters">
         <Field
@@ -58,7 +61,7 @@ export function OperatorTripsPage() {
           value={date || ""}
           onChange={(e) => set("date", e.target.value)}
         />
-        <label className="field">
+{manage && <>        <label className="field">
           Tuyến
           <select
             value={filters.routeId || ""}
@@ -85,7 +88,7 @@ export function OperatorTripsPage() {
               </option>
             ))}
           </select>
-        </label>
+        </label></>}
         <label className="field">
           Trạng thái
           <select
@@ -274,6 +277,7 @@ export function OperatorTripCreatePage() {
   );
 }
 export function OperatorTripDetailPage() {
+  const manage = canManageOperator(useAuth().user?.roles);
   const id = Number(useParams().tripId);
   const query = useQuery({
     queryKey: ["operator", "trips", id],
@@ -295,9 +299,9 @@ export function OperatorTripDetailPage() {
               <TripStatusAction key={id} id={id} status={t.status} />
               <p>
                 <OperatorStatusBadge status={t.status} /> ·{" "}
-                <Link to={`/operator/buses/${t.bus.id}`}>
+                {manage ? <Link to={`/operator/buses/${t.bus.id}`}>
                   {t.bus.licensePlate}
-                </Link>{" "}
+                </Link> : <span>{t.bus.licensePlate}</span>}{" "}
                 · {t.bus.busTypeName}
               </p>
               <p>

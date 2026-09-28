@@ -21,6 +21,9 @@ class FoundationTest extends JwtTestSupport {
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.user.repository.UserRoleRepository userRoles;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.auth.repository.RefreshTokenRepository refreshTokens;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.operator.repository.OperatorStaffRepository operatorStaff;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.operator.repository.TransportOperatorRepository transportOperators;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.operator.OperatorStaffQueryRepository operatorStaffQueries;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.admin.AdminOperatorQueryRepository adminOperatorQueries;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.location.repository.LocationRepository locations;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.fleet.repository.BusTypeRepository busTypes;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.fleet.repository.SeatTemplateRepository seatTemplates;
@@ -47,6 +50,7 @@ class FoundationTest extends JwtTestSupport {
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.booking.repository.OperatorBookingQueryRepository operatorBookingQueries;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.trip.operations.OperatorOccupancyQueryRepository operatorOccupancyQueries;
     @org.springframework.test.context.bean.override.mockito.MockitoBean jakarta.persistence.EntityManager entityManager;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean org.springframework.transaction.PlatformTransactionManager transactionManager;
     @Autowired MockMvc mvc;
     @Autowired RoleProbe roleProbe;
 

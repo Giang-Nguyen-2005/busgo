@@ -1576,3 +1576,53 @@ New confirmation is allowed only while the trip is `SCHEDULED` or `BOARDING` and
 the booking pickup departure is in the future. Otherwise it returns HTTP 409
 `PAYMENT_WINDOW_CLOSED`. A previously valid confirmed payment remains idempotently
 readable after departure.
+
+## M13 system administration backend (P0)
+
+`/api/v1/admin/**` requires `SYSTEM_ADMIN`. That role does not bypass the
+operator namespace or operator ownership. Operator staff/admin context still
+requires exactly one active membership in an active operator.
+
+### System-admin operator APIs
+
+- `GET /api/v1/admin/operators?q=&status=&page=0&size=20`
+- `POST /api/v1/admin/operators`
+- `GET /api/v1/admin/operators/{operatorId}`
+- `PATCH /api/v1/admin/operators/{operatorId}`
+- `PATCH /api/v1/admin/operators/{operatorId}/status`
+- `GET /api/v1/admin/operators/{operatorId}/staff?q=&status=&role=&page=0&size=20`
+
+List size is 1–100 and `q` is at most 100 characters. Operator lists sort by
+`name ASC, id ASC`. Creation requires `name`, immutable normalized `code`,
+`status`, and `initialAdmin` with `fullName`, `email`, `phone`, `password`, and
+`staffCode`. It atomically creates the operator, dedicated user,
+`OPERATOR_ADMIN` role, and ACTIVE membership. Passwords are never returned.
+Operator PATCH accepts only name/phone/email/address. Activation requires an
+active, login-capable operator admin; repeated status changes are idempotent.
+
+### Operator staff APIs
+
+- `GET /api/v1/operator/staff?q=&status=&role=&page=0&size=20`
+- `POST /api/v1/operator/staff`
+- `PATCH /api/v1/operator/staff/{staffId}`
+
+These require `OPERATOR_ADMIN`. Creation accepts a new dedicated user's
+`fullName`, `email`, `phone`, `password`, operator-scoped `staffCode`, and exactly
+one role: `OPERATOR_ADMIN` or `OPERATOR_STAFF`. Existing accounts are not linked.
+PATCH may change staff code, membership status, or the operator role. It cannot
+remove the final active, login-capable administrator. Foreign staff IDs use
+`STAFF_NOT_FOUND`; staff codes are unique per operator.
+
+### Read-only staff matrix
+
+`OPERATOR_STAFF` and `OPERATOR_ADMIN` may GET owned trip list/detail, booking
+list/detail, manifests, occupancy, and active bus types. Trip creation/status,
+fleet writes, routes/fares, and staff management remain `OPERATOR_ADMIN` only.
+
+### Inactive operator semantics
+
+INACTIVE suspends operator management and all new customer commerce: public
+search, commerce trip detail, seat maps, holds, booking conversion, and new mock
+payment confirmation reject or omit the operator. It does not cancel trips or
+bookings, refund payments, or mutate inventory. Historical customer booking and
+issued-ticket reads remain available. Reactivation changes no trip/inventory state.

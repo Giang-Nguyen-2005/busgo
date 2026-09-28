@@ -7,4 +7,10 @@ public interface UserRoleRepository extends JpaRepository<UserRole, UserRoleId> 
     @org.springframework.data.jpa.repository.Query("select ur.role.code from UserRole ur where ur.user.id = :userId order by ur.role.code")
     java.util.List<com.busgo.user.entity.RoleCode> findRoleCodesByUserId(
             @org.springframework.data.repository.query.Param("userId") Long userId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("delete from UserRole ur where ur.user.id = :userId and ur.role.code = :code")
+    int deleteByUserIdAndRoleCode(
+            @org.springframework.data.repository.query.Param("userId") Long userId,
+            @org.springframework.data.repository.query.Param("code") com.busgo.user.entity.RoleCode code);
 }

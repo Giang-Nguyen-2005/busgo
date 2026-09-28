@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import axios from "axios";
+
 import { Empty, Loading } from "../../components/ui";
 import { errorMessage } from "../../api/errors";
-import type { ApiError, PagedResponse } from "../../types/api";
+import type { PagedResponse } from "../../types/api";
 export const busStatuses = ["AVAILABLE", "MAINTENANCE", "INACTIVE"] as const;
 export const tripStatuses = [
   "SCHEDULED",
@@ -52,16 +52,10 @@ export function OperatorError({
   error: unknown;
   retry?: () => void;
 }) {
-  const body = axios.isAxiosError<ApiError>(error)
-    ? error.response?.data
-    : undefined;
   return (
     <div className="notice danger" role="alert">
       <div>
-        {body?.message || errorMessage(error)}
-        {body?.code && (
-          <small className="operator-error-code">{body.code}</small>
-        )}
+        {errorMessage(error)}
         {retry && (
           <button className="secondary" onClick={retry}>
             Thử lại

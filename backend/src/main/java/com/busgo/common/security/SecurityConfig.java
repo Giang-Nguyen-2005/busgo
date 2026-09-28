@@ -39,6 +39,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/users/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/me/change-password").authenticated()
+                        .requestMatchers("/api/v1/admin/**").hasRole("SYSTEM_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/operator/trips", "/api/v1/operator/trips/*",
+                                "/api/v1/operator/bookings", "/api/v1/operator/bookings/*",
+                                "/api/v1/operator/trips/*/passengers", "/api/v1/operator/trips/*/occupancy",
+                                "/api/v1/operator/bus-types", "/api/v1/operator/bus-types/*")
+                                .hasAnyRole("OPERATOR_STAFF", "OPERATOR_ADMIN")
                         .requestMatchers("/api/v1/operator/**").hasRole("OPERATOR_ADMIN")
                         .anyRequest().denyAll())
                 .exceptionHandling(errors -> errors

@@ -207,3 +207,14 @@ export interface BookingFilters {
   q?: string; tripId?: number; status?: BookingStatus; paymentStatus?: PaymentStatus;
   date?: string; page: number; size: number;
 }
+
+// M13 OperatorStaffDtos: membership and login status are distinct.
+export type OperatorRole = "OPERATOR_ADMIN" | "OPERATOR_STAFF";
+export interface OperatorStaff {
+  staffId: number; staffCode: string | null; membershipStatus: ActiveStatus; role: OperatorRole;
+  user: { id: number; fullName: string; email: string; phone: string | null; status: "ACTIVE" | "INACTIVE" | "LOCKED" };
+  createdAt: string;
+}
+export interface CreateOperatorStaffRequest { fullName: string; email: string; phone: string; password: string; staffCode: string; role: OperatorRole }
+export interface UpdateOperatorStaffRequest { staffCode: string; status: ActiveStatus; role: OperatorRole }
+export interface StaffFilters { q?: string; status?: ActiveStatus; role?: OperatorRole; page: number; size: number }

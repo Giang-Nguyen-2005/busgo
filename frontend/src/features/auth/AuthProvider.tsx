@@ -12,10 +12,12 @@ import { getTokens, setTokens } from "../../api/session";
 import type { Tokens, User } from "../../types/customer";
 import { ErrorState, Loading } from "../../components/ui";
 
-const AuthContext = createContext<{
+export const AuthContext = createContext<{
   user?: User;
   authenticated: boolean;
   loading: boolean;
+  error?: unknown;
+  retry?: () => void;
   login: (tokens: Tokens) => void;
   logout: () => void;
 }>({ authenticated: false, loading: false, login: () => {}, logout: () => {} });
@@ -42,6 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user: authenticated ? profile.data : undefined,
         authenticated,
+        error: profile.error,
+        retry: () => { void profile.refetch(); },
         loading: authenticated && profile.isPending,
         login: (tokens) => {
           setTokens(null);

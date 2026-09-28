@@ -15,6 +15,7 @@ const { QueryClient, QueryClientProvider } = await import("@tanstack/react-query
 const { operatorApi } = await import("../src/api/operatorApi.ts");
 const { apiClient } = await import("../src/api/client.ts");
 const { useTripStatusMutation } = await import("../src/features/operator/queries.ts");
+const { AuthContext } = await import("../src/features/auth/AuthProvider.tsx");
 const { TripStatusAction } = await import("../src/features/operator/TripStatusAction.tsx");
 const { paymentStatusLabel, dateTime } = await import("../src/utils/format.ts");
 const render = (Component, props) => renderToStaticMarkup(React.createElement(MemoryRouter, null, React.createElement(Component, props)));
@@ -148,7 +149,7 @@ test("status mutation refreshes trips, occupancy, manifest and bookings on succe
 });
 test("trip controls include accessible confirmation and omit terminal actions", () => {
   const cache = new QueryClient();
-  const html = status => renderToStaticMarkup(React.createElement(QueryClientProvider, { client: cache }, React.createElement(TripStatusAction, { id: 4, status })));
+  const html = status => renderToStaticMarkup(React.createElement(QueryClientProvider, { client: cache }, React.createElement(AuthContext.Provider, { value: { user: { roles: ["OPERATOR_ADMIN"] } } }, React.createElement(TripStatusAction, { id: 4, status }))));
   assert.match(html("SCHEDULED"), /<dialog/);
   assert.match(html("SCHEDULED"), /aria-describedby="trip-status-impact"/);
   assert.match(html("BOARDING"), /Cửa sổ xác nhận thanh toán sẽ đóng/);

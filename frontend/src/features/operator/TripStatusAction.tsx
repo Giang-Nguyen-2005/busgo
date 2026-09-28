@@ -4,13 +4,17 @@ import { nextTripAction } from "./operations";
 import { useTripStatusMutation } from "./queries";
 import { OperationsError } from "./OperationsShared";
 
+import { useAuth } from "../auth/AuthProvider";
+import { canManageOperator } from "../auth/access";
 export function TripStatusAction({ id, status }: { id: number; status: TripStatus }) {
+  const manage = canManageOperator(useAuth().user?.roles);
   const action = nextTripAction(status);
   const mutation = useTripStatusMutation(id);
   const dialog = useRef<HTMLDialogElement>(null);
   const [message, setMessage] = useState("");
   // Never silently substitute a new action while a confirmation is open.
   useEffect(() => { dialog.current?.close(); }, [id, status]);
+  if (!manage) return null;
   return <div className="operator-trip-action">
     {message && <p role="status">{message}</p>}
     {mutation.isError && <OperationsError error={mutation.error} />}

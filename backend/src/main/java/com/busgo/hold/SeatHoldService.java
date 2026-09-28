@@ -12,6 +12,8 @@ import com.busgo.route.repository.OperatorRouteFareRepository;
 import com.busgo.trip.entity.*;
 import com.busgo.trip.repository.*;
 import com.busgo.trip.search.CustomerJourneyResolver;
+import com.busgo.operator.entity.OperatorStatus;
+import com.busgo.operator.repository.TransportOperatorRepository;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
@@ -31,11 +33,12 @@ public class SeatHoldService {
     private final SeatHoldInventoryRepository inventory;
     private final SeatHoldProperties properties;
     private final Clock clock;
+    private final TransportOperatorRepository operators;
 
     public SeatHoldService(CustomerJourneyResolver journeys, TripSeatRepository seats,
             TripRepository trips, TripStopSnapshotRepository stops,
             OperatorRouteFareRepository fares, SeatHoldInventoryRepository inventory,
-            SeatHoldProperties properties, Clock clock) {
+            SeatHoldProperties properties, Clock clock, TransportOperatorRepository operators) {
         this.journeys = journeys;
         this.seats = seats;
         this.trips = trips;
@@ -44,6 +47,7 @@ public class SeatHoldService {
         this.inventory = inventory;
         this.properties = properties;
         this.clock = clock;
+        this.operators = operators;
     }
 
     @Transactional
@@ -53,8 +57,12 @@ public class SeatHoldService {
                 request.dropoffLocationId());
         Trip lockedTrip = trips.lockById(request.tripId())
                 .orElseThrow(SeatHoldService::notFound);
+        var operator=operators.lockById(lockedTrip.getOperatorRoute().getOperator().getId())
+                .orElseThrow(SeatHoldService::notFound);
         LocalDateTime now = utc(clock.instant());
-        if (lockedTrip.getStatus() != TripStatus.SCHEDULED
+        if (operator.getStatus()!=OperatorStatus.ACTIVE
+                || lockedTrip.getOperatorRoute().getStatus()!=ActiveStatus.ACTIVE
+                || lockedTrip.getStatus() != TripStatus.SCHEDULED
                 || journey.pickup().getPlannedDepartureTime() == null
                 || !journey.pickup().getPlannedDepartureTime().isAfter(now)) {
             throw tripNotBookable();

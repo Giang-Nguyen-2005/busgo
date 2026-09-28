@@ -1,6 +1,13 @@
 import axios from "axios";
 import type { ApiError } from "../types/api";
 const messages: Record<string, string> = {
+  OPERATOR_NOT_FOUND: "Không tìm thấy nhà xe.",
+  STAFF_NOT_FOUND: "Không tìm thấy nhân sự trong nhà xe.",
+  OPERATOR_CODE_ALREADY_EXISTS: "Mã nhà xe đã được sử dụng.",
+  STAFF_CODE_ALREADY_EXISTS: "Mã nhân sự đã được sử dụng trong nhà xe.",
+  STAFF_MEMBERSHIP_CONFLICT: "Tài khoản đã có liên kết nhân sự không phù hợp. Vui lòng kiểm tra lại.",
+  LAST_OPERATOR_ADMIN_REQUIRED: "Nhà xe phải luôn còn ít nhất một quản trị viên đang hoạt động.",
+  OPERATOR_ACTIVATION_NOT_ALLOWED: "Chưa thể kích hoạt nhà xe. Cần ít nhất một quản trị viên nhà xe đang hoạt động và có thể đăng nhập.",
   TRIP_NOT_FOUND: "Không tìm thấy chuyến xe.",
   TRIP_NOT_BOOKABLE: "Chuyến xe hiện không thể đặt. Vui lòng tìm chuyến khác.",
   INVALID_PICKUP_STOP: "Điểm đón không hợp lệ.",

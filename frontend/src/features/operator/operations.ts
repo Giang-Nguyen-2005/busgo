@@ -46,6 +46,7 @@ export function nextTripAction(status: TripStatus) {
 }
 export function operationErrorMessage(code?: string) {
   const messages: Record<string, string> = {
+    ACCESS_DENIED: "Tài khoản không có quyền truy cập hoặc nhà xe đã ngừng hoạt động.",
     INVALID_TRIP_STATUS_TRANSITION: "Trạng thái chuyến đã thay đổi hoặc thao tác không còn hợp lệ. Vui lòng kiểm tra trạng thái mới nhất.",
     PAYMENT_WINDOW_CLOSED: "Đã hết thời gian xác nhận thanh toán cho chuyến này.",
     TRIP_NOT_FOUND: "Không tìm thấy chuyến xe trong nhà xe của bạn.",

@@ -4,6 +4,7 @@ import { get } from "../../api/client";
 import type { User } from "../../types/customer";
 import { useAuth } from "./AuthProvider";
 import { Empty, ErrorState, Loading } from "../../components/ui";
+import { canAccessOperatorPath } from "./access";
 export function OperatorGuard() {
   const auth = useAuth();
   const location = useLocation();
@@ -23,12 +24,11 @@ export function OperatorGuard() {
   if (auth.loading || profile.isPending) return <Loading />;
   if (profile.isError)
     return <ErrorState error={profile.error} retry={() => profile.refetch()} />;
-  if (!auth.user?.roles.includes("OPERATOR_ADMIN"))
+  if (!canAccessOperatorPath(auth.user?.roles || [], location.pathname))
     return (
       <Empty title="403 — Không có quyền truy cập">
         <p>
-          Khu vực nhà xe yêu cầu quyền OPERATOR_ADMIN. OPERATOR_STAFF không có
-          quyền truy cập.
+          Tài khoản của bạn không có quyền truy cập trang này.
         </p>
         <Link to="/">Trang chủ</Link>
         <p>

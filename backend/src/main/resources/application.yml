@@ -26,6 +26,12 @@ busgo:
     max-seats-per-hold: ${MAX_SEATS_PER_HOLD:5}
     seat-hold-cleanup-interval: ${SEAT_HOLD_CLEANUP_INTERVAL:PT1M}
     seat-hold-cleanup-initial-delay: ${SEAT_HOLD_CLEANUP_INITIAL_DELAY:PT1M}
+  system-admin-bootstrap:
+    enabled: ${BUSGO_SYSTEM_ADMIN_BOOTSTRAP_ENABLED:false}
+    full-name: ${BUSGO_SYSTEM_ADMIN_FULL_NAME:}
+    email: ${BUSGO_SYSTEM_ADMIN_EMAIL:}
+    phone: ${BUSGO_SYSTEM_ADMIN_PHONE:}
+    password: ${BUSGO_SYSTEM_ADMIN_PASSWORD:}
 server:
   port: ${SERVER_PORT:8080}
   error:

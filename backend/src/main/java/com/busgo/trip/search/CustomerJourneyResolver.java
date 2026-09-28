@@ -6,6 +6,7 @@ import com.busgo.common.entity.ActiveStatus;
 import com.busgo.common.exception.BusinessException;
 import com.busgo.common.exception.ResourceNotFoundException;
 import com.busgo.route.entity.OperatorRouteFare;
+import com.busgo.operator.entity.OperatorStatus;
 import com.busgo.route.repository.OperatorRouteFareRepository;
 import com.busgo.trip.entity.*;
 import com.busgo.trip.repository.*;
@@ -37,6 +38,10 @@ public class CustomerJourneyResolver {
         }
         Trip trip = trips.findPublicById(tripId)
                 .orElseThrow(() -> new ResourceNotFoundException("TRIP_NOT_FOUND", "Trip was not found."));
+        if (trip.getOperatorRoute().getOperator().getStatus() != OperatorStatus.ACTIVE
+                || trip.getOperatorRoute().getStatus() != ActiveStatus.ACTIVE) {
+            throw notBookable("Trip is not bookable because its operator is inactive.");
+        }
         TripStop pickup = stops.findByTripIdAndLocationId(tripId, pickupLocationId)
                 .orElseThrow(() -> invalid("INVALID_PICKUP_STOP", "Pickup stop is not part of this trip."));
         TripStop dropoff = stops.findByTripIdAndLocationId(tripId, dropoffLocationId)

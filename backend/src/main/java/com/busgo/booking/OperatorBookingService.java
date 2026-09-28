@@ -30,7 +30,7 @@ public class OperatorBookingService {
     @Transactional(readOnly = true)
     public PagedResponse<OperatorBookingListItem> list(CurrentUser user, String q, Long tripId,
             BookingStatus status, PaymentStatus paymentStatus, LocalDate date, int page, int size) {
-        Long operatorId = context.requireAdminOperator(user).getId();
+        Long operatorId = context.requireOperatorMember(user).getId();
         BusGoTime.UtcWindow window = date == null ? null : BusGoTime.businessDate(date);
         String search = q == null || q.isBlank() ? null
                 : "%" + q.strip().toLowerCase(Locale.ROOT) + "%";
@@ -51,7 +51,7 @@ public class OperatorBookingService {
 
     @Transactional(readOnly = true)
     public OperatorBookingDetail detail(CurrentUser user, Long bookingId) {
-        Long operatorId = context.requireAdminOperator(user).getId();
+        Long operatorId = context.requireOperatorMember(user).getId();
         var row = queries.findOwnedDetail(operatorId, bookingId)
                 .orElseThrow(OperatorBookingService::notFound);
         var items = queries.findItems(operatorId, bookingId).stream().map(item ->

@@ -8,6 +8,7 @@ import { post } from "../api/client";
 import { useAuth } from "../features/auth/AuthProvider";
 import { email, name, password, phone } from "../features/auth/forms";
 import type { LoginResponse } from "../types/customer";
+import { loginDestination } from "../features/auth/access";
 import { safeReturn } from "../utils/format";
 import { ErrorState, Field } from "../components/ui";
 
@@ -75,7 +76,7 @@ function LoginForm() {
       post<LoginResponse>("/auth/login", values),
     onSuccess: (tokens) => {
       auth.login(tokens);
-      navigate(safeReturn(params.get("returnTo")), { replace: true });
+      navigate(loginDestination(tokens.user.roles, params.get("returnTo")), { replace: true });
     },
   });
   return (

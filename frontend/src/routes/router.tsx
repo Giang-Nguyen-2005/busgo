@@ -7,6 +7,20 @@ import { Empty } from "../components/ui";
 
 export const router = createBrowserRouter([
   {
+    path: "/admin",
+    lazy: async () => ({ Component: (await import("../features/auth/SystemAdminGuard")).SystemAdminGuard }),
+    errorElement: <Empty title="Không thể hiển thị khu vực quản trị"><a href="/admin">Tải lại</a></Empty>,
+    children: [{
+      lazy: async () => ({ Component: (await import("../layouts/AdminLayout")).AdminLayout }),
+      children: [
+        { index: true, lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminHomePage }) },
+        { path: "operators", lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminOperatorsPage }) },
+        { path: "operators/:operatorId", lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminOperatorDetailPage }) },
+        { path: "*", element: <Empty title="Không tìm thấy trang quản trị"><Link to="/admin">Tổng quan</Link></Empty> },
+      ],
+    }],
+  },
+  {
     path: "/operator",
     lazy: async () => ({
       Component: (await import("../features/auth/OperatorGuard")).OperatorGuard,
@@ -22,6 +36,10 @@ export const router = createBrowserRouter([
           Component: (await import("../layouts/OperatorLayout")).OperatorLayout,
         }),
         children: [
+          {
+            path: "staff",
+            lazy: async () => ({ Component: (await import("../features/operator/StaffManagement")).StaffManagement }),
+          },
           {
             path: "bookings",
             lazy: async () => ({ Component: (await import("../pages/operator/OperatorBookingsPages")).OperatorBookingsPage }),

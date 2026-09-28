@@ -51,7 +51,7 @@ public class TripService {
     @Transactional(readOnly = true)
     public PagedResponse<TripSummaryResponse> list(CurrentUser user, LocalDate date, Long routeId,
             Long busId, TripStatus status, int page, int size) {
-        Long operatorId = context.requireAdminOperator(user).getId();
+        Long operatorId = context.requireOperatorMember(user).getId();
         LocalDateTime start = date == null ? null : date.atStartOfDay();
         LocalDateTime end = date == null ? null : date.plusDays(1).atStartOfDay();
         var result = trips.searchOwned(operatorId, start, end, routeId, busId, status,
@@ -62,7 +62,7 @@ public class TripService {
 
     @Transactional(readOnly = true)
     public TripDetailResponse get(CurrentUser user, Long tripId) {
-        Long operatorId = context.requireAdminOperator(user).getId();
+        Long operatorId = context.requireOperatorMember(user).getId();
         Trip trip = trips.findOwnedById(tripId, operatorId)
                 .orElseThrow(() -> new ResourceNotFoundException("TRIP_NOT_FOUND", "Trip was not found."));
         List<TripStopResponse> stopResponses = tripStops.findByTripIdOrderByStopOrderAsc(tripId).stream()

@@ -29,7 +29,7 @@ public class OperatorTripOperationsService {
 
     @Transactional(readOnly = true)
     public PassengerManifest manifest(CurrentUser user, Long tripId) {
-        Long operatorId = context.requireAdminOperator(user).getId();
+        Long operatorId = context.requireOperatorMember(user).getId();
         Trip trip = ownedTrip(operatorId, tripId);
         var passengers = queries.manifest(operatorId, tripId).stream().map(row ->
                 new PassengerManifestRow(row.bookingId(), row.bookingCode(), row.bookingStatus(),
@@ -46,7 +46,7 @@ public class OperatorTripOperationsService {
 
     @Transactional(readOnly = true)
     public TripOccupancy occupancy(CurrentUser user, Long tripId) {
-        Long operatorId = context.requireAdminOperator(user).getId();
+        Long operatorId = context.requireOperatorMember(user).getId();
         Trip trip = ownedTrip(operatorId, tripId);
         List<OperatorOccupancyQueryRepository.OccupancyRow> rows =
                 queries.occupancy(operatorId, tripId);

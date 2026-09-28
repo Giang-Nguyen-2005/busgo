@@ -13,6 +13,7 @@ export function resolve(specifier, context, next) {
   return next(specifier, context);
 }
 export function load(url, context, next) {
+  if (url.endsWith(".css")) return { format: "module", shortCircuit: true, source: "export default {};" };
   if (/\/src\/.*\.tsx?$/.test(url)) {
     const source = readFileSync(new URL(url), "utf8").replace("import.meta.env.VITE_API_BASE_URL", "undefined");
     return { format: "module", shortCircuit: true, source: ts.transpileModule(source, {

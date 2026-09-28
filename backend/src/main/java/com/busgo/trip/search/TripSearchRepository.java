@@ -43,6 +43,8 @@ public class TripSearchRepository {
               and dropoff.plannedArrivalTime is not null
               and pickup.stopOrder < dropoff.stopOrder
               and fare.status = :active
+              and operatorRoute.status = :active
+              and op.status = :operatorActive
               and fare.price > 0
               and t.status = :scheduled
               and pickup.plannedDepartureTime >= :dateStart
@@ -70,6 +72,7 @@ public class TripSearchRepository {
         query.setParameter("pickupLocationId", criteria.pickupLocationId());
         query.setParameter("dropoffLocationId", criteria.dropoffLocationId());
         query.setParameter("active", ActiveStatus.ACTIVE);
+        query.setParameter("operatorActive", com.busgo.operator.entity.OperatorStatus.ACTIVE);
         query.setParameter("scheduled", TripStatus.SCHEDULED);
         query.setParameter("dateStart", criteria.dateStart());
         query.setParameter("dateEnd", criteria.dateEnd());
