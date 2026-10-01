@@ -16,6 +16,7 @@ export const router = createBrowserRouter([
       children: [
         { index: true, lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminHomePage }) },
         { path: "operators", lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminOperatorsPage }) },
+        { path: "operators/new", lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminOperatorCreatePage }) },
         { path: "operators/:operatorId", lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminOperatorDetailPage }) },
         { path: "*", element: <Empty title="Không tìm thấy trang quản trị"><Link to="/admin">Tổng quan</Link></Empty> },
       ],

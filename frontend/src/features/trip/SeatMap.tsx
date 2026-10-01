@@ -1,3 +1,4 @@
+import { seatTypeLabel, seatLimitDisabled } from "../customer/presentation";
 import { Armchair } from "lucide-react";
 import type { Seat } from "../../types/customer";
 export function SeatMap({
@@ -30,6 +31,7 @@ export function SeatMap({
           Không khả dụng
         </span>
       </div>
+      {selected.length >= 5 && <p className="notice info" role="status">Bạn có thể chọn tối đa 5 chỗ. Bỏ chọn một chỗ để đổi lựa chọn; chỗ viền nét đứt vẫn còn trống.</p>}
       <div className="seat-floors">
         {floors.map((floor) => {
           const group = seats.filter((seat) => seat.floor === floor);
@@ -51,7 +53,7 @@ export function SeatMap({
                       <button
                         type="button"
                         key={seat.tripSeatId}
-                        className={`seat ${selected.includes(seat.tripSeatId) ? "selected" : ""}`}
+                        className={`seat ${selected.includes(seat.tripSeatId) ? "selected" : ""} ${!seat.available ? "unavailable" : seatLimitDisabled(seat.available, selected.includes(seat.tripSeatId), selected.length) ? "limit-disabled" : ""}`}
                         style={{
                           gridRow: seat.row - minRow + 1,
                           gridColumn: seat.column - minColumn + 1,
@@ -63,8 +65,8 @@ export function SeatMap({
                             !selected.includes(seat.tripSeatId))
                         }
                         aria-pressed={selected.includes(seat.tripSeatId)}
-                        aria-label={`Ghế ${seat.seatCode}, ${seat.seatType}, ${seat.available ? "còn trống" : "không khả dụng"}`}
-                        title={seat.seatType}
+                        aria-label={`Chỗ ${seat.seatCode}, ${seatTypeLabel(seat.seatType)}, ${seat.available ? "còn trống" : "không khả dụng"}`}
+                        title={seatTypeLabel(seat.seatType)}
                         onClick={() => onToggle(seat.tripSeatId)}
                       >
                         <Armchair size={21} />

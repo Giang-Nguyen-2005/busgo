@@ -1,66 +1,83 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useState, type ReactNode } from "react";
+import { useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { adminApi } from "../../api/adminApi";
-import { Empty, ErrorState, Field } from "../../components/ui";
-import { AccountFields, ContactFields, ManagementFilters, StatusSelect } from "../../features/operator/ManagementFields";
-import { StaffManagement } from "../../features/operator/StaffManagement";
-import { adminOperatorFilters, contactRequest, createOperatorRequest, managementLabel } from "../../features/operator/management";
-import { Confirm, OperatorPageHeader, OperatorTable, Pagination, positiveId, QueryState, useOperatorFilters } from "../../features/operator/shared";
-import type { AdminOperatorDetail } from "../../types/admin";
-import { dateTime } from "../../utils/format";
+import { Empty, ErrorState, Field, Loading, PasswordField } from "../../components/ui";
+import { adminOperatorFilters, contactRequest, createOperatorRequest, managementLabel, staffFilters } from "../../features/operator/management";
+import type { AdminOperatorDetail, AdminOperatorListItem } from "../../types/admin";
+import type { ActiveStatus, OperatorStaff } from "../../types/operator";
+import type { PagedResponse } from "../../types/api";
+import { dateTime, positiveId } from "../../utils/format";
+import { blockingQueryError, RefreshNotice } from "../../features/customer/QueryFeedback";
+import { activateExplanation, deactivateExplanation, adminTotalRequests, legacyCreatePath, useAdminSearch } from "../../features/admin/presentation";
 
+function QueryContent<T>({ query, children }: { query: UseQueryResult<T>; children: (data: T) => ReactNode }) {
+ if (query.isPending) return <Loading />;
+ if (blockingQueryError(query)) return <ErrorState error={query.error} retry={() => query.refetch()} />;
+ return <><RefreshNotice query={query} />{children(query.data!)}</>;
+}
+export function AdminBadge({ status }: { status: string }) { return <span className={'admin-badge ' + status}>{managementLabel(status)}</span>; }
+function Header({ title, children }: { title: string; children?: ReactNode }) { return <div className="admin-heading"><h1>{title}</h1><div className="admin-actions">{children}</div></div>; }
 export function AdminHomePage() {
-  return <><OperatorPageHeader title="Quản trị hệ thống" /><p>Quản lý thông tin, trạng thái nhà xe và xem nhân sự.</p><div className="operator-quick-actions"><Link className="card" to="/admin/operators">Danh sách nhà xe</Link><Link className="card" to="/admin/operators?create=1">Tạo nhà xe</Link></div></>;
+ return <><Header title="Tổng quan hệ thống"><Link className="button" to="/admin/operators/new">Tạo nhà xe</Link></Header><p className="muted">Quản lý nhà xe và tra cứu nhân sự trong hệ thống BusGo.</p><div className="admin-stats">{adminTotalRequests.map(item => <AdminTotal key={item.label} item={item} />)}</div><p className="fine-print">Các tổng được tải riêng từ danh sách nhà xe và có thể cập nhật ở thời điểm khác nhau.</p><section className="card"><h2>Tra cứu nhà xe</h2><p>Tìm theo tên, mã, số điện thoại hoặc email.</p><Link className="button secondary" to="/admin/operators">Mở danh sách nhà xe</Link></section></>;
+}
+function AdminTotal({ item }: { item: typeof adminTotalRequests[number] }) {
+ const query = useQuery({ queryKey: ["admin", "operators", "total", item.params], queryFn: ({ signal }) => adminApi.operators(item.params, signal) });
+ return <section className="card admin-stat"><Link to={item.href}>{item.label}</Link><QueryContent query={query}>{data => <strong>{data.pagination.totalElements}</strong>}</QueryContent></section>;
+}
+export function AdminFilters({ staff = false }: { staff?: boolean }) {
+ const [params, setParams] = useSearchParams(); const { draft, setDraft } = useAdminSearch();
+ const set = (key: string, value: string) => setParams(previous => { const next = new URLSearchParams(previous); value ? next.set(key,value) : next.delete(key); next.delete("page"); return next; });
+ return <div className="admin-filters"><Field label="Tìm kiếm" description={staff ? "Theo mã nhân sự, tên, email hoặc điện thoại." : "Theo tên, mã nhà xe, email hoặc điện thoại."} value={draft} maxLength={100} onChange={e => setDraft(e.target.value)} /><label className="field"><span>{staff ? "Trạng thái thành viên" : "Trạng thái nhà xe"}</span><select value={params.get("status") || ""} onChange={e => set("status",e.target.value)}><option value="">Tất cả</option><option value="ACTIVE">Hoạt động</option><option value="INACTIVE">Ngừng hoạt động</option></select></label>{staff && <label className="field"><span>Vai trò</span><select value={params.get("role") || ""} onChange={e => set("role",e.target.value)}><option value="">Tất cả</option><option value="OPERATOR_ADMIN">Quản trị viên nhà xe</option><option value="OPERATOR_STAFF">Nhân viên nhà xe</option></select></label>}</div>;
+}
+function AdminPagination({ pagination: p }: { pagination: PagedResponse<unknown>["pagination"] }) {
+ const [, setParams] = useSearchParams();
+ const set = (key: string, value: number) => setParams(previous => { const next = new URLSearchParams(previous); next.set(key,String(value)); if (key !== "page") next.delete("page"); return next; });
+ return <nav className="admin-pagination" aria-label="Phân trang"><span>{p.totalElements} kết quả · Trang {p.page + 1}/{Math.max(1,p.totalPages)}</span><label>Số dòng <select value={p.size} onChange={e => set("size",Number(e.target.value))}>{[10,20,50,100].map(n => <option key={n}>{n}</option>)}</select></label><button className="secondary" disabled={p.page === 0} onClick={() => set("page",p.page-1)}>Trước</button><button className="secondary" disabled={p.page+1 >= p.totalPages} onClick={() => set("page",p.page+1)}>Sau</button></nav>;
+}
+export function OperatorDirectory({ rows }: { rows: AdminOperatorListItem[] }) {
+ return <table className="admin-table"><thead><tr>{["Nhà xe","Liên hệ","Trạng thái","Nhân sự","Thao tác"].map(h => <th scope="col" key={h}>{h}</th>)}</tr></thead><tbody>{rows.map(o => <tr key={o.id}><td><Link to={'/admin/operators/' + o.id}><strong>{o.name}</strong></Link><small>{o.code}</small></td><td data-label="Liên hệ">{o.phone || "Chưa có điện thoại"}<small>{o.email || "Chưa có email"}</small></td><td data-label="Trạng thái"><AdminBadge status={o.status} /></td><td data-label="Nhân sự">{o.activeStaffCount} thành viên hoạt động<small>{o.activeAdminCount} quản trị viên hoạt động, có thể đăng nhập</small></td><td><Link className="button secondary" to={'/admin/operators/' + o.id}>Chi tiết</Link></td></tr>)}</tbody></table>;
 }
 export function AdminOperatorsPage() {
-  const { params, set } = useOperatorFilters();
-  const filters = adminOperatorFilters(params);
-  const query = useQuery({ queryKey: ["admin", "operators", filters], queryFn: ({ signal }) => adminApi.operators(filters, signal) });
-  return <><OperatorPageHeader title="Nhà xe"><button onClick={() => set("create", "1")}>Tạo nhà xe</button></OperatorPageHeader>
-    {params.get("create") === "1" && <CreateOperatorForm cancel={() => set("create", "")} />}
-    <ManagementFilters params={params} set={set} /><QueryState query={query}>{result => <>
-      <OperatorTable headers={["Mã nhà xe", "Tên", "Điện thoại", "Email", "Trạng thái", "Nhân sự hoạt động", "Quản trị viên hoạt động", "Ngày tạo"]} empty={!result.data.length}>
-        {result.data.map(o => <tr key={o.id}><td><Link to={`/admin/operators/${o.id}`}>{o.code}</Link></td><td>{o.name}</td><td>{o.phone || "—"}</td><td>{o.email || "—"}</td><td>{managementLabel(o.status)}</td><td>{o.activeStaffCount}</td><td>{o.activeAdminCount}</td><td>{dateTime(o.createdAt)}</td></tr>)}
-      </OperatorTable><Pagination pagination={result.pagination} set={set} /></>}</QueryState></>;
+ const [params] = useSearchParams(); const filters = adminOperatorFilters(params); const redirect = legacyCreatePath(params);
+ const query = useQuery({ queryKey: ["admin","operators",filters], queryFn: ({ signal }) => adminApi.operators(filters,signal), enabled: !redirect });
+ if (redirect) return <Navigate to={redirect} replace />;
+ return <><Header title="Nhà xe"><Link className="button" to="/admin/operators/new">Tạo nhà xe</Link></Header><AdminFilters /><QueryContent query={query}>{result => <>{result.data.length ? <OperatorDirectory rows={result.data} /> : <Empty title={filters.q || filters.status ? "Không có nhà xe khớp bộ lọc" : "Chưa có nhà xe"}><Link to={filters.q || filters.status ? "/admin/operators" : "/admin/operators/new"}>{filters.q || filters.status ? "Xóa bộ lọc" : "Tạo nhà xe đầu tiên"}</Link></Empty>}<AdminPagination pagination={result.pagination} /></>}</QueryContent></>;
 }
-function CreateOperatorForm({ cancel }: { cancel: () => void }) {
-  const navigate = useNavigate();
-  const cache = useQueryClient();
-  const mutation = useMutation({ mutationFn: (data: FormData) => adminApi.createOperator(createOperatorRequest(data)),
-    onSuccess: async operator => { await cache.invalidateQueries({ queryKey: ["admin", "operators"] }); navigate(`/admin/operators/${operator.id}`); } });
-  return <form className="card form-stack management-form" onSubmit={e => { e.preventDefault(); mutation.mutate(new FormData(e.currentTarget)); }}><fieldset disabled={mutation.isPending}>
-    <h2>Thông tin nhà xe</h2><Field label="Mã nhà xe" name="code" required maxLength={50} pattern="[A-Za-z0-9_\-]+" /><ContactFields /><StatusSelect />
-    <h2>Quản trị viên ban đầu</h2><p>Bắt buộc tạo một quản trị viên ban đầu cho nhà xe.</p><AccountFields prefix="admin." />
-    {mutation.isError && <ErrorState error={mutation.error} />}
-    <div className="operator-actions"><button>{mutation.isPending ? "Đang tạo…" : "Tạo nhà xe"}</button><button type="button" className="secondary" onClick={cancel}>Hủy</button></div>
-  </fieldset></form>;
+function ContactFields({ values }: { values?: AdminOperatorDetail }) {
+ return <div className="admin-grid"><Field label="Tên nhà xe *" name="name" required pattern=".*\S.*" maxLength={150} defaultValue={values?.name} /><Field label="Điện thoại nhà xe (không bắt buộc)" name="phone" type="tel" maxLength={20} defaultValue={values?.phone || ""} /><Field label="Email nhà xe (không bắt buộc)" name="email" type="email" maxLength={150} defaultValue={values?.email || ""} /><Field label="Địa chỉ (không bắt buộc)" name="address" maxLength={255} defaultValue={values?.address || ""} /></div>;
+}
+export function AdminOperatorCreatePage() {
+ const navigate = useNavigate(); const cache = useQueryClient();
+ const mutation = useMutation({ mutationFn: (data: FormData) => adminApi.createOperator(createOperatorRequest(data)), onSuccess: async o => { await cache.invalidateQueries({ queryKey: ["admin","operators"] }); navigate('/admin/operators/' + o.id, { replace: true }); } });
+ return <><Link to="/admin/operators">← Nhà xe</Link><Header title="Tạo nhà xe" /><p className="muted">Các trường có dấu * là bắt buộc.</p><form className="admin-onboarding" onSubmit={e => { e.preventDefault(); mutation.mutate(new FormData(e.currentTarget)); }}><fieldset disabled={mutation.isPending}><section className="card form-stack"><h2>1. Thông tin nhà xe</h2><Field label="Mã nhà xe *" description="Chữ cái, số, dấu gạch ngang hoặc gạch dưới. Không thể đổi sau khi tạo." name="code" required maxLength={50} pattern="[A-Za-z0-9_\-]+" /><ContactFields /></section><section className="card form-stack"><h2>2. Quản trị viên ban đầu</h2><p className="notice info">Tài khoản được tạo trực tiếp, không có email mời. Mật khẩu ban đầu phải được chia sẻ qua kênh riêng ngoài hệ thống.</p><div className="admin-grid"><Field label="Họ và tên *" name="admin.fullName" required pattern=".*\S.*" maxLength={100} /><Field label="Email đăng nhập *" name="admin.email" type="email" required maxLength={150} autoComplete="off" /><Field label="Số điện thoại *" name="admin.phone" type="tel" required pattern=".*\S.*" maxLength={20} /><Field label="Mã nhân sự *" name="admin.staffCode" required pattern=".*\S.*" maxLength={50} /><PasswordField label="Mật khẩu ban đầu *" name="admin.password" required minLength={8} autoComplete="new-password" description="Ít nhất 8 ký tự, tối đa 72 byte UTF-8." onChange={e => e.currentTarget.setCustomValidity(new TextEncoder().encode(e.currentTarget.value).length > 72 ? "Mật khẩu tối đa 72 byte UTF-8." : "")} /></div></section><section className="card form-stack"><h2>3. Trạng thái ban đầu</h2><label className="field"><span>Trạng thái nhà xe *</span><select name="status" defaultValue="ACTIVE"><option value="ACTIVE">Hoạt động</option><option value="INACTIVE">Ngừng hoạt động</option></select></label><p className="muted">Nhà xe ngừng hoạt động chưa thể quản lý hoặc nhận giao dịch mới.</p></section>{mutation.isError && <ErrorState error={mutation.error} />}<div className="admin-actions"><button>{mutation.isPending ? "Đang tạo…" : "Tạo nhà xe và quản trị viên"}</button><Link className="button secondary" to="/admin/operators">Quay lại danh sách</Link></div></fieldset></form></>;
 }
 export function AdminOperatorDetailPage() {
-  const id = positiveId(useParams().operatorId || null);
-  const query = useQuery({ queryKey: ["admin", "operators", id], queryFn: ({ signal }) => adminApi.operator(id!, signal), enabled: !!id });
-  if (!id) return <Empty title="Không tìm thấy nhà xe"><Link to="/admin/operators">Danh sách nhà xe</Link></Empty>;
-  return <><OperatorPageHeader title="Chi tiết nhà xe"><Link to="/admin/operators">Danh sách nhà xe</Link></OperatorPageHeader><QueryState query={query}>{operator => <OperatorDetail key={operator.id} operator={operator} />}</QueryState><StaffManagement key={id} operatorId={id} /></>;
+ const raw = useParams().operatorId; const id = Number(raw);
+ const query = useQuery({ queryKey: ["admin","operators",id], queryFn: ({ signal }) => adminApi.operator(id,signal), enabled: positiveId(raw) });
+ if (!positiveId(raw)) return <Empty title="Không tìm thấy nhà xe"><Link to="/admin/operators">Danh sách nhà xe</Link></Empty>;
+ return <><nav aria-label="Đường dẫn"><Link to="/admin">Tổng quan</Link> / <Link to="/admin/operators">Nhà xe</Link> / Chi tiết</nav><QueryContent query={query}>{o => <OperatorDetail key={o.id} operator={o} />}</QueryContent></>;
 }
-function OperatorDetail({ operator: o }: { operator: AdminOperatorDetail }) {
-  const cache = useQueryClient();
-  const [confirm, setConfirm] = useState(false);
-  const [message, setMessage] = useState("");
-  const refresh = () => cache.invalidateQueries({ queryKey: ["admin", "operators"] });
-  const contact = useMutation({ mutationFn: (data: FormData) => adminApi.updateOperator(o.id, contactRequest(data)), onSuccess: () => setMessage("Đã cập nhật thông tin nhà xe."), onSettled: refresh });
-  const status = useMutation({ mutationFn: () => adminApi.updateStatus(o.id, o.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"), onSuccess: () => { setConfirm(false); setMessage("Đã cập nhật trạng thái nhà xe."); }, onSettled: refresh });
-  return <><h2>{o.name}</h2><p>Trạng thái: <strong>{managementLabel(o.status)}</strong></p>{message && <p role="status">{message}</p>}
-    <form key={`${o.id}-${o.updatedAt}`} className="card form-stack management-form" onSubmit={e => { e.preventDefault(); setMessage(""); contact.mutate(new FormData(e.currentTarget)); }}><fieldset disabled={contact.isPending || status.isPending}>
-      <Field label="Mã nhà xe (không thể thay đổi)" value={o.code} readOnly /><ContactFields values={{ name: o.name, phone: o.phone || "", email: o.email || "", address: o.address || "" }} />
-      {contact.isError && <ErrorState error={contact.error} />}<button>{contact.isPending ? "Đang lưu…" : "Lưu thông tin liên hệ"}</button>
-    </fieldset></form>
-    <section className="card management-form"><h3>Trạng thái nhà xe</h3>{status.isError && <ErrorState error={status.error} />}
-      {confirm ? <Confirm pending={status.isPending} cancel={() => setConfirm(false)} confirm={() => status.mutate()} text={o.status === "ACTIVE"
-        ? "Ngừng hoạt động sẽ dừng quyền quản lý nhà xe và giao dịch mới của khách hàng. Chuyến xe, đặt vé, thanh toán và vé hiện có KHÔNG tự động bị hủy hoặc hoàn tiền."
-        : "Kích hoạt nhà xe yêu cầu ít nhất một quản trị viên nhà xe đang hoạt động và có thể đăng nhập."} />
-        : <button disabled={contact.isPending} onClick={() => { status.reset(); setMessage(""); setConfirm(true); }}>{o.status === "ACTIVE" ? "Ngừng hoạt động nhà xe" : "Kích hoạt nhà xe"}</button>}
-    </section>
-    <dl className="management-grid card management-form"><div><dt>Tổng nhân sự / đang hoạt động</dt><dd>{o.staffCounts.total} / {o.staffCounts.active}</dd></div><div><dt>Quản trị viên / nhân viên</dt><dd>{o.staffCounts.admins} / {o.staffCounts.staff}</dd></div>
-      <div><dt>Xe / tuyến vận hành</dt><dd>{o.operationalCounts.buses} / {o.operationalCounts.routes}</dd></div><div><dt>Chuyến / đặt vé</dt><dd>{o.operationalCounts.trips} / {o.operationalCounts.bookings}</dd></div><div><dt>Ngày tạo</dt><dd>{dateTime(o.createdAt)}</dd></div><div><dt>Cập nhật lần cuối</dt><dd>{dateTime(o.updatedAt)}</dd></div></dl>
-  </>;
+export function OperatorDetail({ operator: o }: { operator: AdminOperatorDetail }) {
+ const cache = useQueryClient(); const [editing, setEditing] = useState(false); const [message, setMessage] = useState(""); const [target, setTarget] = useState<ActiveStatus | null>(null);
+ const refresh = () => cache.invalidateQueries({ queryKey: ["admin","operators"] });
+ const status = useMutation({ mutationFn: (value: ActiveStatus) => adminApi.updateStatus(o.id,value), onSuccess: () => { setTarget(null); setMessage("Đã cập nhật trạng thái nhà xe."); }, onSettled: refresh });
+ return <><Header title={o.name}><AdminBadge status={o.status} /></Header><p className="muted">Mã nhà xe: {o.code}</p>{message && <p className="notice success" role="status">{message}</p>}<section className="card"><h2>Tổng quan nhà xe</h2><dl className="admin-counts">{[["Tổng nhân sự",o.staffCounts.total],["Thành viên hoạt động",o.staffCounts.active],["Có vai trò quản trị viên",o.staffCounts.admins],["Có vai trò nhân viên",o.staffCounts.staff],["Tổng xe",o.operationalCounts.buses],["Tổng tuyến",o.operationalCounts.routes],["Tổng chuyến",o.operationalCounts.trips],["Tổng đặt vé",o.operationalCounts.bookings]].map(([label,value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><p className="fine-print">Số lượng vai trò không đồng nghĩa với số tài khoản hoạt động có thể đăng nhập. Tổng xe, tuyến, chuyến và đặt vé là tổng bản ghi.</p></section>
+ <section className="card"><div className="admin-heading"><h2>Thông tin liên hệ</h2>{!editing && <button className="secondary" onClick={() => setEditing(true)}>Chỉnh sửa</button>}</div>{editing ? <ContactEditor operator={o} close={() => setEditing(false)} saved={() => { setEditing(false); setMessage("Đã cập nhật thông tin nhà xe."); }} /> : <dl className="admin-grid"><div><dt>Tên nhà xe</dt><dd>{o.name}</dd></div><div><dt>Điện thoại</dt><dd>{o.phone || "Chưa cung cấp"}</dd></div><div><dt>Email</dt><dd>{o.email || "Chưa cung cấp"}</dd></div><div><dt>Địa chỉ</dt><dd>{o.address || "Chưa cung cấp"}</dd></div></dl>}</section>
+ <AdminStaff operatorId={o.id} />
+ <section className="card admin-status"><h2>Trạng thái nhà xe</h2><p>{o.status === "ACTIVE" ? "Ngừng hoạt động ảnh hưởng đến quyền quản lý và giao dịch mới." : activateExplanation}</p>{status.isError && <ErrorState error={status.error} />}{target ? <div className="admin-confirm" role="group" aria-label="Xác nhận thay đổi trạng thái"><p>{target === "INACTIVE" ? deactivateExplanation : activateExplanation}</p><div className="admin-actions"><button className={target === "INACTIVE" ? "admin-danger" : ""} disabled={status.isPending} onClick={() => status.mutate(target)}>{status.isPending ? "Đang cập nhật…" : target === "INACTIVE" ? "Ngừng hoạt động" : "Kích hoạt nhà xe"}</button><button className="secondary" disabled={status.isPending} onClick={() => setTarget(null)}>Quay lại</button></div></div> : <button disabled={editing} className={o.status === "ACTIVE" ? "admin-danger" : ""} onClick={() => { status.reset(); setTarget(o.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"); }}>{o.status === "ACTIVE" ? "Ngừng hoạt động nhà xe" : "Kích hoạt nhà xe"}</button>}{editing && <p className="fine-print">Hoàn tất chỉnh sửa liên hệ trước khi thay đổi trạng thái.</p>}</section><p className="admin-metadata">Ngày tạo: {dateTime(o.createdAt)} · Cập nhật lần cuối: {dateTime(o.updatedAt)}</p></>;
+}
+export function ContactEditor({ operator, close, saved }: { operator: AdminOperatorDetail; close: () => void; saved: () => void }) {
+ // Snapshot only when editing starts. Background refetches must never reset inputs.
+ const [initial] = useState(operator); const [dirty,setDirty] = useState(false); const [discard,setDiscard] = useState(false); const cache = useQueryClient();
+ const mutation = useMutation({ mutationFn: (data: FormData) => adminApi.updateOperator(operator.id,contactRequest(data)), onSuccess: saved, onSettled: () => cache.invalidateQueries({ queryKey: ["admin","operators"] }) });
+ return <form className="form-stack" onChange={() => setDirty(true)} onSubmit={e => { e.preventDefault(); mutation.mutate(new FormData(e.currentTarget)); }}><fieldset disabled={mutation.isPending}><ContactFields values={initial} />{operator.updatedAt !== initial.updatedAt && <p className="notice warning">Thông tin trên hệ thống vừa thay đổi. Nội dung bạn đang nhập được giữ nguyên; kiểm tra trước khi lưu.</p>}{mutation.isError && <ErrorState error={mutation.error} />}<div className="admin-actions"><button>{mutation.isPending ? "Đang lưu…" : "Lưu thông tin liên hệ"}</button><button type="button" className="secondary" onClick={() => dirty ? setDiscard(true) : close()}>Hủy chỉnh sửa</button></div>{discard && <div className="admin-confirm"><p>Bỏ các thay đổi chưa lưu?</p><button type="button" className="secondary" onClick={close}>Bỏ thay đổi</button> <button type="button" className="secondary" onClick={() => setDiscard(false)}>Tiếp tục chỉnh sửa</button></div>}</fieldset></form>;
+}
+export function AdminStaffTable({ rows }: { rows: OperatorStaff[] }) {
+ return <table className="admin-table"><thead><tr>{["Nhân sự","Liên hệ","Thành viên","Vai trò / tài khoản","Ngày tạo"].map(h => <th key={h} scope="col">{h}</th>)}</tr></thead><tbody>{rows.map(s => <tr key={s.staffId}><td><strong>{s.user.fullName}</strong><small>Mã: {s.staffCode || "Chưa có"}</small></td><td data-label="Liên hệ">{s.user.email}<small>{s.user.phone || "Chưa có điện thoại"}</small></td><td data-label="Thành viên"><AdminBadge status={s.membershipStatus} /></td><td data-label="Vai trò / tài khoản">{managementLabel(s.role)}<small>Tài khoản: {managementLabel(s.user.status)}</small></td><td data-label="Ngày tạo">{dateTime(s.createdAt)}</td></tr>)}</tbody></table>;
+}
+function AdminStaff({ operatorId }: { operatorId: number }) {
+ const [params] = useSearchParams(); const filters = staffFilters(params);
+ const query = useQuery({ queryKey: ["admin","operators",operatorId,"staff",filters], queryFn: ({ signal }) => adminApi.staff(operatorId,filters,signal) });
+ return <section><h2>Nhân sự · Chỉ xem</h2><AdminFilters staff /><QueryContent query={query}>{result => <>{result.data.length ? <AdminStaffTable rows={result.data} /> : <Empty title={filters.q || filters.status || filters.role ? "Không có nhân sự khớp bộ lọc" : "Chưa có nhân sự"}><Link to={'/admin/operators/' + operatorId}>Xóa bộ lọc nhân sự</Link></Empty>}<AdminPagination pagination={result.pagination} /></>}</QueryContent></section>;
 }

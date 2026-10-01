@@ -1459,3 +1459,27 @@ no customer/admin redesign, commit, or push was performed. The usage-limit
 continuation finished verification/documentation only. Detailed file inventory,
 route behavior, evidence, practical limitations (including staff ID filters and
 booking-list seat counts), and deferred scope are in docs/m14a-verification.md.
+
+## M14B customer and system-admin UX implementation and verification
+
+Completed customer search/journey context, compact result cards, truthful bus
+imagery, five-seat-limit feedback, mobile summary ordering, payment/ticket/history
+presentation, profile feedback and role-aware navigation. System admin now has
+API-derived totals, a compact directory, dedicated `/admin/operators/new`
+onboarding, overview-first detail, stable contact drafts, read-only staff and
+explicit activation/deactivation consequences. Backend behavior and permissions
+remain authoritative; no backend or operator/staff redesign was included.
+
+Verification completed 2026-10-01: 65 frontend tests passed, TypeScript/Vite build
+passed and git diff --check passed. The isolated synthetic browser fixture covered
+13 surfaces at 320, 390, 768, 820, 1024 and 1440px (78 checks), with no document
+horizontal overflow. Scoped customer/admin body sizing preserves operator CSS.
+Focused interactions covered seat geometry/limits, contact validation/countdown,
+payment and repeat tickets, empty/refresh states, admin totals/search/contact draft
+stability/status rejection, profile feedback and filter keyboard focus. Shared
+Field accessible names remain stable when descriptions/errors appear.
+
+Existing Zod annotation and bundle-size warnings remain. No live backend, real
+credential/payment, physical-device or full screen-reader verification is claimed.
+No commit or push performed. File inventory, detailed evidence, fixture limits,
+unverified items and deferred scope are in docs/m14b-verification.md.

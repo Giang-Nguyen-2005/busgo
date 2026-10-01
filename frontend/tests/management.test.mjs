@@ -112,6 +112,6 @@ test('admin staff table is read-only and nullable fields are safe', () => {
   assert.match(html, /Đã khóa/); assert.match(html, /Lan/); assert.doesNotMatch(html, /<button/);
 });
 test('admin list renders real data, pagination and onboarding sections', () => {
-  const html = render(h(AdminOperatorsPage), ['SYSTEM_ADMIN'], '/admin/operators?create=1', {}, cache => cache.setQueryData(['admin', 'operators', adminOperatorFilters(new URLSearchParams())], { data: [{ id: 2, code: 'BUS2', name: 'Nhà xe 2', phone: null, email: null, status: 'ACTIVE', activeStaffCount: 3, activeAdminCount: 1, createdAt: '2026-09-28T00:00:00Z' }], pagination: { page: 0, size: 20, totalElements: 1, totalPages: 1 } }));
-  assert.match(html, /admin\/operators\/2/); assert.match(html, /1 kết quả/); assert.match(html, /Thông tin nhà xe/); assert.match(html, /Quản trị viên ban đầu/); assert.match(html, /không có email mời/);
+  const html = render(h(AdminOperatorsPage), ['SYSTEM_ADMIN'], '/admin/operators', {}, cache => cache.setQueryData(['admin', 'operators', adminOperatorFilters(new URLSearchParams())], { data: [{ id: 2, code: 'BUS2', name: 'Nhà xe 2', phone: null, email: null, status: 'ACTIVE', activeStaffCount: 3, activeAdminCount: 1, createdAt: '2026-09-28T00:00:00Z' }], pagination: { page: 0, size: 20, totalElements: 1, totalPages: 1 } }));
+  assert.match(html, /admin\/operators\/2/); assert.match(html, /1 kết quả/); assert.match(html, /admin\/operators\/new/); assert.match(html, /Tạo nhà xe/);
 });

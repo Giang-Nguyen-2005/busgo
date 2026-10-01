@@ -1,3 +1,4 @@
+import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -59,10 +60,10 @@ export function BookingPage() {
     },
   });
   const back = saved
-    ? tripLink(saved.tripId, saved.pickup.locationId, saved.dropoff.locationId)
+    ? tripLink(saved.tripId, saved.pickup.locationId, saved.dropoff.locationId) + (saved.searchContext ? "&search=" + encodeURIComponent(saved.searchContext) : "")
     : "/";
   const seconds = hold.data
-    ? Math.max(0, Math.ceil((Date.parse(hold.data.expiresAt) - now) / 1000))
+    ? Math.max(0, Math.ceil((Date.parse(hold.data!.expiresAt) - now) / 1000))
     : 0;
   const expired =
     hold.data?.status === "EXPIRED" ||
@@ -94,7 +95,7 @@ export function BookingPage() {
     );
   return (
     <>
-      <Steps current={1} />
+      <Steps current={1} /><RefreshNotice query={hold} />
       <div className="page-heading">
         <div>
           <h1>Hoàn tất thông tin đặt vé</h1>
@@ -105,7 +106,7 @@ export function BookingPage() {
       </div>
       {hold.isPending ? (
         <Loading />
-      ) : hold.isError ? (
+      ) : blockingQueryError(hold) ? (
         <>
           <ErrorState error={hold.error} retry={() => hold.refetch()} />
           <div className="actions">
@@ -118,11 +119,11 @@ export function BookingPage() {
           </div>
         </>
       ) : (
-        <div className="checkout-layout">
+        <div className="checkout-layout booking-checkout">
           <section className="card">
-            <h2>Thông tin liên hệ</h2>
+            <h2>Thông tin liên hệ đặt vé</h2>
             <p className="muted">
-              Thông tin này được sử dụng trên vé điện tử của bạn.
+              Thông tin dùng để liên hệ về đặt vé. Bạn chưa cung cấp tên riêng cho từng khách trên chỗ.
             </p>
             <form
               className="form-stack"
@@ -150,7 +151,7 @@ export function BookingPage() {
               />
               {booking.isError && (
                 <>
-                  <ErrorState error={booking.error} />
+                  <ErrorState error={booking.error} /><Link className="button secondary" to="/my-bookings">Kiểm tra Vé của tôi trước khi đặt lại</Link>
                   <p className="fine-print">
                     Nếu kết nối bị ngắt sau khi gửi, hãy{" "}
                     <Link to="/my-bookings">kiểm tra Vé của tôi</Link> trước khi
@@ -159,7 +160,7 @@ export function BookingPage() {
                 </>
               )}
               <button
-                disabled={booking.isPending || expired || hold.isFetching}
+                disabled={booking.isPending || expired || hold.isFetching || hold.isError}
               >
                 {booking.isPending
                   ? "Đang tạo đặt vé…"
@@ -171,15 +172,15 @@ export function BookingPage() {
             <h2>{saved.operatorName || "Hành trình của bạn"}</h2>
             {saved.routeName && <p className="muted">{saved.routeName}</p>}
             <Journey
-              pickup={hold.data.pickup.name}
-              dropoff={hold.data.dropoff.name}
-              departure={hold.data.pickup.departureTime}
-              arrival={hold.data.dropoff.arrivalTime}
+              pickup={hold.data!.pickup.name}
+              dropoff={hold.data!.dropoff.name}
+              departure={hold.data!.pickup.departureTime}
+              arrival={hold.data!.dropoff.arrivalTime}
             />
             <PriceSummary
-              seats={hold.data.seats.map((s) => s.seatCode)}
-              unit={hold.data.pricePerSeat}
-              total={hold.data.totalPrice}
+              seats={hold.data!.seats.map((s) => s.seatCode)}
+              unit={hold.data!.pricePerSeat}
+              total={hold.data!.totalPrice}
             />
             <div className={`notice ${seconds < 60 ? "warning" : "info"}`}>
               <Clock3 size={20} />

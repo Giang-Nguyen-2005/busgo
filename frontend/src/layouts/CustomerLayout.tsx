@@ -2,14 +2,18 @@ import { useEffect } from "react";
 import { BusFront, LogOut, UserRound } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthProvider";
+import { customerAccess } from "../features/customer/presentation";
+import "../features/customer/customer.css";
 export function CustomerLayout() {
   const auth = useAuth();
   const location = useLocation();
+  const customer = customerAccess(auth.user?.roles);
+  const workspace = auth.user?.roles.includes("SYSTEM_ADMIN") ? "/admin" : "/operator";
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
   return (
-    <>
+    <div className="customer-shell">
       <a className="skip-link" href="#main">
         Đến nội dung chính
       </a>
@@ -22,17 +26,17 @@ export function CustomerLayout() {
             BusGo<span className="brand-dot">.</span>
           </Link>
           <nav className="main-nav" aria-label="Điều hướng chính">
-            <NavLink to="/" end>
+            <NavLink className="home-nav" to="/" end>
               Trang chủ
             </NavLink>
-            {auth.authenticated && <NavLink to="/my-bookings">Vé của tôi</NavLink>}
+            {customer && <NavLink to="/my-bookings">Vé của tôi</NavLink>}
           </nav>
           <div className="account-nav">
             {auth.authenticated ? (
               <>
-                <Link className="profile-link" to="/profile">
+                <Link className="profile-link" to={customer ? "/profile" : workspace}>
                   <UserRound size={18} />
-                  <span>{auth.user?.fullName || "Tài khoản"}</span>
+                  <span>{customer ? "Hồ sơ" : "Khu vực quản lý"}</span>
                 </Link>
                 <button
                   className="icon-button"
@@ -75,17 +79,17 @@ export function CustomerLayout() {
           </div>
           <div>
             <Link to="/">Tìm chuyến xe</Link>
-            {auth.authenticated ? (
+            {customer ? (
               <>
                 <Link to="/my-bookings">Vé của tôi</Link>
                 <Link to="/profile">Tài khoản</Link>
               </>
             ) : (
-              <Link to="/login">Đăng nhập</Link>
+              <Link to={auth.authenticated ? workspace : "/login"}>{auth.authenticated ? "Khu vực quản lý" : "Đăng nhập"}</Link>
             )}
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 }

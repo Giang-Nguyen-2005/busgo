@@ -20,6 +20,7 @@ const messages: Record<string, string> = {
   SEAT_HOLD_EXPIRED: "Thời gian giữ chỗ đã hết. Vui lòng chọn lại ghế.",
   SEAT_HOLD_ACCESS_DENIED: "Bạn không có quyền sử dụng lượt giữ chỗ này.",
   BOOKING_NOT_FOUND: "Không tìm thấy đặt vé của bạn.",
+  PAYMENT_WINDOW_CLOSED: "Thanh toán không còn khả dụng cho đặt vé này. Vui lòng kiểm tra chi tiết đặt vé.",
   BOOKING_NOT_PAYABLE:
     "Đặt vé này không thể thanh toán. Vui lòng kiểm tra lại chi tiết.",
   TICKET_NOT_AVAILABLE:

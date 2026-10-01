@@ -76,6 +76,16 @@ apiClient.interceptors.response.use(
   },
 );
 
+// Customer/admin authorization loss follows the existing session-clearing flow.
+// Ignore responses from replaced sessions; operator behavior stays in operatorApi.
+apiClient.interceptors.response.use(response => response, error => {
+  const path = error.config?.url || "";
+  const protectedPath = /^\/(admin(?:\/|$)|bookings(?:\/|$)|seat-holds(?:\/|$)|users\/me(?:\/|$))/.test(path);
+  if (protectedPath && error.config?._sessionVersion === getSessionVersion()
+      && (error.response?.status === 401 || (error.response?.status === 403 && error.response?.data?.code === "ACCESS_DENIED"))) setTokens(null);
+  return Promise.reject(error);
+});
+
 export async function get<T>(
   path: string,
   params?: object,

@@ -1,3 +1,4 @@
+import { passwordCompletion } from "../features/customer/presentation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -84,6 +85,7 @@ function LoginForm() {
       className="form-stack"
       onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
     >
+      {params.get("passwordChanged") === "1" && <div className="notice success" role="status">{passwordCompletion}</div>}
       {params.get("registered") && (
         <div className="notice success">
           Đăng ký thành công. Mời bạn đăng nhập.

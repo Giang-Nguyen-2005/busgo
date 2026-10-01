@@ -1,3 +1,5 @@
+import { useId, useState } from "react";
+import { fallbackBusAlt } from "../features/customer/presentation";
 import type { InputHTMLAttributes, ReactNode } from "react";
 import {
   AlertCircle,
@@ -64,18 +66,14 @@ export function Empty({
     </div>
   );
 }
-export function Field({
-  label,
-  error,
-  ...props
-}: InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string }) {
-  return (
-    <label className="field">
-      <span>{label}</span>
-      <input aria-invalid={!!error} {...props} />
-      {error && <small className="field-error">{error}</small>}
-    </label>
-  );
+export function Field({ label, error, description, ...props }: InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string; description?: string }) {
+ const generated = useId(); const id = props.id || generated;
+ const described = [props["aria-describedby"], description ? id + "-hint" : "", error ? id + "-error" : ""].filter(Boolean).join(" ") || undefined;
+ return <label className="field" htmlFor={id}><span id={id + "-label"}>{label}</span><input {...props} id={id} aria-labelledby={props["aria-labelledby"] || id + "-label"} aria-invalid={!!error} aria-describedby={described} />{description && <small id={id + "-hint"} className="muted">{description}</small>}{error && <small id={id + "-error"} className="field-error">{error}</small>}</label>;
+}
+export function PasswordField(props: Parameters<typeof Field>[0]) {
+ const [visible, setVisible] = useState(false);
+ return <div className="password-control"><Field {...props} type={visible ? "text" : "password"} /><button type="button" className="secondary" aria-label={(visible ? "Ẩn " : "Hiện ") + props.label.toLowerCase()} aria-pressed={visible} onClick={() => setVisible(!visible)}>{visible ? "Ẩn" : "Hiện"}</button></div>;
 }
 export const statuses: Record<BookingStatus, string> = {
   PENDING: "Chờ thanh toán",
@@ -146,11 +144,11 @@ export function PriceSummary({
   return (
     <div className="price-summary">
       <div>
-        <span>Ghế đã chọn ({seats.length})</span>
-        <strong>{seats.join(", ") || "Chưa chọn ghế"}</strong>
+        <span>Chỗ đã chọn ({seats.length})</span>
+        <strong className="seat-chips">{seats.length ? seats.map(seat => <span className="seat-chip" key={seat}>{seat}</span>) : "Chưa chọn chỗ"}</strong>
       </div>
       <div>
-        <span>Giá mỗi ghế</span>
+        <span>Giá mỗi chỗ</span>
         <span>{money(unit)}</span>
       </div>
       <div className="total">
@@ -160,85 +158,16 @@ export function PriceSummary({
     </div>
   );
 }
-export function TripCard({ trip }: { trip: Trip }) {
-  const fallbackImage = "/images/busgo/bus-standard.jpg";
-  return (
-    <article className="card trip-card">
-      <div className="trip-card-content">
-        <div className="trip-thumbnail-wrap">
-          <img
-            className="trip-thumbnail"
-            src={trip.busImageUrl || fallbackImage}
-            alt={`Xe ${trip.busType.name} của ${trip.operator.name}`}
-            loading="lazy"
-            onError={(event) => {
-              if (event.currentTarget.src.endsWith(fallbackImage)) return;
-              event.currentTarget.src = fallbackImage;
-            }}
-          />
-        </div>
-        <div className="trip-card-details">
-          <div className="trip-top">
-            <div className="operator-icon">
-              <BusFront />
-            </div>
-            <div>
-              <h2>{trip.operator.name}</h2>
-              <span className="muted">{trip.busType.name}</span>
-            </div>
-            <span className="badge">{trip.route.name}</span>
-          </div>
-          <div className="trip-main">
-            <div className="trip-times">
-              <div>
-                <small className="time-label">Khởi hành</small>
-                <strong>{time(trip.pickup.departureTime)}</strong>
-                <span>{trip.pickup.name}</span>
-              </div>
-              <div className="trip-line">
-                <small>{duration(trip.durationMinutes)}</small>
-                <span>
-                  ○<i />
-                  <ArrowRight size={15} />
-                </span>
-              </div>
-              <div>
-                <small className="time-label">Đến nơi</small>
-                <strong>{time(trip.dropoff.arrivalTime)}</strong>
-                <span>{trip.dropoff.name}</span>
-                {date(trip.pickup.departureTime) !==
-                  date(trip.dropoff.arrivalTime) && (
-                  <small className="arrival-date">
-                    {date(trip.dropoff.arrivalTime)}
-                  </small>
-                )}
-              </div>
-            </div>
-            <div className="trip-price">
-              <strong>{money(trip.price)}</strong>
-              <small>/ ghế</small>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="trip-bottom">
-        <span className="muted">
-          Còn <b className="green">{trip.availableSeats} chỗ</b> ·{" "}
-          {dateTime(trip.pickup.departureTime)}
-        </span>
-        <Link
-          className="button"
-          to={tripLink(
-            trip.tripId,
-            trip.pickup.locationId,
-            trip.dropoff.locationId,
-          )}
-        >
-          Chọn chuyến <ArrowRight size={16} />
-        </Link>
-      </div>
-    </article>
-  );
+export function TripCard({ trip, searchContext }: { trip: Trip; searchContext?: string }) {
+ const [failed, setFailed] = useState(false);
+ const illustrative = !trip.busImageUrl || failed;
+ const href = tripLink(trip.tripId, trip.pickup.locationId, trip.dropoff.locationId) + (searchContext ? "&search=" + encodeURIComponent(searchContext) : "");
+ return <article className="card trip-card">
+ <div className="trip-card-content"><div className="trip-thumbnail-wrap"><img className="trip-thumbnail" src={illustrative ? "/images/busgo/bus-standard.jpg" : trip.busImageUrl!} alt={illustrative ? fallbackBusAlt : 'Xe ' + trip.busType.name + ' của ' + trip.operator.name} loading="lazy" onError={() => setFailed(true)} /></div>
+ <div className="trip-card-details"><div className="trip-times"><div><small className="time-label">Đón khách</small><strong>{time(trip.pickup.departureTime)}</strong><span>{trip.pickup.name}</span></div><div className="trip-line"><small>{duration(trip.durationMinutes)}</small><span>○<i /><ArrowRight size={15} /></span></div><div><small className="time-label">Trả khách</small><strong>{time(trip.dropoff.arrivalTime)}</strong><span>{trip.dropoff.name}</span>{date(trip.pickup.departureTime) !== date(trip.dropoff.arrivalTime) && <small className="arrival-date">{date(trip.dropoff.arrivalTime)}</small>}</div></div>
+ <div className="trip-meta"><strong>{trip.operator.name}</strong><span>{trip.busType.name}</span></div><p className="trip-route">Tuyến xe: {trip.route.name}</p></div></div>
+ <div className="trip-bottom"><span className="muted">Còn <b className="green">{trip.availableSeats} chỗ</b></span><div className="trip-price"><strong>{money(trip.price)}</strong><small>/ chỗ</small></div><Link className="button" to={href}>Chọn chỗ <ArrowRight size={16} /></Link></div>
+ </article>;
 }
 export function Pagination({
   pagination,

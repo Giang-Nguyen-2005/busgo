@@ -1,5 +1,5 @@
 import type { Hold } from "../../types/customer";
-export type SavedHold = Hold & { operatorName?: string; routeName?: string };
+export type SavedHold = Hold & { operatorName?: string; routeName?: string; searchContext?: string };
 export function readHold(): SavedHold | null {
   try {
     const value = JSON.parse(sessionStorage.getItem("busgo.hold") || "null");

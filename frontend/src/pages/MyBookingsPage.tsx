@@ -1,3 +1,5 @@
+import { historyEmpty } from "../features/customer/presentation";
+import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowRight, Armchair } from "lucide-react";
@@ -53,24 +55,23 @@ export function MyBookingsPage() {
           </button>
         ))}
       </nav>
+      <RefreshNotice query={query} />
       {query.isPending ? (
         <Loading />
-      ) : query.isError ? (
+      ) : blockingQueryError(query) ? (
         <ErrorState error={query.error} retry={() => query.refetch()} />
       ) : (
         <>
-          {query.data.data.length === 0 ? (
-            <Empty title="Chưa có đặt vé nào">
+          {query.data!.data.length === 0 ? (
+            <Empty title={historyEmpty(!!status)}>
               <p>
-                Chuyến đi tiếp theo đang chờ bạn. Hãy tìm hành trình phù hợp.
+                {status ? "Thử trạng thái khác hoặc xem tất cả đặt vé." : "Tìm chuyến và chọn chỗ để bắt đầu hành trình đầu tiên."}
               </p>
-              <Link className="button" to="/">
-                Khám phá chuyến xe
-              </Link>
+              {status ? <button onClick={() => setParams({})}>Xem tất cả đặt vé</button> : <Link className="button" to="/">Tìm chuyến xe</Link>}
             </Empty>
           ) : (
             <div className="booking-list">
-              {query.data.data.map((booking) => (
+              {query.data!.data.map((booking) => (
                 <article key={booking.bookingId} className="card booking-card">
                   <div className="split">
                     <span className="eyebrow">{booking.bookingCode}</span>
@@ -90,6 +91,7 @@ export function MyBookingsPage() {
                     </span>
                     <strong>{money(booking.totalAmount)}</strong>
                   </div>
+                  {booking.status === "CONFIRMED" && <Link className="button small" to={`/booking-success?bookingId=${booking.bookingId}`}>Xem vé điện tử</Link>}
                   <Link
                     className="text-button"
                     to={`/my-bookings/${booking.bookingId}`}
@@ -101,7 +103,7 @@ export function MyBookingsPage() {
             </div>
           )}
           <Pagination
-            pagination={query.data.pagination}
+            pagination={query.data!.pagination}
             onPage={(next) =>
               setParams({ ...(status ? { status } : {}), page: String(next) })
             }

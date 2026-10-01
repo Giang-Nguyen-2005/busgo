@@ -1,3 +1,6 @@
+import { searchReturn } from "../features/customer/presentation";
+import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
+import { dateTime } from "../utils/format";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -82,7 +85,7 @@ function TripSelection() {
     if (!seats.isSuccess || !seats.isFetchedAfterMount) return;
     if (draft && !restored.current) {
       restored.current = true;
-      const kept = revalidateSelection(draft.tripSeatIds, seats.data.seats);
+      const kept = revalidateSelection(draft.tripSeatIds, seats.data!.seats);
       setSelected(kept);
       clearSelection();
       setSelectionNotice(
@@ -91,7 +94,7 @@ function TripSelection() {
           : "Một số ghế bạn chọn trước khi đăng nhập không còn khả dụng. Các ghế còn trống được giữ trong lựa chọn; vui lòng chọn lại ghế khác nếu cần.",
       );
     } else {
-      const kept = revalidateSelection(selected, seats.data.seats);
+      const kept = revalidateSelection(selected, seats.data!.seats);
       if (kept.length !== selected.length) {
         setSelected(kept);
         setSelectionNotice(
@@ -114,6 +117,7 @@ function TripSelection() {
       clearSelection();
       saveHold({
         ...data,
+        searchContext: searchReturn(params.get("search")),
         operatorName: detail.data?.operator.name,
         routeName: detail.data?.route.name,
       });
@@ -137,7 +141,9 @@ function TripSelection() {
     );
   return (
     <>
+      <Link className="back-link" to={searchReturn(params.get("search"))}>← Kết quả tìm chuyến</Link>
       <Steps current={0} />
+      <RefreshNotice query={detail} /><RefreshNotice query={seats} />
       {location.state?.notice && (
         <div className="notice warning" role="status">
           {String(location.state.notice)}
@@ -150,7 +156,7 @@ function TripSelection() {
       )}
       {detail.isPending || seats.isPending ? (
         <Loading />
-      ) : detail.isError || seats.isError ? (
+      ) : blockingQueryError(detail) || blockingQueryError(seats) ? (
         <ErrorState
           error={detail.error || seats.error}
           retry={() => {
@@ -164,33 +170,35 @@ function TripSelection() {
             <div>
               <span className="eyebrow">CHỌN CHỖ CHO HÀNH TRÌNH</span>
               <h1>
-                {detail.data.pickup.name} → {detail.data.dropoff.name}
+                {detail.data!.pickup.name} → {detail.data!.dropoff.name}
               </h1>
               <p className="muted">
-                {detail.data.operator.name} · {detail.data.busType.name}
+                {detail.data!.operator.name} · {detail.data!.busType.name}
               </p>
             </div>
-            <Link className="text-button" to="/">
+            <Link className="text-button" to={searchReturn(params.get("search"))}>
               Đổi hành trình
             </Link>
           </div>
           <div className="checkout-layout">
             <section className="card">
+              <Journey pickup={detail.data!.pickup.name} dropoff={detail.data!.dropoff.name} departure={detail.data!.pickup.departureTime} arrival={detail.data!.dropoff.arrivalTime} />
+              <details className="itinerary"><summary>Xem lịch trình chuyến xe</summary><ol>{detail.data!.stops.map(stop => <li key={stop.tripStopId}><strong>{stop.name}</strong><small>{stop.arrivalTime ? `Đến ${dateTime(stop.arrivalTime)}` : ""}{stop.departureTime ? ` · Đi ${dateTime(stop.departureTime)}` : ""}</small></li>)}</ol></details>
               <div className="section-title">
                 <BusFront size={22} />
                 <div>
-                  <h2>Chọn ghế ngồi</h2>
+                  <h2>Chọn chỗ trên xe</h2>
                   <p className="muted">
-                    Còn {seats.data.availableSeatCount} ghế · Tối đa 5 ghế mỗi
+                    Còn {seats.data!.availableSeatCount} chỗ · Tối đa 5 chỗ mỗi
                     lần đặt
                   </p>
                 </div>
               </div>
-              {!seats.data.seats.length ? (
+              {!seats.data!.seats.length ? (
                 <Empty title="Chưa có sơ đồ ghế" />
               ) : (
                 <SeatMap
-                  seats={seats.data.seats}
+                  seats={seats.data!.seats}
                   selected={availableSelection}
                   disabled={hold.isPending}
                   onToggle={(id) =>
@@ -202,28 +210,28 @@ function TripSelection() {
                   }
                 />
               )}
-              {seats.data.availableSeatCount === 0 && (
+              {seats.data!.availableSeatCount === 0 && (
                 <div className="notice warning">
                   Hành trình hiện đã hết chỗ. Vui lòng chọn chuyến khác.
                 </div>
               )}
             </section>
-            <aside className="card summary sticky">
+            <aside className="card summary sticky selection-summary">
               <span className="eyebrow">THÔNG TIN CHUYẾN</span>
-              <h2>{detail.data.operator.name}</h2>
-              <p className="muted">{detail.data.route.name}</p>
+              <h2>{detail.data!.operator.name}</h2>
+              <p className="muted">{detail.data!.route.name}</p>
               <Journey
-                pickup={detail.data.pickup.name}
-                dropoff={detail.data.dropoff.name}
-                departure={detail.data.pickup.departureTime}
-                arrival={detail.data.dropoff.arrivalTime}
+                pickup={detail.data!.pickup.name}
+                dropoff={detail.data!.dropoff.name}
+                departure={detail.data!.pickup.departureTime}
+                arrival={detail.data!.dropoff.arrivalTime}
               />
               <PriceSummary
-                seats={seats.data.seats
+                seats={seats.data!.seats
                   .filter((s) => availableSelection.includes(s.tripSeatId))
                   .map((s) => s.seatCode)}
-                unit={seats.data.price}
-                total={availableSelection.length * seats.data.price}
+                unit={seats.data!.price}
+                total={availableSelection.length * seats.data!.price}
               />
               <p className="fine-print">
                 Giá tạm tính. Hệ thống sẽ xác nhận giá và giữ chỗ khi bạn tiếp
@@ -243,7 +251,7 @@ function TripSelection() {
               <button
                 className="full"
                 disabled={
-                  !availableSelection.length ||
+                  !availableSelection.length || detail.isError || seats.isError ||
                   hold.isPending ||
                   (seats.isFetching && !seats.isFetchedAfterMount) ||
                   auth.loading ||

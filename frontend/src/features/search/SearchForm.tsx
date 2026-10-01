@@ -3,15 +3,18 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { ArrowRight, MapPin, Search } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeftRight, MapPin, Search } from "lucide-react";
 import { get } from "../../api/client";
 import type { Location } from "../../types/customer";
 import { today } from "../../utils/format";
 import { ErrorState, Field } from "../../components/ui";
 
+import { readJourney, journeyParams, swapJourney } from "../customer/presentation";
 const schema = z
   .object({
+    pickupLabel: z.string(),
+    dropoffLabel: z.string(),
     pickupLocationId: z.number().positive("Chọn điểm đón từ danh sách."),
     dropoffLocationId: z.number().positive("Chọn điểm đến từ danh sách."),
     departureDate: z
@@ -26,14 +29,16 @@ const schema = z
 function LocationInput({
   label,
   onChange,
+  value,
   error,
 }: {
   label: string;
-  onChange: (id: number) => void;
+  onChange: (id: number, label: string) => void;
+  value: string;
   error?: string;
 }) {
   const id = useId();
-  const [text, setText] = useState("");
+  const text = value;
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -52,8 +57,7 @@ function LocationInput({
     staleTime: 60_000,
   });
   const choose = (location: Location) => {
-    setText(location.name);
-    onChange(location.id);
+    onChange(location.id, location.name);
     setOpen(false);
   };
   return (
@@ -85,8 +89,7 @@ function LocationInput({
           maxLength={150}
           onFocus={() => setOpen(true)}
           onChange={(event) => {
-            setText(event.target.value);
-            onChange(0);
+            onChange(0, event.target.value);
             setOpen(true);
           }}
           onKeyDown={(event) => {
@@ -160,13 +163,16 @@ function LocationInput({
   );
 }
 export function SearchForm() {
+  const [params] = useSearchParams();
+  return <JourneyForm key={params.toString()} params={params} />;
+}
+function JourneyForm({ params }: { params: URLSearchParams }) {
   const navigate = useNavigate();
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
-      pickupLocationId: 0,
-      dropoffLocationId: 0,
-      departureDate: today(),
+      ...readJourney(params),
+      departureDate: params.get("departureDate") || today(),
     },
   });
   return (
@@ -174,7 +180,7 @@ export function SearchForm() {
       className="search-form card"
       onSubmit={form.handleSubmit((values) =>
         navigate(
-          `/search?${new URLSearchParams(Object.entries(values).map(([key, value]) => [key, String(value)]))}`,
+          `/search?${journeyParams(values, params)}`,
         ),
       )}
     >
@@ -184,19 +190,21 @@ export function SearchForm() {
         render={({ field, fieldState }) => (
           <LocationInput
             label="Điểm đón"
-            onChange={field.onChange}
+            value={form.watch("pickupLabel")}
+            onChange={(id, label) => { field.onChange(id); form.setValue("pickupLabel", label); }}
             error={fieldState.error?.message}
           />
         )}
       />
-      <ArrowRight className="search-arrow" size={20} />
+      <button type="button" className="secondary search-swap" aria-label="Đổi điểm đón và điểm trả" onClick={() => form.reset(swapJourney(form.getValues()))}><ArrowLeftRight size={20} /></button>
       <Controller
         name="dropoffLocationId"
         control={form.control}
         render={({ field, fieldState }) => (
           <LocationInput
-            label="Điểm đến"
-            onChange={field.onChange}
+            label="Điểm trả"
+            value={form.watch("dropoffLabel")}
+            onChange={(id, label) => { field.onChange(id); form.setValue("dropoffLabel", label); }}
             error={fieldState.error?.message}
           />
         )}
@@ -206,6 +214,7 @@ export function SearchForm() {
         type="date"
         min={today()}
         {...form.register("departureDate")}
+        value={form.watch("departureDate")}
         error={form.formState.errors.departureDate?.message}
       />
       <button type="submit">

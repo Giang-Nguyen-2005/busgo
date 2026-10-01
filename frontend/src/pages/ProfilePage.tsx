@@ -7,7 +7,8 @@ import { LockKeyhole, UserRound } from "lucide-react";
 import { apiClient } from "../api/client";
 import { useAuth } from "../features/auth/AuthProvider";
 import { name, password, phone } from "../features/auth/forms";
-import { ErrorState, Field } from "../components/ui";
+import { ErrorState, Field, PasswordField } from "../components/ui";
+import { readonlyEmailExplanation } from "../features/customer/presentation";
 const profileSchema = z.object({ fullName: name, phone });
 const passwordSchema = z
   .object({
@@ -49,7 +50,7 @@ export function ProfilePage() {
     onSuccess: () => {
       passwords.reset();
       auth.logout();
-      navigate("/login?returnTo=%2Fprofile", { replace: true });
+      navigate("/login?returnTo=%2Fprofile&passwordChanged=1", { replace: true });
     },
   });
   return (
@@ -71,7 +72,7 @@ export function ProfilePage() {
             className="form-stack"
             onSubmit={profile.handleSubmit((values) => update.mutate(values))}
           >
-            <Field label="Email" value={auth.user?.email || ""} readOnly />
+            <Field label="Email" value={auth.user?.email || ""} readOnly description={readonlyEmailExplanation} />
             <Field
               label="Họ và tên"
               autoComplete="name"
@@ -108,21 +109,21 @@ export function ProfilePage() {
             className="form-stack"
             onSubmit={passwords.handleSubmit((values) => change.mutate(values))}
           >
-            <Field
+            <PasswordField
               label="Mật khẩu hiện tại"
               type="password"
               autoComplete="current-password"
               {...passwords.register("currentPassword")}
               error={passwords.formState.errors.currentPassword?.message}
             />
-            <Field
+            <PasswordField
               label="Mật khẩu mới"
               type="password"
               autoComplete="new-password"
               {...passwords.register("newPassword")}
               error={passwords.formState.errors.newPassword?.message}
             />
-            <Field
+            <PasswordField
               label="Nhập lại mật khẩu mới"
               type="password"
               autoComplete="new-password"

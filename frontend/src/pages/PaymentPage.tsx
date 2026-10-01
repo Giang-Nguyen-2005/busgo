@@ -1,3 +1,5 @@
+import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
+import { paymentPresentation } from "../features/customer/presentation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { QrCode, ShieldCheck } from "lucide-react";
@@ -26,7 +28,7 @@ export function PaymentPage() {
       void cache.invalidateQueries({ queryKey: ["bookings"] });
       if (data.paymentStatus === "PAID" && data.bookingStatus === "CONFIRMED")
         navigate(`/booking-success?bookingId=${data.bookingId}`, {
-          replace: true,
+          replace: true, state: { justPaid: true },
         });
     },
     onError: () => {
@@ -43,7 +45,7 @@ export function PaymentPage() {
     );
   return (
     <>
-      <Steps current={2} />
+      <Steps current={2} /><RefreshNotice query={booking} />
       <div className="page-heading">
         <div>
           <h1>Thanh toán đặt vé</h1>
@@ -52,38 +54,36 @@ export function PaymentPage() {
       </div>
       {booking.isPending ? (
         <Loading />
-      ) : booking.isError ? (
+      ) : blockingQueryError(booking) ? (
         <ErrorState error={booking.error} retry={() => booking.refetch()} />
       ) : (
         <div className="checkout-layout">
           <section className="card payment-card">
-            <span className="badge">PHIÊN BẢN DEMO</span>
+            <span className="badge">THANH TOÁN GIẢ LẬP</span><h2>{booking.data!.bookingCode}</h2><div className="payment-amount">{money(booking.data!.totalAmount)}</div><p className="notice info" role="status">{paymentPresentation(booking.data!.status, payment.isPending)}</p>
             <h2>Thanh toán QR giả lập</h2>
-            <p className="muted">Mã đặt vé {booking.data.bookingCode}</p>
-            <div className="mock-qr">
+            <p className="muted">Mã đặt vé {booking.data!.bookingCode}</p>
+            {booking.data!.status === "PENDING" && <div className="mock-qr">
               <QrCode size={96} strokeWidth={1} />
-              <strong>MOCK QR</strong>
-              <small>Minh họa · Không dùng để chuyển tiền</small>
-            </div>
-            <div className="payment-amount">
-              {money(booking.data.totalAmount)}
-            </div>
+              <strong>QR minh họa</strong>
+              <small>Không dùng để chuyển tiền</small>
+            </div>}
+
             <p className="muted">
               Không có giao dịch ngân hàng hoặc khoản tiền thực tế nào được thực
               hiện.
             </p>
             {payment.isError && <ErrorState error={payment.error} />}
-            {booking.data.status === "PENDING" ? (
+            {booking.data!.status === "PENDING" ? (
               <button
                 className="full"
-                disabled={payment.isPending || booking.isFetching}
+                disabled={payment.isPending || booking.isFetching || booking.isError}
                 onClick={() => payment.mutate()}
               >
                 {payment.isPending
                   ? "Đang xác nhận…"
                   : "Xác nhận thanh toán giả lập"}
               </button>
-            ) : booking.data.status === "CONFIRMED" ? (
+            ) : booking.data!.status === "CONFIRMED" ? (
               <>
                 <div className="notice success">
                   Đặt vé đã được xác nhận. Vé điện tử của bạn đã sẵn sàng.
@@ -106,7 +106,7 @@ export function PaymentPage() {
             </div>
           </section>
           <aside className="card summary sticky">
-            <BookingSummary booking={booking.data} />
+            <BookingSummary booking={booking.data!} />
             <Link className="text-button" to={`/my-bookings/${id}`}>
               Xem chi tiết đặt vé
             </Link>

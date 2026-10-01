@@ -4,6 +4,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { SearchForm } from "../features/search/SearchForm";
+import { readJourney, journeyTitle } from "../features/customer/presentation";
+import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
 import { FilterPanel } from "../features/search/FilterPanel";
 import { apiClient } from "../api/client";
 import type { PagedResponse } from "../types/api";
@@ -44,7 +47,7 @@ export function SearchPage() {
     "minPrice",
     "maxPrice",
     "departureFrom",
-    "departureTo",
+    "departureTo", "operatorId", "busTypeId",
   ].filter((key) => params.get(key)).length;
   const valid =
     positiveId(params.get("pickupLocationId")) &&
@@ -99,7 +102,7 @@ export function SearchPage() {
   if (!valid)
     return (
       <Empty title="Bạn muốn đi đâu?">
-        <p>Chọn điểm đón, điểm đến và ngày đi để tìm chuyến.</p>
+        <p>Chọn điểm đón, điểm trả và ngày đi để tìm chuyến.</p><SearchForm />
         <Link className="button" to="/">
           Tìm chuyến xe
         </Link>
@@ -111,18 +114,15 @@ export function SearchPage() {
         <div>
           <span className="eyebrow">CHỌN CHUYẾN PHÙ HỢP</span>
           <h1>
-            {result.data?.data[0]
-              ? `${result.data.data[0].pickup.name} → ${result.data.data[0].dropoff.name}`
-              : "Kết quả tìm chuyến"}
+            {journeyTitle(readJourney(params))}
           </h1>
           <p className="muted">
             Ngày đi {date(params.get("departureDate")!)} · Giờ Việt Nam
           </p>
         </div>
-        <Link className="button secondary" to="/">
-          Đổi hành trình
-        </Link>
+
       </div>
+      <details className="search-editor" open><summary>Chỉnh sửa hành trình</summary><SearchForm /></details>
       <div className="results-layout">
         <FilterPanel
           activeCount={activeFilters}
@@ -186,7 +186,7 @@ export function SearchPage() {
           <div className="results-toolbar">
             <span>
               {result.data
-                ? `${result.data.pagination.totalElements} chuyến phù hợp`
+                ? `${result.data!.pagination.totalElements} chuyến phù hợp`
                 : "Đang tìm chuyến…"}
             </span>
             <label>
@@ -202,23 +202,25 @@ export function SearchPage() {
               </select>
             </label>
           </div>
+          {activeFilters > 0 && <div className="filter-chips"><span>{activeFilters} điều kiện lọc</span><button className="text-button" onClick={() => update({ minPrice: "", maxPrice: "", departureFrom: "", departureTo: "", operatorId: "", busTypeId: "" })}>Xóa bộ lọc</button></div>}
+          <RefreshNotice query={result} />
           {result.isPending ? (
             <Loading />
-          ) : result.isError ? (
+          ) : blockingQueryError(result) ? (
             <ErrorState error={result.error} retry={() => result.refetch()} />
           ) : (
             <>
-              {result.data.data.length ? (
-                result.data.data.map((trip) => (
-                  <TripCard key={trip.tripId} trip={trip} />
+              {result.data!.data.length ? (
+                result.data!.data.map((trip) => (
+                  <TripCard key={trip.tripId} trip={trip} searchContext={`/search?${params}`} />
                 ))
               ) : (
-                <Empty title="Chưa tìm thấy chuyến phù hợp">
-                  <p>Thử thay đổi ngày đi, hành trình hoặc bộ lọc.</p>
+                <Empty title={activeFilters ? "Không có chuyến khớp bộ lọc" : "Chưa có chuyến cho hành trình và ngày này"}>
+                  <p>{activeFilters ? "Xóa bộ lọc để xem lại kết quả cho hành trình đã chọn." : "Thử ngày đi khác hoặc chỉnh sửa hành trình phía trên."}</p>
                 </Empty>
               )}
               <Pagination
-                pagination={result.data.pagination}
+                pagination={result.data!.pagination}
                 onPage={(page) => {
                   const next = new URLSearchParams(params);
                   next.set("page", String(page));
