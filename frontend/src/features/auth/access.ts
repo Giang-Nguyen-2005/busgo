@@ -8,7 +8,7 @@ export function canAccessOperatorPath(roles: string[], path: string) {
   if (!/^\/operator(\/|$)/.test(path)) return false;
   if (canManageOperator(roles)) return true;
   return /^\/operator\/?$/.test(path) || /^\/operator\/(trips|bookings|bus-types)\/?$/.test(path) ||
-    /^\/operator\/(trips|bookings|bus-types)\/\d+\/?$/.test(path) || /^\/operator\/trips\/\d+\/(passengers|occupancy)\/?$/.test(path);
+    /^\/operator\/(trips|bookings|bus-types)\/\d+\/?$/.test(path) || /^\/operator\/trips\/\d+\/(seats|passengers|occupancy)\/?$/.test(path);
 }
 export function loginDestination(roles: string[], requested: string | null) {
   const target = safeReturn(requested);

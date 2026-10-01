@@ -7,7 +7,7 @@ import com.busgo.common.exception.*;
 import com.busgo.common.security.CurrentUser;
 import com.busgo.operator.OperatorContextService;
 import com.busgo.trip.entity.*;
-import com.busgo.trip.repository.TripRepository;
+import com.busgo.trip.repository.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
@@ -19,12 +19,17 @@ public class OperatorTripOperationsService {
     private final TripRepository trips;
     private final OperatorContextService context;
     private final OperatorOccupancyQueryRepository queries;
+    private final TripSeatRepository tripSeats;
+    private final TripSegmentRepository tripSegments;
 
     public OperatorTripOperationsService(TripRepository trips, OperatorContextService context,
-            OperatorOccupancyQueryRepository queries) {
+            OperatorOccupancyQueryRepository queries, TripSeatRepository tripSeats,
+            TripSegmentRepository tripSegments) {
         this.trips = trips;
         this.context = context;
         this.queries = queries;
+        this.tripSeats = tripSeats;
+        this.tripSegments = tripSegments;
     }
 
     @Transactional(readOnly = true)
@@ -69,7 +74,7 @@ public class OperatorTripOperationsService {
         var seats = bySeat.values().stream().map(seatRows -> {
             var first = seatRows.get(0);
             var states = seatRows.stream().map(row -> new SeatSegmentState(
-                    row.tripSegmentId(), row.segmentOrder(), row.status(),
+                    row.tripSegmentId(), row.segmentOrder(), row.status(), row.status() == null,
                     row.status() == InventoryStatus.HELD ? api(row.holdExpiresAt()) : null,
                     row.status() == InventoryStatus.BOOKED ? row.bookingId() : null,
                     row.status() == InventoryStatus.BOOKED ? row.bookingCode() : null,
@@ -77,12 +82,18 @@ public class OperatorTripOperationsService {
             return new OccupancySeat(first.tripSeatId(), first.seatCode(), first.row(),
                     first.column(), first.floor(), first.seatType(), states);
         }).toList();
+        long expectedSeatCount = tripSeats.countByTripId(tripId);
+        long expectedSegmentCount = tripSegments.countByTripId(tripId);
+        long expectedCellCount = expectedSeatCount * expectedSegmentCount;
+        long actualCellCount = rows.stream().filter(row -> row.status() != null).count();
+        long missingCellCount = expectedCellCount - actualCellCount;
         long wholeTripAvailable = bySeat.values().stream()
-                .filter(seatRows -> !seatRows.isEmpty()
+                .filter(seatRows -> seatRows.size() == expectedSegmentCount
                         && seatRows.stream().allMatch(row -> row.status() == InventoryStatus.AVAILABLE))
                 .count();
-        return new TripOccupancy(tripId, trip.getStatus(), bySeat.size(), bySegment.size(),
-                wholeTripAvailable, segments, seats);
+        return new TripOccupancy(tripId, trip.getStatus(), expectedSeatCount,
+                expectedSegmentCount, wholeTripAvailable, missingCellCount == 0,
+                expectedCellCount, actualCellCount, missingCellCount, segments, seats);
     }
 
     @Transactional

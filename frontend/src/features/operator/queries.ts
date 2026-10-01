@@ -1,16 +1,19 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { BookingFilters, TripStatus } from "../../types/operator";
 import { allPages, operatorApi } from "../../api/operatorApi";
 export const useOperatorBookings = (filters: BookingFilters) => useQuery({
+  placeholderData: keepPreviousData, retry: 1,
   queryKey: ["operator", "bookings", filters], queryFn: ({ signal }) => operatorApi.bookings(filters, signal),
 });
 export const useOperatorBooking = (id: number) => useQuery({
   queryKey: ["operator", "bookings", id], queryFn: ({ signal }) => operatorApi.booking(id, signal),
 });
 export const usePassengers = (id: number) => useQuery({
+  refetchInterval: 30_000, retry: 1,
   queryKey: ["operator", "trips", id, "passengers"], queryFn: ({ signal }) => operatorApi.passengers(id, signal),
 });
 export const useOccupancy = (id: number) => useQuery({
+  refetchInterval: 30_000, retry: 1,
   queryKey: ["operator", "trips", id, "occupancy"], queryFn: ({ signal }) => operatorApi.occupancy(id, signal),
 });
 export function useTripStatusMutation(id: number) {

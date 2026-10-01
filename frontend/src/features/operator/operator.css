@@ -318,3 +318,86 @@
 .management-grid dd { margin: 4px 0; overflow-wrap: anywhere; }
 .management-form input, .management-form select { min-width: 0; width: 100%; }
 @media (max-width: 700px) { .management-grid { grid-template-columns: 1fr; } .operator-topbar { flex-wrap: wrap; gap: 10px; } }
+
+/* M14A dispatch surface: all overrides are confined to the operator shell. */
+.operator-shell { background: #f3f7f6; }
+.operator-shell .operator-sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.operator-shell .operator-nav-group { color: #b3d0cd; font-size: 12px; letter-spacing: .06em; padding: 14px 16px 2px; text-transform: uppercase; }
+.operator-shell .operator-topbar { padding: 12px 24px; }
+.operator-shell .operator-topbar summary { list-style: none; border: 1px solid #cbdad7; border-radius: 9px; padding: 10px 14px; min-height: 44px; }
+.operator-shell .operator-topbar summary::-webkit-details-marker { display: none; }
+.operator-shell .operator-content { padding: 22px; }
+.operator-shell button, .operator-shell .button, .operator-shell select, .operator-shell input { min-height: 44px; }
+.operator-shell :focus-visible { outline: 3px solid #8759cd; outline-offset: 3px; }
+.operator-shell .operator-trip-header { border-top: 4px solid #147d74; padding: 18px 22px 0; margin-bottom: 22px; }
+.operator-shell .operator-trip-header h1 { font-size: 24px; }
+.operator-shell .operator-trip-header .operator-heading { margin: 12px 0 0; }
+.operator-shell .operator-trip-header p { margin: 7px 0; }
+.operator-shell .operator-tabs { display: flex; overflow-x: auto; gap: 8px; margin-top: 12px; }
+.operator-shell .operator-tabs a { display: flex; align-items: center; min-height: 48px; white-space: nowrap; padding: 12px; border-bottom: 3px solid transparent; }
+.operator-shell .operator-tabs a.active { color: #0c625a; font-weight: 750; border-bottom-color: #147d74; }
+.operator-shell .operator-refresh { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; color: #536966; font-size: 13px; margin: 12px 0; }
+.operator-shell .operator-departure { display: block; font-size: 30px; font-variant-numeric: tabular-nums; line-height: 1.2; color: #0c625a; }
+.operator-shell .operator-trip-rows { display: grid; border: 1px solid #ceddd9; border-radius: 12px; overflow: hidden; background: white; }
+.operator-shell .operator-trip-row { display: grid; grid-template-columns: minmax(100px, .7fr) minmax(160px, 2fr) minmax(130px, 1fr) auto; align-items: center; gap: 18px; padding: 16px 20px; border-bottom: 1px solid #e1e9e7; }
+.operator-shell .operator-trip-row:last-child { border-bottom: 0; }
+.operator-shell .operator-trip-row p { margin: 6px 0; }
+.operator-shell .operator-trip-row small { display: block; margin-top: 6px; }
+.operator-shell .operator-overdue { color: #8d450a; font-size: 13px; font-weight: 700; }
+.operator-shell .operator-legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.operator-shell .operator-context { padding: 14px; background: #deeee9; border-left: 4px solid #147d74; }
+.operator-shell .operator-segment-counts { font-size: 13px; padding: 12px 16px; background: white; border: 1px solid #ceddd9; border-radius: 10px; }
+.operator-shell .operator-live-seats { grid-auto-columns: 126px; grid-auto-rows: minmax(86px, auto); gap: 14px; }
+.operator-shell .operator-live-seats button { padding: 10px 6px; align-content: start; white-space: normal; }
+.operator-shell .operator-live-seats strong { font-size: 18px; }
+.operator-shell .operator-live-seats small { font-size: 12px; line-height: 1.3; margin-top: 5px; }
+.operator-shell .operator-live-seats button:disabled { opacity: 1; color: #526763; background: #eef1f0; border-style: dashed; }
+.operator-shell .operator-live-seats button:hover:not(:disabled) { box-shadow: 0 0 0 2px #147d74; }
+.operator-shell .operator-status-MISSING { color: #693c22; background: repeating-linear-gradient(135deg,#fff4e5,#fff4e5 8px,#f5e4d0 8px,#f5e4d0 10px); border: 1px dashed #996b42; }
+.operator-shell .operator-status-NEUTRAL { color: #374e4b; background: #f0f3f4; }
+.operator-shell .operator-mini-states { display: grid; gap: 3px; margin-top: 7px; }
+.operator-shell .operator-mini-states .operator-badge { font-size: 10px; padding: 3px; white-space: normal; }
+.operator-shell .operator-seat-drawer { margin: 0 0 0 auto; height: 100dvh; max-height: 100dvh; width: min(480px, 90vw); max-width: 100vw; border: 0; border-left: 1px solid #bed3ce; padding: 24px; overflow-y: auto; color: #193d38; background: white; }
+.operator-shell .operator-seat-drawer::backdrop { background: #122c2855; }
+.operator-shell .operator-inspection-segments { padding-left: 24px; }
+.operator-shell .operator-inspection-segments li { padding-bottom: 12px; border-bottom: 1px solid #dce6e3; }
+.operator-shell .operator-inspection-booking { padding: 12px 0; overflow-wrap: anywhere; }
+.operator-shell dt { color: #526763; font-size: 12px; }
+.operator-shell dd { margin: 4px 0 12px; }
+.operator-shell .operator-passenger { display: grid; grid-template-columns: .8fr 1.2fr 1.2fr 1fr; gap: 18px; padding: 16px 0; border-bottom: 1px solid #dce6e3; overflow-wrap: anywhere; }
+.operator-shell .operator-passenger dl { margin: 0; }
+.operator-shell .operator-seat-code { display: block; font-size: 22px; margin-bottom: 8px; }
+.operator-shell .operator-passenger small { display: block; }
+.operator-shell .operator-occupancy { max-height: 65vh; overflow: auto; }
+.operator-shell .operator-occupancy thead th { position: sticky; top: 0; z-index: 2; }
+.operator-shell .operator-occupancy thead th:first-child { z-index: 3; }
+.operator-shell .operator-table td, .operator-shell .operator-table th { padding: 12px; }
+.operator-shell .operator-metadata { font-size: 13px; color: #536966; margin: 16px 0; }
+.operator-shell .operator-metadata summary { min-height: 44px; padding: 12px; cursor: pointer; }
+@media (max-width: 1050px) {
+  .operator-shell { display: block; }
+  .operator-shell .operator-sidebar { height: auto; position: static; padding: 8px 16px; }
+  .operator-shell .operator-brand { display: inline-block; }
+  .operator-shell .operator-menu { display: inline-flex; float: right; }
+  .operator-shell .operator-nav { display: none; margin-top: 12px; }
+  .operator-shell .operator-nav.is-open { display: grid; }
+  .operator-shell .operator-passenger { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 700px) {
+  .operator-shell .operator-content { padding: 14px; }
+  .operator-shell .operator-trip-header { padding: 14px 12px 0; }
+  .operator-shell .operator-trip-header h1 { font-size: 20px; }
+  .operator-shell .operator-trip-row { grid-template-columns: 88px minmax(0, 1fr); padding: 14px; gap: 12px; }
+  .operator-shell .operator-trip-row .operator-departure { font-size: 26px; }
+  .operator-shell .operator-seat-drawer { width: 100%; max-width: 100%; margin: 0; padding: 18px; }
+  .operator-shell .operator-passenger { grid-template-columns: 1fr; gap: 6px; }
+  .operator-shell .operator-passenger dl { display: grid; grid-template-columns: 110px 1fr; gap: 6px; }
+  .operator-shell .operator-booking-results .operator-table-scroll { border: 0; background: transparent; }
+  .operator-shell .operator-booking-results table, .operator-shell .operator-booking-results tbody { display: block; }
+  .operator-shell .operator-booking-results thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .operator-shell .operator-booking-results tr { display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 12px; border: 1px solid #ceddd9; border-radius: 10px; background: white; padding: 8px; }
+  .operator-shell .operator-booking-results td { display: block; min-width: 0; border: 0; padding: 8px; overflow-wrap: anywhere; }
+  .operator-shell .operator-booking-results td:first-child { grid-column: 1 / -1; }
+}
+.operator-shell .operator-live-seats button[aria-pressed="true"] { outline: 3px solid #8759cd; outline-offset: 3px; }
+@media (max-width: 700px) { .operator-shell .operator-booking-results td[data-label]::before { content: attr(data-label); display: block; font-size: 11px; color: #536966; margin-bottom: 4px; } }

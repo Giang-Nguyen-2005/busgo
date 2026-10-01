@@ -1,3 +1,4 @@
+import { operatorTripRoute } from "./operatorTripRoutes";
 import { createBrowserRouter, Link } from "react-router-dom";
 import { CustomerLayout } from "../layouts/CustomerLayout";
 import { CustomerGuard } from "../features/auth/AuthProvider";
@@ -49,14 +50,6 @@ export const router = createBrowserRouter([
             lazy: async () => ({ Component: (await import("../pages/operator/OperatorBookingsPages")).OperatorBookingDetailPage }),
           },
           {
-            path: "trips/:tripId/passengers",
-            lazy: async () => ({ Component: (await import("../pages/operator/OperatorTripOperationsPages")).OperatorPassengersPage }),
-          },
-          {
-            path: "trips/:tripId/occupancy",
-            lazy: async () => ({ Component: (await import("../pages/operator/OperatorTripOperationsPages")).OperatorOccupancyPage }),
-          },
-          {
             index: true,
             lazy: async () => ({
               Component: (await import("../pages/operator/OperatorHomePage"))
@@ -77,13 +70,7 @@ export const router = createBrowserRouter([
                 .OperatorTripCreatePage,
             }),
           },
-          {
-            path: "trips/:tripId",
-            lazy: async () => ({
-              Component: (await import("../pages/operator/OperatorTripsPages"))
-                .OperatorTripDetailPage,
-            }),
-          },
+          operatorTripRoute,
           {
             path: "buses",
             lazy: async () => ({

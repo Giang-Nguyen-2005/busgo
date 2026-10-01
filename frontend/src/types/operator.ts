@@ -192,7 +192,7 @@ export interface OccupancySegment {
   counts: { available: number; held: number; booked: number; blocked: number };
 }
 export interface SeatSegmentState {
-  tripSegmentId: number; segmentOrder: number; status: InventoryStatus; holdExpiresAt: string | null;
+  tripSegmentId: number; segmentOrder: number; status: InventoryStatus | null; missing: boolean; holdExpiresAt: string | null;
   bookingId: number | null; bookingCode: string | null; bookingStatus: BookingStatus | null;
 }
 export interface OccupancySeat {
@@ -200,6 +200,7 @@ export interface OccupancySeat {
   seatType: SeatType; segments: SeatSegmentState[];
 }
 export interface TripOccupancy {
+  complete: boolean; expectedInventoryCellCount: number; actualInventoryCellCount: number; missingInventoryCellCount: number;
   tripId: number; tripStatus: TripStatus; seatCount: number; segmentCount: number;
   wholeTripAvailableSeatCount: number; segments: OccupancySegment[]; seats: OccupancySeat[];
 }

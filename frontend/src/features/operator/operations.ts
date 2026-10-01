@@ -38,7 +38,7 @@ export function occupancyMatrix(data: TripOccupancy) {
 }
 export function nextTripAction(status: TripStatus) {
   const actions = {
-    SCHEDULED: { status: "BOARDING" as const, label: "Mở lên xe", impact: "Chuyến chuyển sang đón khách. Khách hàng sẽ không thể giữ chỗ hoặc tạo đặt vé mới." },
+    SCHEDULED: { status: "BOARDING" as const, label: "Bắt đầu đón khách", impact: "Chuyến chuyển sang đón khách. Khách hàng sẽ không thể giữ chỗ hoặc tạo đặt vé mới." },
     BOARDING: { status: "DEPARTED" as const, label: "Khởi hành", impact: "Chuyến chuyển sang đã khởi hành. Cửa sổ xác nhận thanh toán sẽ đóng." },
     DEPARTED: { status: "COMPLETED" as const, label: "Hoàn thành chuyến", impact: "Chuyến chuyển sang trạng thái kết thúc và không thể chuyển trạng thái tiếp." },
   };

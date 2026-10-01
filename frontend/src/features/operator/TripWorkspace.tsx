@@ -1,0 +1,27 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, NavLink, Outlet, useOutletContext, useParams } from "react-router-dom";
+import { operatorApi } from "../../api/operatorApi";
+import type { TripDetailResponse } from "../../types/operator";
+import { dateTime } from "../../utils/format";
+import { departureClock, tripTabs } from "./dispatch";
+import { OperationsQueryState } from "./OperationsShared";
+import { OperatorStatusBadge } from "./shared";
+import { TripStatusAction } from "./TripStatusAction";
+import { RefreshState } from "./RefreshState";
+export const useTripWorkspace = () => useOutletContext<TripDetailResponse>();
+export function TripWorkspace() {
+  const id = Number(useParams().tripId);
+  const cache = useQueryClient();
+  const query = useQuery({ queryKey: ["operator", "trips", id], queryFn: ({ signal }) => operatorApi.trip(id, signal), refetchInterval: 30_000, retry: 1 });
+  return <OperationsQueryState query={query}>{trip => <>
+    <section className="operator-trip-header card">
+      <Link to="/operator/trips">← Chuyến xe</Link>
+      <div className="operator-heading"><div><strong className="operator-departure">{departureClock(trip.departureTime)}</strong><h1>{trip.route.name}</h1>
+        <p>{dateTime(trip.departureTime)} · Giờ Việt Nam</p><p><strong>{trip.bus.licensePlate}</strong> · {trip.bus.busTypeName} · <OperatorStatusBadge status={trip.status} /></p></div>
+        <TripStatusAction key={id} id={id} status={trip.status} /></div>
+      <RefreshState query={query} onRefresh={() => { void cache.invalidateQueries({ queryKey: ["operator", "trips", id] }); }} />
+      <nav className="operator-tabs" aria-label="Không gian chuyến xe">{tripTabs.map(([path, label]) => <NavLink end key={path} to={`/operator/trips/${id}${path ? `/${path}` : ""}`}>{label}</NavLink>)}</nav>
+    </section>
+    <Outlet context={trip} />
+  </>}</OperationsQueryState>;
+}

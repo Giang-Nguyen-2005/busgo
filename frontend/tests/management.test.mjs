@@ -77,7 +77,7 @@ test('staff navigation, quick actions and trip mutation controls are read-only',
     assert.doesNotMatch(html, /Tạo chuyến/);
   }
   assert.equal(render(h(TripStatusAction, { id: 1, status: 'SCHEDULED' }), ['OPERATOR_STAFF']), '');
-  assert.match(render(h(TripStatusAction, { id: 1, status: 'SCHEDULED' }), ['OPERATOR_ADMIN']), /Mở lên xe/);
+  assert.match(render(h(TripStatusAction, { id: 1, status: 'SCHEDULED' }), ['OPERATOR_ADMIN']), /Bắt đầu đón khách/);
 });
 test('M13 errors never expose raw backend codes or messages', () => {
   for (const code of ['OPERATOR_NOT_FOUND', 'STAFF_NOT_FOUND', 'OPERATOR_CODE_ALREADY_EXISTS', 'EMAIL_ALREADY_EXISTS', 'STAFF_CODE_ALREADY_EXISTS', 'STAFF_MEMBERSHIP_CONFLICT', 'LAST_OPERATOR_ADMIN_REQUIRED', 'OPERATOR_ACTIVATION_NOT_ALLOWED', 'ACCESS_DENIED']) {

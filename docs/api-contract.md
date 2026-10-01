@@ -933,14 +933,23 @@ price > 0
 GET /operator/trips
 Filters:
 date
+businessDate
 routeId (global Route ID)
 busId
 status
 page
 size
 
-M3/M4 implementation note: các endpoint này yêu cầu OPERATOR_ADMIN và luôn giới hạn
-dữ liệu theo operator_staff của user đã xác thực. `date` là một ngày UTC.
+M3/M4 compatibility note: `date` vẫn là một ngày UTC. M14A thêm
+`businessDate=YYYY-MM-DD`, được hiểu là ngày lịch tại `Asia/Ho_Chi_Minh` và đổi
+thành khoảng UTC nửa mở `[00:00, 00:00 ngày kế tiếp)` trước khi truy vấn
+`departureTime`. Ví dụ `businessDate=2030-09-21` truy vấn
+`[2030-09-20T17:00:00Z, 2030-09-21T17:00:00Z)`. Không được truyền đồng thời
+`date` và `businessDate`; trường hợp đó trả HTTP 400 `VALIDATION_ERROR`.
+Pagination, các filter còn lại và sort ổn định `departureTime ASC, id ASC` không
+đổi. Timestamps trong response tiếp tục là offset-aware UTC. Quyền đọc hỗ trợ cả
+`OPERATOR_ADMIN` và `OPERATOR_STAFF`, luôn giới hạn theo operator_staff của user
+đã xác thực.
 
 51. Create Trip
 POST /operator/trips
@@ -1562,6 +1571,18 @@ count, per-segment `AVAILABLE`/`HELD`/`BOOKED`/`BLOCKED` counts, and every
 seat-by-segment inventory state. `BOOKED` cells may include booking ID/code/status;
 `HELD` cells include only expiry and never the hold owner's identity. No single
 whole-trip status is assigned to a seat.
+
+M14A completeness contract: the expected matrix is the trip snapshot seats
+multiplied by the trip snapshot segments, never the set of existing inventory
+rows. The response also contains `complete`, `expectedInventoryCellCount`,
+`actualInventoryCellCount`, and `missingInventoryCellCount`. Every expected cell
+appears in the seat's `segments` list. A missing inventory row is represented by
+`missing: true` and a null/omitted `status`; a persisted cell has `missing: false`
+and exactly one of the existing four statuses. Missing cells are not fabricated,
+are never treated as `AVAILABLE`, and exclude their seat from
+`wholeTripAvailableSeatCount`. The endpoint does not expire or rewrite `HELD`
+rows. `OPERATOR_ADMIN` and `OPERATOR_STAFF` have the same operator-scoped read
+contract; mutation permissions are unchanged.
 
 ### `PATCH /api/v1/operator/trips/{tripId}/status`
 

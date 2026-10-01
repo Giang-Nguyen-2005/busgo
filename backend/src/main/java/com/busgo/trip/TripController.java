@@ -23,12 +23,13 @@ public class TripController {
     @GetMapping
     public PagedResponse<TripSummaryResponse> list(@AuthenticationPrincipal CurrentUser user,
             @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) LocalDate businessDate,
             @RequestParam(required = false) @Positive Long routeId,
             @RequestParam(required = false) @Positive Long busId,
             @RequestParam(required = false) TripStatus status,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
-        return service.list(user, date, routeId, busId, status, page, size);
+        return service.list(user, date, businessDate, routeId, busId, status, page, size);
     }
 
     @PostMapping

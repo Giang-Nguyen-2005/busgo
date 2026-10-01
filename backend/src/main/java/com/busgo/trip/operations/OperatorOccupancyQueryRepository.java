@@ -64,15 +64,17 @@ public class OperatorOccupancyQueryRepository {
                        from_location.name AS from_name, to_location.name AS to_name,
                        inventory.status, inventory.hold_expires_at,
                        b.id AS booking_id, b.booking_code, b.status AS booking_status
-                FROM trip_seat_segment_inventory inventory
-                JOIN trip_seats seat ON seat.id = inventory.trip_seat_id
+                FROM trip_seats seat
                 JOIN trips t ON t.id = seat.trip_id
                 JOIN operator_routes opr ON opr.id = t.operator_route_id
-                JOIN trip_segments segment ON segment.id = inventory.trip_segment_id
+                CROSS JOIN trip_segments segment
                 JOIN trip_stops from_stop ON from_stop.id = segment.from_trip_stop_id
                 JOIN locations from_location ON from_location.id = from_stop.location_id
                 JOIN trip_stops to_stop ON to_stop.id = segment.to_trip_stop_id
                 JOIN locations to_location ON to_location.id = to_stop.location_id
+                LEFT JOIN trip_seat_segment_inventory inventory
+                  ON inventory.trip_seat_id = seat.id
+                 AND inventory.trip_segment_id = segment.id
                 LEFT JOIN booking_items bi ON bi.id = inventory.booking_item_id
                 LEFT JOIN bookings b ON b.id = bi.booking_id
                 WHERE seat.trip_id = :tripId AND segment.trip_id = :tripId
@@ -86,7 +88,8 @@ public class OperatorOccupancyQueryRepository {
                         rs.getLong("trip_segment_id"), rs.getInt("segment_order"),
                         rs.getLong("from_trip_stop_id"), rs.getLong("to_trip_stop_id"),
                         rs.getString("from_name"), rs.getString("to_name"),
-                        InventoryStatus.valueOf(rs.getString("status")),
+                        rs.getString("status") == null ? null
+                                : InventoryStatus.valueOf(rs.getString("status")),
                         rs.getObject("hold_expires_at", LocalDateTime.class),
                         rs.getObject("booking_id", Long.class), rs.getString("booking_code"),
                         rs.getString("booking_status") == null ? null

@@ -25,7 +25,8 @@ export function OperatorLayout() {
           className={open ? "operator-nav is-open" : "operator-nav"}
           aria-label="Quản lý nhà xe"
         >
-          {operatorNavigation(auth.user?.roles).map(([path, label]) => (
+          <span className="operator-nav-group">Điều hành</span>
+          {operatorNavigation(auth.user?.roles).slice(0, 3).map(([path, label]) => (
             <NavLink
               key={path}
               end={!path}
@@ -35,6 +36,8 @@ export function OperatorLayout() {
               {label}
             </NavLink>
           ))}
+          {canManageOperator(auth.user?.roles) && <span className="operator-nav-group">Quản lý</span>}
+          {operatorNavigation(auth.user?.roles).slice(3).map(([path, label]) => <NavLink key={path} to={`/operator${path}`} onClick={() => setOpen(false)}>{label}</NavLink>)}
         </nav>
       </aside>
       <div className="operator-workspace">

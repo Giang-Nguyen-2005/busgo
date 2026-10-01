@@ -1,8 +1,10 @@
 package com.busgo.trip;
 
 import com.busgo.common.exception.ResourceNotFoundException;
+import com.busgo.common.exception.BusinessException;
 import com.busgo.common.response.PagedResponse;
 import com.busgo.common.security.CurrentUser;
+import com.busgo.common.time.BusGoTime;
 import com.busgo.fleet.entity.Bus;
 import com.busgo.operator.OperatorContextService;
 import com.busgo.trip.TripDtos.*;
@@ -16,6 +18,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,11 +52,20 @@ public class TripService {
     }
 
     @Transactional(readOnly = true)
-    public PagedResponse<TripSummaryResponse> list(CurrentUser user, LocalDate date, Long routeId,
-            Long busId, TripStatus status, int page, int size) {
+    public PagedResponse<TripSummaryResponse> list(CurrentUser user, LocalDate date,
+            LocalDate businessDate, Long routeId, Long busId, TripStatus status, int page, int size) {
+        if (date != null && businessDate != null) {
+            throw new BusinessException("VALIDATION_ERROR",
+                    "Only one of date and businessDate may be provided.",
+                    HttpStatus.BAD_REQUEST, null);
+        }
         Long operatorId = context.requireOperatorMember(user).getId();
-        LocalDateTime start = date == null ? null : date.atStartOfDay();
-        LocalDateTime end = date == null ? null : date.plusDays(1).atStartOfDay();
+        BusGoTime.UtcWindow businessWindow = businessDate == null
+                ? null : BusGoTime.businessDate(businessDate);
+        LocalDateTime start = businessWindow != null ? businessWindow.startInclusive()
+                : date == null ? null : date.atStartOfDay();
+        LocalDateTime end = businessWindow != null ? businessWindow.endExclusive()
+                : date == null ? null : date.plusDays(1).atStartOfDay();
         var result = trips.searchOwned(operatorId, start, end, routeId, busId, status,
                 PageRequest.of(page, size, Sort.by("departureTime").ascending().and(Sort.by("id"))));
         return PagedResponse.from(result.map(trip -> summary(trip,

@@ -1,5 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { businessDate, departureClock, overdue, tripLabels } from "../../features/operator/dispatch";
+import { useTripWorkspace } from "../../features/operator/TripWorkspace";
+import { RefreshState } from "../../features/operator/RefreshState";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,9 +25,9 @@ import {
   useOperatorFilters,
 } from "../../features/operator/shared";
 import { TripTimeline } from "../../features/operator/TripTimeline";
-import { SeatLayoutPreview } from "../../features/operator/SeatLayoutPreview";
+
 import { dateTime } from "../../utils/format";
-import { TripStatusAction } from "../../features/operator/TripStatusAction";
+
 import { useAuth } from "../../features/auth/AuthProvider";
 import { canManageOperator } from "../../features/auth/access";
 export function OperatorTripsPage() {
@@ -33,17 +36,17 @@ export function OperatorTripsPage() {
   const routes = useRouteChoices(manage);
   const buses = useBusChoices(manage);
   const status = tripStatuses.find((s) => s === params.get("status"));
-  const rawDate = params.get("date") || "";
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : undefined;
+  const date = businessDate(params.get("businessDate"));
   const filters = {
     page,
     size,
-    date,
+    businessDate: date,
     status,
     routeId: positiveId(params.get("routeId")),
     busId: positiveId(params.get("busId")),
   };
   const query = useQuery({
+    placeholderData: keepPreviousData, refetchInterval: 30_000, retry: 1,
     queryKey: ["operator", "trips", filters],
     queryFn: ({ signal }) => operatorApi.trips(filters, signal),
   });
@@ -56,10 +59,10 @@ export function OperatorTripsPage() {
       </OperatorPageHeader>
       <div className="operator-filters">
         <Field
-          label="Ngày khởi hành (UTC)"
+          label="Ngày vận hành (Việt Nam)"
           type="date"
           value={date || ""}
-          onChange={(e) => set("date", e.target.value)}
+          onChange={(e) => set("businessDate", e.target.value)}
         />
 {manage && <>        <label className="field">
           Tuyến
@@ -89,6 +92,7 @@ export function OperatorTripsPage() {
             ))}
           </select>
         </label></>}
+        {!manage && <><Field label="Mã tuyến" type="number" min={1} value={filters.routeId || ""} onChange={e => set("routeId", e.target.value)} /><Field label="Mã xe" type="number" min={1} value={filters.busId || ""} onChange={e => set("busId", e.target.value)} /></>}
         <label className="field">
           Trạng thái
           <select
@@ -97,13 +101,13 @@ export function OperatorTripsPage() {
           >
             <option value="">Tất cả</option>
             {tripStatuses.map((s) => (
-              <option key={s}>{s}</option>
+              <option key={s} value={s}>{tripLabels[s]}</option>
             ))}
           </select>
         </label>
       </div>
       <p className="muted">
-        Bộ lọc ngày theo UTC của máy chủ. Giờ hiển thị theo Việt Nam (UTC+7).
+        Ngày theo lịch Việt Nam (UTC+7). Giờ hiển thị là giờ dự kiến.
       </p>
       {routes.isError && (
         <OperatorError error={routes.error} retry={() => routes.refetch()} />
@@ -111,35 +115,16 @@ export function OperatorTripsPage() {
       {buses.isError && (
         <OperatorError error={buses.error} retry={() => buses.refetch()} />
       )}
+      <RefreshState query={query} />
       <QueryState query={query}>
         {(result) => (
           <>
-            <OperatorTable
-              headers={[
-                "Chuyến / tuyến",
-                "Xe",
-                "Khởi hành",
-                "Dự kiến đến",
-                "Trạng thái",
-              ]}
-              empty={!result.data.length}
-            >
-              {result.data.map((t) => (
-                <tr key={t.id}>
-                  <td>
-                    <Link to={`/operator/trips/${t.id}`}>
-                      #{t.id} · {t.route.name}
-                    </Link>
-                  </td>
-                  <td>{t.bus.licensePlate}</td>
-                  <td>{dateTime(t.departureTime)}</td>
-                  <td>{dateTime(t.estimatedArrivalTime)}</td>
-                  <td>
-                    <OperatorStatusBadge status={t.status} />
-                  </td>
-                </tr>
-              ))}
-            </OperatorTable>
+            {!result.data.length ? <p className="notice">Không có chuyến phù hợp với bộ lọc.</p> : <div className="operator-trip-rows">{result.data.map(t => <article className="operator-trip-row" key={t.id}>
+              <div><strong className="operator-departure">{departureClock(t.departureTime)}</strong><small>{dateTime(t.departureTime)}</small></div>
+              <div><Link to={"/operator/trips/" + t.id}><strong>{t.route.name}</strong></Link><p>{t.bus.licensePlate} · {t.bus.busTypeName}</p><small className="muted">Chuyến #{t.id}</small></div>
+              <div><OperatorStatusBadge status={t.status} />{overdue(t) && <p className="operator-overdue">Quá giờ dự kiến</p>}</div>
+              <Link className="button secondary" to={"/operator/trips/" + t.id}>Xem chuyến</Link>
+            </article>)}</div>}
             <Pagination pagination={result.pagination} set={set} />
           </>
         )}
@@ -277,79 +262,10 @@ export function OperatorTripCreatePage() {
   );
 }
 export function OperatorTripDetailPage() {
-  const manage = canManageOperator(useAuth().user?.roles);
-  const id = Number(useParams().tripId);
-  const query = useQuery({
-    queryKey: ["operator", "trips", id],
-    queryFn: ({ signal }) => operatorApi.trip(id, signal),
-  });
-  return (
-    <>
-      <OperatorPageHeader title={`Chi tiết chuyến #${id}`}>
-        <Link to="/operator/trips">Danh sách chuyến</Link>
-        <Link to={`/operator/trips/${id}/passengers`}>Hành khách</Link>
-        <Link to={`/operator/trips/${id}/occupancy`}>Tình trạng ghế</Link>
-        <Link to={`/operator/bookings?tripId=${id}`}>Đặt vé của chuyến</Link>
-      </OperatorPageHeader>
-      <QueryState query={query}>
-        {(t) => (
-          <>
-            <section className="card">
-              <h2>{t.route.name}</h2>
-              <TripStatusAction key={id} id={id} status={t.status} />
-              <p>
-                <OperatorStatusBadge status={t.status} /> ·{" "}
-                {manage ? <Link to={`/operator/buses/${t.bus.id}`}>
-                  {t.bus.licensePlate}
-                </Link> : <span>{t.bus.licensePlate}</span>}{" "}
-                · {t.bus.busTypeName}
-              </p>
-              <p>
-                {dateTime(t.departureTime)} → {dateTime(t.estimatedArrivalTime)}{" "}
-                (giờ Việt Nam)
-              </p>
-              <p>
-                {t.seats.length} ghế · {t.segments.length} chặng
-              </p>
-            </section>
-            <section className="card">
-              <h2>Điểm dừng theo lịch</h2>
-              <TripTimeline stops={t.stops} />
-            </section>
-            <section className="card">
-              <h2>Các chặng</h2>
-              <OperatorTable
-                headers={["Thứ tự", "Điểm đầu", "Điểm cuối"]}
-                empty={!t.segments.length}
-              >
-                {[...t.segments]
-                  .sort((a, b) => a.segmentOrder - b.segmentOrder)
-                  .map((s) => (
-                    <tr key={s.id}>
-                      <td>{s.segmentOrder}</td>
-                      <td>
-                        {t.stops.find((stop) => stop.id === s.fromTripStopId)
-                          ?.locationName || `#${s.fromTripStopId}`}
-                      </td>
-                      <td>
-                        {t.stops.find((stop) => stop.id === s.toTripStopId)
-                          ?.locationName || `#${s.toTripStopId}`}
-                      </td>
-                    </tr>
-                  ))}
-              </OperatorTable>
-            </section>
-            <section className="card">
-              <h2>Sơ đồ ghế tại lúc tạo chuyến</h2>
-              <p className="notice">
-                Đây là bản chụp sơ đồ ghế, không phải tình trạng ghế trống hoặc
-                đã đặt. Không có thông tin hành khách hay đặt vé.
-              </p>
-              <SeatLayoutPreview seats={t.seats} />
-            </section>
-          </>
-        )}
-      </QueryState>
-    </>
-  );
+  const t = useTripWorkspace();
+  return <>
+    <section className="card"><h2>Tổng quan chuyến</h2><p>{t.seats.length} ghế · {t.segments.length} chặng</p><p>Dự kiến đến: {dateTime(t.estimatedArrivalTime)}</p><Link to={"/operator/bookings?tripId=" + t.id}>Tra cứu đặt vé của chuyến</Link></section>
+    <section className="card"><h2>Điểm dừng theo lịch</h2><TripTimeline stops={t.stops} /></section>
+    <section className="card"><h2>Các chặng</h2><OperatorTable headers={["Thứ tự", "Điểm đầu", "Điểm cuối"]} empty={!t.segments.length}>{[...t.segments].sort((a,b)=>a.segmentOrder-b.segmentOrder).map(s => <tr key={s.id}><td>{s.segmentOrder}</td><td>{t.stops.find(x=>x.id===s.fromTripStopId)?.locationName}</td><td>{t.stops.find(x=>x.id===s.toTripStopId)?.locationName}</td></tr>)}</OperatorTable></section>
+  </>;
 }

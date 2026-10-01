@@ -24,13 +24,15 @@ public final class OperatorTripOperationsDtos {
             Long fromTripStopId, Long toTripStopId, String fromName, String toName,
             InventoryCounts counts) {}
     public record SeatSegmentState(Long tripSegmentId, int segmentOrder,
-            InventoryStatus status, OffsetDateTime holdExpiresAt,
+            InventoryStatus status, boolean missing, OffsetDateTime holdExpiresAt,
             Long bookingId, String bookingCode, BookingStatus bookingStatus) {}
     public record OccupancySeat(Long tripSeatId, String seatCode, int row, int column,
             int floor, com.busgo.fleet.entity.SeatType seatType,
             List<SeatSegmentState> segments) {}
     public record TripOccupancy(Long tripId, TripStatus tripStatus, long seatCount,
             long segmentCount, long wholeTripAvailableSeatCount,
+            boolean complete, long expectedInventoryCellCount,
+            long actualInventoryCellCount, long missingInventoryCellCount,
             List<OccupancySegment> segments, List<OccupancySeat> seats) {}
 
     public record UpdateTripStatusRequest(@NotNull TripStatus status) {}

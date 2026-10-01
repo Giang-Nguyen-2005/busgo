@@ -1412,3 +1412,50 @@ Manual browser, mobile visual QA and live backend end-to-end checks remain
 outstanding. Full file inventory, evidence and checklist: docs/m13-verification.md.
 Backend changes were preserved without modification. No commit or push performed.
 M13 deferred domains and M14 redesign remain out of scope.
+
+## M14A minimal backend contract improvements
+
+Implemented only the two backend gaps identified by the M14A audit. Operator trip
+list now accepts `businessDate` with `Asia/Ho_Chi_Minh` calendar semantics by
+reusing `BusGoTime.businessDate`; the legacy UTC `date` filter remains available,
+and supplying both is a validation error. Existing pagination, filters, stable
+sorting, UTC API timestamps, operator ownership, and admin/staff read permissions
+remain intact.
+
+Operator occupancy now evaluates the authoritative trip-seat snapshot by
+trip-segment snapshot cross-product. It reports expected, actual, and missing cell
+counts plus a completeness flag. Missing cells stay visible with `missing: true`
+and no invented inventory status, and any affected seat is excluded from the
+whole-trip available count. The four persisted statuses and all booking, hold,
+payment, trip, locking, manifest, and customer-availability semantics are
+unchanged. No schema migration or frontend work is included.
+
+Focused MySQL integration coverage was added for Vietnam date boundaries,
+overnight departures, conflicting date parameters, ownership/staff access,
+complete and incomplete matrices, all four statuses, multiple segments, and
+non-overlapping physical-seat reuse. Verification evidence and environment
+limitations are recorded in `docs/m14a-verification.md`.
+
+## M14A operator UX implementation and verification
+
+Completed the trip-centered operator workspace with a shared header and overview,
+physical seat board, passenger, and occupancy tabs. Added the staff-readable seat
+route, Vietnam businessDate dashboard/list, URL-backed journey context, exact
+snapshot geometry, explicit missing-inventory handling, ordered multi-segment
+states, on-demand booking inspection, identity-safe passenger search/grouping,
+contact-aware booking lookup, and responsive operator-only styling. Admin-only
+lifecycle wording and controls retain the existing backend state machine.
+
+Verification completed 2026-09-30: 42 frontend tests passed (all existing
+regressions included); TypeScript/Vite build passed; git diff --check passed.
+Isolated browser fixture checks covered desktop 1440×1100, tablet 820×1000, and
+mobile 390×844: dashboard/list, shared tabs, seat geometry and drawer/sheet,
+passengers, matrix scrolling, keyboard focus/Escape/restoration, role presentation,
+on-demand booking fetches, and cached data on refresh failure. Build warnings
+remain for Zod annotations and the main bundle exceeding 500 kB.
+
+No live backend verification is claimed. Existing backend changes were preserved;
+no customer/admin redesign, commit, or push was performed. The usage-limit
+continuation finished verification/documentation only. Detailed file inventory,
+route behavior, evidence, practical limitations (including staff ID filters and
+booking-list seat counts), and deferred scope are in docs/m14a-verification.md.

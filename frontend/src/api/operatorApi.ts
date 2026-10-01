@@ -1,6 +1,12 @@
 import { apiClient, get, post } from "./client";
 import type { ApiResponse, PagedResponse } from "../types/api";
 import type * as O from "../types/operator";
+import { getSessionVersion, setTokens } from "./session";
+// Losing operator authorization must discard cached sensitive data via AuthProvider.
+apiClient.interceptors.response.use(response => response, error => {
+  if (error.config?._sessionVersion === getSessionVersion() && error.config?.url?.startsWith("/operator/") && [401, 403].includes(error.response?.status)) setTokens(null);
+  return Promise.reject(error);
+});
 const base = "/operator";
 export interface PageParams {
   page?: number;
@@ -12,7 +18,7 @@ export interface BusFilters extends PageParams {
   busTypeId?: number;
 }
 export interface TripFilters extends PageParams {
-  date?: string;
+  businessDate?: string;
   routeId?: number;
   busId?: number;
   status?: O.TripStatus;

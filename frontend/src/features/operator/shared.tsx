@@ -20,7 +20,7 @@ const labels: Record<string, string> = {
   MAINTENANCE: "Bảo trì",
   SCHEDULED: "Đã lên lịch",
   BOARDING: "Đang đón khách",
-  DEPARTED: "Đã khởi hành",
+  DEPARTED: "Đang chạy",
   COMPLETED: "Hoàn thành",
   CANCELLED: "Đã hủy",
 };
@@ -73,20 +73,22 @@ export function QueryState<T>({
   children: (data: T) => ReactNode;
 }) {
   if (query.isPending) return <Loading />;
-  if (query.isError)
+  if (query.isError && (query.data === undefined || [401, 403].includes((query.error as { response?: { status: number } })?.response?.status || 0)))
     return <OperatorError error={query.error} retry={() => query.refetch()} />;
-  return <>{children(query.data)}</>;
+  return <>{query.isError && <div className="notice danger" role="alert">Cập nhật tạm thời thất bại. Đang hiển thị dữ liệu lần trước. <button onClick={() => void query.refetch()}>Thử lại</button></div>}{query.data !== undefined && children(query.data)}</>;
 }
 export function OperatorTable({
   headers,
   children,
   empty,
+  emptyTitle = "Chưa có dữ liệu phù hợp",
 }: {
   headers: string[];
   children: ReactNode;
   empty?: boolean;
+  emptyTitle?: string;
 }) {
-  if (empty) return <Empty title="Chưa có dữ liệu phù hợp" />;
+  if (empty) return <Empty title={emptyTitle} />;
   return (
     <div
       className="operator-table-scroll"
