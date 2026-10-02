@@ -63,12 +63,20 @@ public class BookingService {
 
     @Transactional
     public BookingResponse create(CurrentUser currentUser, CreateBookingRequest request) {
+        return createFromHold(currentUser, request, BookingSource.WEB, com.busgo.payment.entity.PaymentMethod.MOCK_ONLINE);
+    }
+
+    // Package-private: only the authorized assisted service may select source/account semantics.
+    BookingResponse createFromHold(CurrentUser currentUser, CreateBookingRequest request,
+            BookingSource source, com.busgo.payment.entity.PaymentMethod method) {
         LocalDateTime now = utc(clock.instant());
         Long tripId = inventory.findOwnedHoldTripId(request.holdToken(), currentUser.id());
         if (tripId == null) throw holdNotFound();
         Trip trip = trips.lockById(tripId).orElseThrow(BookingService::holdCorrupt);
         var operator=operators.lockById(trip.getOperatorRoute().getOperator().getId())
                 .orElseThrow(BookingService::holdCorrupt);
+        entityManager.refresh(trip, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        entityManager.refresh(operator, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
         if(operator.getStatus()!=OperatorStatus.ACTIVE
                 || trip.getOperatorRoute().getStatus()!=ActiveStatus.ACTIVE) throw tripNotBookable();
         List<LockedHoldRow> rows = inventory.lockOwnedHold(request.holdToken(), currentUser.id());
@@ -85,7 +93,9 @@ public class BookingService {
 
         Booking booking = new Booking();
         booking.setBookingCode(newBookingCode());
-        booking.setCustomer(entityManager.getReference(User.class, currentUser.id()));
+        booking.setCustomer(source == BookingSource.WEB ? entityManager.getReference(User.class, currentUser.id()) : null);
+        booking.setSource(source);
+        booking.setPaymentMethod(method);
         booking.setTrip(trip);
         booking.setPickupTripStop(pickup);
         booking.setDropoffTripStop(dropoff);

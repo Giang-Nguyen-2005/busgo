@@ -2550,3 +2550,5 @@ button:not(:disabled):active, .button:active { transform: translateY(1px); }
 @media (prefers-reduced-motion: reduce) {
  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+.public-payment { width: min(680px, calc(100% - 32px)); margin: 32px auto; padding: 24px; overflow-wrap: anywhere; }

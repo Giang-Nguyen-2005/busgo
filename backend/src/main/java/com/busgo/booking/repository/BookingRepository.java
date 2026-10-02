@@ -12,6 +12,12 @@ import org.springframework.data.repository.query.Param;
 import jakarta.persistence.LockModeType;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
+    Optional<Booking> findByPaymentTokenHash(String hash);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select b from Booking b where b.id = :id")
+    Optional<Booking> lockById(@Param("id") Long id);
+
     boolean existsByBookingCode(String bookingCode);
 
     @Query(value = """

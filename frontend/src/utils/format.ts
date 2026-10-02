@@ -18,7 +18,7 @@ export const dateTime = (value: string) => `${time(value)} • ${date(value)}`;
 export const duration = (minutes: number) =>
   `${Math.floor(minutes / 60)} giờ${minutes % 60 ? ` ${minutes % 60} phút` : ""}`;
 export const paymentMethodLabel = (value: string) =>
-  ({ MOCK_QR: "QR giả lập", CASH: "Tiền mặt" })[value] || "Phương thức khác";
+  ({ MOCK_QR: "QR giả lập", MOCK_ONLINE: "Thanh toán trực tuyến mô phỏng", PAY_ON_BOARD: "Thu tiền khi khách lên xe", QR_TRANSFER: "QR / link thanh toán mô phỏng" })[value] || "Phương thức khác";
 export const paymentStatusLabel = (value: string) =>
   ({
     PAID: "Đã thanh toán",

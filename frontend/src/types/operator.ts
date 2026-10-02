@@ -157,7 +157,10 @@ export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
 export type InventoryStatus = "AVAILABLE" | "HELD" | "BOOKED" | "BLOCKED";
 export interface BookingContact { name: string; phone: string; email: string | null }
 export interface BookingStop { tripStopId: number; locationId: number; name: string; time: string | null }
+export type BookingSource = "WEB" | "PHONE";
+export type PaymentMethod = "MOCK_ONLINE" | "PAY_ON_BOARD" | "QR_TRANSFER";
 export interface OperatorBookingListItem {
+  source: BookingSource; paymentMethod: PaymentMethod;
   bookingId: number; bookingCode: string; status: BookingStatus; paymentStatus: PaymentStatus;
   tripId: number; route: { id: number; name: string }; contact: BookingContact;
   pickup: BookingStop; dropoff: BookingStop; seatCount: number; totalAmount: number; createdAt: string;
@@ -171,12 +174,13 @@ export interface OperatorBookingItem {
   unitPrice: number; ticket: OperatorTicket | null;
 }
 export interface OperatorPayment {
-  id: number; method: "MOCK_QR"; amount: number; status: PaymentStatus;
+  collectedByUserId: number | null; referenceNote: string | null;
+  id: number; method: PaymentMethod; amount: number; status: PaymentStatus;
   transactionReference: string | null; paidAt: string | null; createdAt: string;
 }
 export interface OperatorBookingDetail extends Omit<OperatorBookingListItem, "paymentStatus" | "tripId" | "seatCount"> {
   trip: { id: number; status: TripStatus; departureTime: string; estimatedArrivalTime: string };
-  customer: { id: number; fullName: string; email: string; phone: string | null };
+  customer: { id: number; fullName: string; email: string; phone: string | null } | null;
   items: OperatorBookingItem[]; payments: OperatorPayment[]; updatedAt: string;
 }
 export interface PassengerManifestRow {

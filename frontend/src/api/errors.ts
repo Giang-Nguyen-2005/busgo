@@ -1,6 +1,7 @@
 import axios from "axios";
 import type { ApiError } from "../types/api";
 const messages: Record<string, string> = {
+  PAYMENT_LINK_NOT_FOUND: "Link thanh toán không hợp lệ hoặc đã được thay thế. Vui lòng liên hệ nhà xe.",
   BUS_SCHEDULE_CONFLICT: "Xe đã được phân công cho chuyến khác trong khoảng thời gian này. Vui lòng chọn xe hoặc giờ khởi hành khác.",
   BUS_NOT_AVAILABLE: "Xe chưa sẵn sàng để tạo chuyến. Vui lòng kiểm tra trạng thái xe.",
   OPERATOR_NOT_FOUND: "Không tìm thấy nhà xe.",

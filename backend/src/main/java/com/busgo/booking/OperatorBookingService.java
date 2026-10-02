@@ -38,7 +38,7 @@ public class OperatorBookingService {
                 window == null ? null : window.startInclusive(),
                 window == null ? null : window.endExclusive(), page, size);
         var data = result.rows().stream().map(row -> new OperatorBookingListItem(
-                row.bookingId(), row.bookingCode(), row.status(), row.paymentStatus(), row.tripId(),
+                row.bookingId(), row.bookingCode(), row.status(), row.paymentStatus(), row.source(), row.paymentMethod(), row.tripId(),
                 new RouteSummary(row.routeId(), row.routeName()),
                 new Contact(row.contactName(), row.contactPhone(), row.contactEmail()),
                 new Stop(row.pickupId(), row.pickupLocationId(), row.pickupName(), api(row.pickupTime())),
@@ -63,12 +63,12 @@ public class OperatorBookingService {
         var payments = queries.findPayments(operatorId, bookingId).stream().map(payment ->
                 new PaymentSummary(payment.id(), payment.method(), payment.amount(), payment.status(),
                         payment.transactionReference(), api(payment.paidAt()),
-                        api(payment.createdAt()))).toList();
-        return new OperatorBookingDetail(row.bookingId(), row.bookingCode(), row.status(),
+                        api(payment.createdAt()), payment.collectedByUserId(), payment.referenceNote())).toList();
+        return new OperatorBookingDetail(row.bookingId(), row.bookingCode(), row.status(), row.source(), row.paymentMethod(),
                 new TripSummary(row.tripId(), row.tripStatus(), api(row.departureTime()),
                         api(row.estimatedArrivalTime())),
                 new RouteSummary(row.routeId(), row.routeName()),
-                new CustomerSummary(row.customerId(), row.customerName(), row.customerEmail(),
+                row.customerId() == null ? null : new CustomerSummary(row.customerId(), row.customerName(), row.customerEmail(),
                         row.customerPhone()),
                 new Contact(row.contactName(), row.contactPhone(), row.contactEmail()),
                 new Stop(row.pickupId(), row.pickupLocationId(), row.pickupName(), api(row.pickupTime())),

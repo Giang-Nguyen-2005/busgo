@@ -19,8 +19,8 @@ public class Booking extends AuditedEntity {
     @Column(name = "booking_code", length = 50, nullable = false, unique = true)
     private String bookingCode;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "customer_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
     private User customer;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -41,7 +41,7 @@ public class Booking extends AuditedEntity {
     @Column(name = "contact_phone", length = 20, nullable = false)
     private String contactPhone;
 
-    @Column(name = "contact_email", length = 150, nullable = false)
+    @Column(name = "contact_email", length = 150)
     private String contactEmail;
 
     @Column(name = "total_amount", precision = 12, scale = 2, nullable = false)
@@ -51,6 +51,20 @@ public class Booking extends AuditedEntity {
     @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.VARCHAR)
     @Column(name = "status", length = 30, nullable = false)
     private BookingStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.VARCHAR)
+    @Column(nullable = false, updatable = false, length = 30)
+    private BookingSource source = BookingSource.WEB;
+
+    @Enumerated(EnumType.STRING)
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.VARCHAR)
+    @Column(name = "payment_method", nullable = false, updatable = false, length = 30)
+    private com.busgo.payment.entity.PaymentMethod paymentMethod = com.busgo.payment.entity.PaymentMethod.MOCK_ONLINE;
+
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.CHAR)
+    @Column(name = "payment_token_hash", length = 64, columnDefinition = "char(64)")
+    private String paymentTokenHash;
 
     @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY)
     @OrderBy("id ASC")

@@ -16,8 +16,29 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/operator/bookings")
 public class OperatorBookingController {
     private final OperatorBookingService service;
+    private final AssistedBookingService assisted;
 
-    public OperatorBookingController(OperatorBookingService service) { this.service = service; }
+    public OperatorBookingController(OperatorBookingService service, AssistedBookingService assisted) {
+        this.service = service; this.assisted = assisted;
+    }
+
+    @PostMapping
+    @ResponseStatus(org.springframework.http.HttpStatus.CREATED)
+    public ApiResponse<BookingDtos.BookingResponse> create(@AuthenticationPrincipal CurrentUser user,
+            @jakarta.validation.Valid @RequestBody AssistedBookingDtos.CreateRequest request) {
+        return ApiResponse.of(assisted.create(user, request));
+    }
+    @PostMapping("/{bookingId}/payments")
+    public ApiResponse<com.busgo.payment.PaymentTicketDtos.PaymentConfirmation> record(
+            @AuthenticationPrincipal CurrentUser user, @PathVariable @Positive Long bookingId,
+            @jakarta.validation.Valid @RequestBody AssistedBookingDtos.RecordPayment request) {
+        return ApiResponse.of(assisted.record(user, bookingId, request));
+    }
+    @PostMapping("/{bookingId}/payment-link")
+    public ApiResponse<AssistedBookingDtos.PaymentLink> link(@AuthenticationPrincipal CurrentUser user,
+            @PathVariable @Positive Long bookingId) {
+        return ApiResponse.of(assisted.issueLink(user, bookingId));
+    }
 
     @GetMapping
     public PagedResponse<OperatorBookingListItem> list(

@@ -79,7 +79,7 @@ $env:DB_PASSWORD = '<your local database password>'
 MySQL 8.4 is the Compose reference environment. An existing server on port 3306
 requires a matching DB_URL; merely having a MySQL service running is insufficient.
 
-Flyway owns V1–V10; Hibernate uses `ddl-auto=validate`. Keep old migration files
+Flyway owns V1–V11; Hibernate uses `ddl-auto=validate`. Keep old migration files
 unchanged. Existing schemas require matching Flyway history/checksums. Before
 upgrading a pre-V10 database, run this read-only duplicate check:
 

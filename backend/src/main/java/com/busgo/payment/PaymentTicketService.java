@@ -64,19 +64,37 @@ public class PaymentTicketService {
 
     @Transactional
     public PaymentConfirmation confirm(CurrentUser currentUser, Long bookingId) {
-        LocalDateTime now = utc(clock.instant());
         Long tripId = bookings.findOwnedTripId(bookingId, currentUser.id())
                 .orElseThrow(PaymentTicketService::bookingNotFound);
+        return confirmBooking(bookingId, tripId, currentUser.id(), PaymentMethod.MOCK_ONLINE, null, null);
+    }
+
+    // Caller must establish customer ownership, operator ownership, or scoped token authority.
+    @Transactional
+    public PaymentConfirmation confirmAssisted(Long bookingId, Long tripId, Long actorId,
+            PaymentMethod method, String note, String tokenHash) {
+        return confirmBooking(bookingId, tripId, actorId, method, note, tokenHash);
+    }
+
+    private PaymentConfirmation confirmBooking(Long bookingId, Long tripId, Long actorId,
+            PaymentMethod method, String note, String tokenHash) {
+        LocalDateTime now = utc(clock.instant());
         Trip lockedTrip = trips.lockById(tripId)
                 .orElseThrow(PaymentTicketService::bookingNotFound);
         var operator=operators.lockById(lockedTrip.getOperatorRoute().getOperator().getId())
                 .orElseThrow(PaymentTicketService::bookingNotFound);
-        Booking booking = bookings.lockOwnedById(bookingId, currentUser.id())
+        Booking booking = bookings.lockById(bookingId)
                 .orElseThrow(PaymentTicketService::bookingNotFound);
+        entityManager.refresh(lockedTrip, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        entityManager.refresh(operator, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        entityManager.refresh(booking, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        if (tokenHash != null && !tokenHash.equals(booking.getPaymentTokenHash()))
+            throw new ResourceNotFoundException("PAYMENT_LINK_NOT_FOUND", "Payment link was not found.");
         if (operator.getStatus()!=OperatorStatus.ACTIVE
                 || lockedTrip.getOperatorRoute().getStatus()!=com.busgo.common.entity.ActiveStatus.ACTIVE)
             throw paymentWindowClosed();
         if (!lockedTrip.getId().equals(booking.getTrip().getId())) throw invalidPayment();
+        if (booking.getPaymentMethod() != method) throw notPayable();
         List<BookingItem> items = bookingItems.findDetailedByBookingId(booking.getId());
         validateInventory(booking, items);
 
@@ -95,16 +113,23 @@ public class PaymentTicketService {
         if ((lockedTrip.getStatus() != TripStatus.SCHEDULED
                 && lockedTrip.getStatus() != TripStatus.BOARDING)
                 || booking.getPickupTripStop().getPlannedDepartureTime() == null
-                || !booking.getPickupTripStop().getPlannedDepartureTime().isAfter(now)) {
+                || (!booking.getPickupTripStop().getPlannedDepartureTime().isAfter(now)
+                    && !(booking.getSource() == BookingSource.PHONE && actorId != null
+                         && lockedTrip.getStatus() == TripStatus.BOARDING))) {
             throw paymentWindowClosed();
         }
 
         Payment payment = new Payment();
         payment.setBooking(booking);
-        payment.setMethod(PaymentMethod.MOCK_QR);
+        payment.setMethod(method);
+        payment.setCollectedBy(booking.getSource() == BookingSource.PHONE && actorId != null
+                ? entityManager.getReference(User.class, actorId) : null);
+        payment.setReferenceNote(note);
         payment.setAmount(booking.getTotalAmount());
         payment.setStatus(PaymentStatus.PAID);
-        payment.setTransactionReference(newTransactionReference());
+        payment.setTransactionReference(booking.getSource() == BookingSource.PHONE && actorId != null
+                ? "COLLECT-" + UUID.randomUUID().toString().replace("-", "").toUpperCase(Locale.ROOT)
+                : newTransactionReference());
         payment.setPaidAt(now);
         payment = payments.saveAndFlush(payment);
 
@@ -113,8 +138,8 @@ public class PaymentTicketService {
         history.setBooking(booking);
         history.setFromStatus(BookingStatus.PENDING);
         history.setToStatus(BookingStatus.CONFIRMED);
-        history.setChangedBy(entityManager.getReference(User.class, currentUser.id()));
-        history.setNote("Mock QR payment confirmed");
+        history.setChangedBy(actorId == null ? null : entityManager.getReference(User.class, actorId));
+        history.setNote(actorId == null ? "Public mock payment confirmed" : "Payment confirmed by authenticated actor");
         history.setChangedAt(now);
         histories.save(history);
 

@@ -7,6 +7,7 @@ import { AuthPage } from "../pages/AuthPage";
 import { Empty } from "../components/ui";
 
 export const router = createBrowserRouter([
+  { path: "/pay/:token", lazy: async () => ({ Component: (await import("../pages/PublicPaymentPage")).PublicPaymentPage }) },
   {
     path: "/admin",
     lazy: async () => ({ Component: (await import("../features/auth/SystemAdminGuard")).SystemAdminGuard }),
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
           {
             path: "bookings",
             lazy: async () => ({ Component: (await import("../pages/operator/OperatorBookingsPages")).OperatorBookingsPage }),
+          },
+          {
+            path: "bookings/new",
+            lazy: async () => ({ Component: (await import("../pages/operator/OperatorBookingCreatePage")).OperatorBookingCreatePage }),
           },
           {
             path: "bookings/:bookingId",
