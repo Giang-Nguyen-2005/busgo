@@ -28,6 +28,9 @@ const paged = async <T>(path: string, params: object, signal?: AbortSignal) =>
 const patch = async <T>(path: string, body: object) =>
   (await apiClient.patch<ApiResponse<T>>(base + path, body)).data.data;
 export const operatorApi = {
+  createBooking: (body: { tripId: number; pickupLocationId: number; dropoffLocationId: number; tripSeatIds: number[]; contactName: string; contactPhone: string; contactEmail?: string; paymentMethod: O.PaymentMethod }) => post<import("../types/customer").Booking>(base + "/bookings", body),
+  recordPayment: (id: number, body: { method: O.PaymentMethod; referenceNote?: string }) => post(base + "/bookings/" + id + "/payments", body),
+  paymentLink: (id: number) => post<{ path: string }>(base + "/bookings/" + id + "/payment-link"),
   staff: (params: O.StaffFilters, signal?: AbortSignal) => paged<O.OperatorStaff>("/staff", params, signal),
   createStaff: (body: O.CreateOperatorStaffRequest) => post<O.OperatorStaff>(`${base}/staff`, body),
   updateStaff: (id: number, body: O.UpdateOperatorStaffRequest) => patch<O.OperatorStaff>(`/staff/${id}`, body),

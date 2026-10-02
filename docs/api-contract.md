@@ -639,7 +639,7 @@ Request để trống; amount, customer và status luôn do server suy ra.
 Backend:
     • lock Booking bằng database row lock
     • kiểm tra inventory đã BOOKED và link đúng BookingItem từ M8
-    • tạo Payment MOCK_QR/PAID với Booking.totalAmount
+    • tạo Payment MOCK_ONLINE/PAID với Booking.totalAmount
     • Booking PENDING → CONFIRMED
     • ghi booking_status_history
     • tạo đúng một Ticket cho mỗi BookingItem
@@ -652,7 +652,7 @@ Lần confirm đầu tiên và các lần retry thành công đều trả HTTP 2
     "paymentId": 801,
     "bookingId": 701,
     "bookingCode": "BG2609180001",
-    "method": "MOCK_QR",
+    "method": "MOCK_ONLINE",
     "amount": 650000,
     "bookingStatus": "CONFIRMED",
     "paymentStatus": "PAID",
@@ -749,7 +749,7 @@ Response:
     ],
 
     "payment": {
-      "method": "MOCK_QR",
+      "method": "MOCK_ONLINE",
       "status": "PAID"
     },
 
@@ -800,7 +800,7 @@ Response:
     "bookingCode": "BG2609180001",
     "status": "CONFIRMED",
     "paymentStatus": "PAID",
-    "paymentMethod": "MOCK_QR",
+    "paymentMethod": "MOCK_ONLINE",
     "amount": 650000,
     "operator": { "id": 1, "name": "GiangBus" },
     "route": { "id": 1, "name": "Đắk Lắk - Hà Nội" },
@@ -1673,3 +1673,64 @@ cross-view offsets on a non-UTC JVM without rewriting existing records, changing
 businessDate semantics or changing direct-JDBC hold expiry timestamps. Keep JVM
 timezone consistent for an existing database; moving legacy data between JVM
 timezones still needs explicit review of its timestamp conventions.
+
+
+## M16A assisted bookings and collection
+
+PHONE is a booking source; Zalo is only an external manual communication channel.
+Sources: WEB, PHONE. Intended/actual methods: MOCK_ONLINE (WEB), PAY_ON_BOARD or
+QR_TRANSFER (PHONE). No gateway, real banking QR, or Zalo send operation exists.
+
+Operator list/detail append source and paymentMethod. Detail customer is nullable
+for offline callers. Existing contact, items and payments contracts remain; payment
+summaries append collectedByUserId (nullable) and referenceNote (nullable). No payment
+rows and no tickets exist before successful collection. PENDING reserves BOOKED
+inventory; CONFIRMED means successful payment and issued tickets, not boarding.
+
+### Operator mutations (OPERATOR_ADMIN and active operator membership only)
+
+- POST /api/v1/operator/bookings → 201, ApiResponse<BookingResponse>.
+  Body: tripId, pickupLocationId, dropoffLocationId, tripSeatIds (1–5 unique positive
+  IDs), contactName (required, ≤100), contactPhone (required, ≤20), contactEmail
+  (optional valid email, ≤150), paymentMethod (PAY_ON_BOARD or QR_TRANSFER).
+  Booking source is assigned PHONE; customer ownership cannot be supplied.
+  Same journey fare, hold allocation and complete inventory validation as WEB.
+- POST /api/v1/operator/bookings/{bookingId}/payments → 200,
+  ApiResponse<PaymentConfirmation>. Body: method (must match booking's PHONE method),
+  referenceNote (optional, ≤500). Records the full amount and current employee/time.
+  One successful payment and one ticket per item; repeats return existing payment.
+- POST /api/v1/operator/bookings/{bookingId}/payment-link → 200,
+  {data:{path:"/pay/<opaque-token>"}}. QR_TRANSFER PHONE only. Relative path is resolved
+  against the frontend origin. Reissuing revokes the previous link; raw token is
+  returned once and never stored in the database.
+
+Foreign trip/booking accesses use 404 BOOKING_NOT_FOUND. Staff mutation and system
+admin operator-context requests use 403 ACCESS_DENIED. Inactive operator membership
+rejects management; public confirmation uses 409 PAYMENT_WINDOW_CLOSED. Overlapping
+or incomplete inventory uses 409 SEAT_NOT_AVAILABLE; incomplete booked inventory
+uses 409 BOOKING_INVENTORY_INCONSISTENT. Invalid request fields use 400
+VALIDATION_ERROR. Unsupported/mismatched method or terminal booking uses 409
+BOOKING_NOT_PAYABLE. New payments require SCHEDULED or BOARDING; employee PHONE
+collection during BOARDING is allowed after pickup time. This never performs check-in.
+
+### Anonymous payment links
+
+- GET /api/v1/public/payments/{token} → 200, ApiResponse<PublicPayment>.
+- POST /api/v1/public/payments/{token}/mock-confirm → 200, the same minimal contract.
+  No request body, account login, payer account, booking ID, or editable fields.
+  QR_TRANSFER mock confirmation only. Existing paid outcome is idempotent.
+
+PublicPayment fields: bookingCode, operator (name), journey (route name), pickup and
+ dropoff ({name,time}), seats (seat codes), amount, method, status, mockPayment:true.
+No contact, account, employee, database IDs or internal payment references are exposed.
+Both responses use Cache-Control:no-store and Referrer-Policy:no-referrer. Invalid,
+malformed or revoked tokens return 404 PAYMENT_LINK_NOT_FOUND with no private data.
+Active paid links remain idempotent after departure; inactive operators close repeats
+consistently with WEB. Unpaid public confirmation closes at pickup departure. No token
+TTL or anonymous ticket download is introduced in M16A. The anonymous page directs
+customers to the operator for ticket delivery; operator detail displays ticket QR.
+
+WEB authenticated booking/hold/payment/ticket ownership and behavior remain intact.
+V11 defaults historical bookings to WEB/MOCK_ONLINE and renames historical MOCK_QR
+payment rows. PHONE never creates a fake customer account. See m16a-assisted-booking.md
+for implementation, concurrency and deferred scope; m16a-verification.md for evidence.

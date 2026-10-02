@@ -33,6 +33,13 @@ public class Payment extends AuditedEntity {
     @Column(name = "transaction_reference", length = 100, nullable = false, unique = true)
     private String transactionReference;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "collected_by_user_id")
+    private com.busgo.user.entity.User collectedBy;
+
+    @Column(name = "reference_note", length = 500)
+    private String referenceNote;
+
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 }

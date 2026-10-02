@@ -52,7 +52,7 @@ public class OperatorBookingQueryRepository {
                 .addValue("limit", size).addValue("offset", Math.multiplyExact(page, size));
         long total = jdbc.queryForObject("SELECT COUNT(*) " + FROM, params, Long.class);
         List<ListRow> rows = jdbc.query("""
-                SELECT b.id, b.booking_code, b.status,
+                SELECT b.id, b.booking_code, b.status, b.source, b.payment_method,
                        COALESCE(p.status, 'PENDING') AS payment_status,
                        b.trip_id, r.id AS route_id, r.name AS route_name,
                        b.contact_name, b.contact_phone, b.contact_email,
@@ -67,7 +67,7 @@ public class OperatorBookingQueryRepository {
                 """ + FROM + " ORDER BY b.created_at DESC, b.id DESC LIMIT :limit OFFSET :offset",
                 params, (rs, rowNum) -> new ListRow(
                         rs.getLong("id"), rs.getString("booking_code"),
-                        BookingStatus.valueOf(rs.getString("status")),
+                        BookingStatus.valueOf(rs.getString("status")), com.busgo.booking.entity.BookingSource.valueOf(rs.getString("source")), PaymentMethod.valueOf(rs.getString("payment_method")),
                         PaymentStatus.valueOf(rs.getString("payment_status")),
                         rs.getLong("trip_id"), rs.getLong("route_id"),
                         rs.getString("route_name"), rs.getString("contact_name"),
@@ -85,7 +85,7 @@ public class OperatorBookingQueryRepository {
 
     public Optional<DetailRow> findOwnedDetail(Long operatorId, Long bookingId) {
         List<DetailRow> rows = jdbc.query("""
-                SELECT b.id, b.booking_code, b.status, b.total_amount, b.created_at, b.updated_at,
+                SELECT b.id, b.booking_code, b.status, b.source, b.payment_method, b.total_amount, b.created_at, b.updated_at,
                        b.contact_name, b.contact_phone, b.contact_email,
                        u.id AS customer_id, u.full_name, u.email AS customer_email, u.phone AS customer_phone,
                        t.id AS trip_id, t.status AS trip_status, t.departure_time,
@@ -95,7 +95,7 @@ public class OperatorBookingQueryRepository {
                        dropoff.id AS dropoff_id, dropoff.location_id AS dropoff_location_id,
                        dropoff_location.name AS dropoff_name, dropoff.planned_arrival_time AS dropoff_time
                 FROM bookings b
-                JOIN users u ON u.id = b.customer_id
+                LEFT JOIN users u ON u.id = b.customer_id
                 JOIN trips t ON t.id = b.trip_id
                 JOIN operator_routes opr ON opr.id = t.operator_route_id
                 JOIN routes r ON r.id = opr.route_id
@@ -107,11 +107,11 @@ public class OperatorBookingQueryRepository {
                 """, new MapSqlParameterSource("bookingId", bookingId)
                         .addValue("operatorId", operatorId),
                 (rs, rowNum) -> new DetailRow(rs.getLong("id"), rs.getString("booking_code"),
-                        BookingStatus.valueOf(rs.getString("status")), rs.getBigDecimal("total_amount"),
+                        BookingStatus.valueOf(rs.getString("status")), com.busgo.booking.entity.BookingSource.valueOf(rs.getString("source")), PaymentMethod.valueOf(rs.getString("payment_method")), rs.getBigDecimal("total_amount"),
                         JpaJdbcTime.read(rs, "created_at"),
                         JpaJdbcTime.read(rs, "updated_at"),
                         rs.getString("contact_name"), rs.getString("contact_phone"),
-                        rs.getString("contact_email"), rs.getLong("customer_id"),
+                        rs.getString("contact_email"), rs.getObject("customer_id", Long.class),
                         rs.getString("full_name"), rs.getString("customer_email"),
                         rs.getString("customer_phone"), rs.getLong("trip_id"),
                         TripStatus.valueOf(rs.getString("trip_status")),
@@ -149,7 +149,7 @@ public class OperatorBookingQueryRepository {
     public List<PaymentRow> findPayments(Long operatorId, Long bookingId) {
         return jdbc.query("""
                 SELECT p.id, p.method, p.amount, p.status, p.transaction_reference,
-                       p.paid_at, p.created_at
+                       p.paid_at, p.created_at, p.collected_by_user_id, p.reference_note
                 FROM payments p
                 JOIN bookings b ON b.id = p.booking_id
                 JOIN trips t ON t.id = b.trip_id
@@ -161,7 +161,7 @@ public class OperatorBookingQueryRepository {
                         rs.getBigDecimal("amount"), PaymentStatus.valueOf(rs.getString("status")),
                         rs.getString("transaction_reference"),
                         JpaJdbcTime.read(rs, "paid_at"),
-                        JpaJdbcTime.read(rs, "created_at")));
+                        JpaJdbcTime.read(rs, "created_at"), rs.getObject("collected_by_user_id", Long.class), rs.getString("reference_note")));
     }
 
     private static MapSqlParameterSource params(Long operatorId, Long bookingId) {
@@ -170,13 +170,13 @@ public class OperatorBookingQueryRepository {
     }
 
     public record PageRows(List<ListRow> rows, long total) {}
-    public record ListRow(Long bookingId, String bookingCode, BookingStatus status,
+    public record ListRow(Long bookingId, String bookingCode, BookingStatus status, com.busgo.booking.entity.BookingSource source, PaymentMethod paymentMethod,
             PaymentStatus paymentStatus, Long tripId, Long routeId, String routeName,
             String contactName, String contactPhone, String contactEmail,
             Long pickupId, Long pickupLocationId, String pickupName, LocalDateTime pickupTime,
             Long dropoffId, Long dropoffLocationId, String dropoffName, LocalDateTime dropoffTime,
             int seatCount, BigDecimal totalAmount, LocalDateTime createdAt) {}
-    public record DetailRow(Long bookingId, String bookingCode, BookingStatus status,
+    public record DetailRow(Long bookingId, String bookingCode, BookingStatus status, com.busgo.booking.entity.BookingSource source, PaymentMethod paymentMethod,
             BigDecimal totalAmount, LocalDateTime createdAt, LocalDateTime updatedAt,
             String contactName, String contactPhone, String contactEmail,
             Long customerId, String customerName, String customerEmail, String customerPhone,
@@ -189,5 +189,5 @@ public class OperatorBookingQueryRepository {
             String ticketSeatCode, Long paymentId, LocalDateTime ticketCreatedAt) {}
     public record PaymentRow(Long id, PaymentMethod method, BigDecimal amount,
             PaymentStatus status, String transactionReference, LocalDateTime paidAt,
-            LocalDateTime createdAt) {}
+            LocalDateTime createdAt, Long collectedByUserId, String referenceNote) {}
 }

@@ -17,7 +17,7 @@ public final class OperatorBookingDtos {
     public record CustomerSummary(Long id, String fullName, String email, String phone) {}
 
     public record OperatorBookingListItem(Long bookingId, String bookingCode,
-            BookingStatus status, PaymentStatus paymentStatus, Long tripId,
+            BookingStatus status, PaymentStatus paymentStatus, com.busgo.booking.entity.BookingSource source, PaymentMethod paymentMethod, Long tripId,
             RouteSummary route, Contact contact, Stop pickup, Stop dropoff,
             int seatCount, BigDecimal totalAmount, OffsetDateTime createdAt) {}
 
@@ -27,10 +27,10 @@ public final class OperatorBookingDtos {
             String passengerName, BigDecimal unitPrice, TicketSummary ticket) {}
     public record PaymentSummary(Long id, PaymentMethod method, BigDecimal amount,
             PaymentStatus status, String transactionReference, OffsetDateTime paidAt,
-            OffsetDateTime createdAt) {}
+            OffsetDateTime createdAt, Long collectedByUserId, String referenceNote) {}
 
     public record OperatorBookingDetail(Long bookingId, String bookingCode,
-            BookingStatus status, TripSummary trip, RouteSummary route,
+            BookingStatus status, com.busgo.booking.entity.BookingSource source, PaymentMethod paymentMethod, TripSummary trip, RouteSummary route,
             CustomerSummary customer, Contact contact, Stop pickup, Stop dropoff,
             List<BookingItemSummary> items, List<PaymentSummary> payments,
             BigDecimal totalAmount, OffsetDateTime createdAt, OffsetDateTime updatedAt) {}

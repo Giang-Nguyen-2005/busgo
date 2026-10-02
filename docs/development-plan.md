@@ -1506,3 +1506,58 @@ Existing Zod annotation and bundle-size warnings remain. No live backend, real
 credential/payment, physical-device or full screen-reader verification is claimed.
 No commit or push performed. File inventory, detailed evidence, fixture limits,
 unverified items and deferred scope are in docs/m14b-verification.md.
+## Product Direction
+
+BusGo is being developed as a management-oriented transportation platform.
+
+### Current V1
+BusGo currently consists of:
+- Customer booking flow
+- Operator management and operations
+- System administration
+- Multi-operator-ready architecture
+
+### V1.5 Focus
+The next development phase prioritizes operator management:
+- operational dashboard
+- booking management
+- trip operations
+- driver/assistant assignment
+- boarding/check-in
+- reporting and analytics
+- customer management where useful
+
+### V2 Direction
+BusGo will evolve toward a multi-operator marketplace:
+- multiple transport operators
+- customer comparison between operators
+- cancellation/refund
+- promotions
+- real payment integration
+- commissions/settlements
+- richer platform administration
+- advanced reporting
+
+### Final Product Positioning
+BusGo is positioned as:
+
+"An online bus operation management and ticket booking platform."
+
+The Operator Management experience is the primary management focus.
+Customer booking provides transaction flow into the management system.
+System Admin provides platform-level governance.
+
+
+## M16A — Operator assisted booking and payment collection
+
+Implemented PHONE assisted bookings without customer accounts, immutable WEB/PHONE
+source and intended payment method, PAY_ON_BOARD collection, opaque QR_TRANSFER mock
+payment links, admin-only mutation commands, operator ticket QR, and focused creation
+UI. Shared hold/conversion/payment services preserve inventory and ticket invariants.
+V11 follows V10; staff capabilities, boarding, cancellation, rescheduling, gateways,
+Zalo API and reporting screens remain deferred. Zalo is only a manually used external
+communication channel, not a booking source.
+
+See [M16A design](m16a-assisted-booking.md) and [verification](m16a-verification.md)
+for source audit, contracts, files, migration, test results and practical limitations.
+No commit or push is performed for this milestone.

@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SeatHoldService {
+    private final jakarta.persistence.EntityManager entityManager;
     private final CustomerJourneyResolver journeys;
     private final TripSeatRepository seats;
     private final TripRepository trips;
@@ -38,7 +39,9 @@ public class SeatHoldService {
     public SeatHoldService(CustomerJourneyResolver journeys, TripSeatRepository seats,
             TripRepository trips, TripStopSnapshotRepository stops,
             OperatorRouteFareRepository fares, SeatHoldInventoryRepository inventory,
-            SeatHoldProperties properties, Clock clock, TransportOperatorRepository operators) {
+            SeatHoldProperties properties, Clock clock, TransportOperatorRepository operators,
+            jakarta.persistence.EntityManager entityManager) {
+        this.entityManager = entityManager;
         this.journeys = journeys;
         this.seats = seats;
         this.trips = trips;
@@ -59,6 +62,8 @@ public class SeatHoldService {
                 .orElseThrow(SeatHoldService::notFound);
         var operator=operators.lockById(lockedTrip.getOperatorRoute().getOperator().getId())
                 .orElseThrow(SeatHoldService::notFound);
+        entityManager.refresh(lockedTrip, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        entityManager.refresh(operator, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
         LocalDateTime now = utc(clock.instant());
         if (operator.getStatus()!=OperatorStatus.ACTIVE
                 || lockedTrip.getOperatorRoute().getStatus()!=ActiveStatus.ACTIVE

@@ -1,3 +1,9 @@
+import { QRCodeSVG } from "qrcode.react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { operatorApi } from "../../api/operatorApi";
+import { useAuth } from "../../features/auth/AuthProvider";
+import { canManageOperator } from "../../features/auth/access";
+import { ErrorState } from "../../components/ui";
 import { useEffect, useState } from "react";
 import { RefreshState } from "../../features/operator/RefreshState";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -13,6 +19,7 @@ function Stop({ stop }: { stop: BookingStop }) {
   return <>{stop.name}{stop.time && <span className="operator-stop-time muted"> · {dateTime(stop.time)}</span>}</>;
 }
 export function OperatorBookingsPage() {
+  const auth = useAuth();
   const [params, setParams] = useSearchParams();
   const filters = bookingFilters(params);
   const set = (key: string, value: string) => setParams(previous => updateBookingFilter(previous, key, value), { replace: key === "q" });
@@ -20,7 +27,7 @@ export function OperatorBookingsPage() {
   useEffect(() => { const timer = window.setTimeout(() => setSearch(filters.q), 350); return () => window.clearTimeout(timer); }, [filters.q]);
   const query = useOperatorBookings({ ...filters, q: search });
   return <>
-    <OperatorPageHeader title="Đặt vé" />
+    <OperatorPageHeader title="Đặt vé">{canManageOperator(auth.user?.roles) && <Link className="button" to="/operator/bookings/new">Tạo đặt vé</Link>}</OperatorPageHeader>
     <div className="operator-filters">
       <Field label="Tìm mã đặt vé, tên, điện thoại, email" maxLength={100} value={params.get("q") || ""} onChange={e => set("q", e.target.value)} />
       <Field label="Mã chuyến" type="number" min={1} value={params.get("tripId") || ""} onChange={e => set("tripId", e.target.value)} />
@@ -43,26 +50,26 @@ export function OperatorBookingRow({ booking: b }: { booking: OperatorBookingLis
   return <tr>
     <td className="booking-identity"><Link className="operator-booking-code" to={`/operator/bookings/${b.bookingId}`}>{b.bookingCode}</Link><Link className="operator-contact-name" to={`/operator/bookings/${b.bookingId}`}>{b.contact.name}</Link><p>{b.contact.phone}</p><details className="row-secondary"><summary>Thông tin thêm</summary><small className="muted">{b.contact.email || "Chưa có email"}</small><small>Tạo: {dateTime(b.createdAt)}</small></details></td>
     <td className="booking-journey"><Link to={`/operator/trips/${b.tripId}`}><strong>{b.route.name}</strong></Link><p>{b.pickup.time ? dateTime(b.pickup.time) : "Chưa có giờ đón"} · <strong>{b.seatCount} ghế</strong></p><small className="muted">{b.pickup.name} → {b.dropoff.name}</small>{b.dropoff.time && <small className="muted">Trả: {dateTime(b.dropoff.time)}</small>}</td>
-    <td className="booking-state"><div><OperationsBadge status={b.status} /><span className={`operator-badge operator-status-${b.paymentStatus}`}>{paymentStatusLabel(b.paymentStatus)}</span></div><strong className="booking-money">{money(b.totalAmount)}</strong></td>
+    <td className="booking-state"><div><OperationsBadge status={b.status} /><span className={`operator-badge operator-status-${b.paymentStatus}`}>{paymentStatusLabel(b.paymentStatus)}</span></div><small>{b.source} · {paymentMethodLabel(b.paymentMethod)}</small><strong className="booking-money">{money(b.totalAmount)}</strong></td>
   </tr>;
 }
 
 export function BookingDetailContent({ booking: b }: { booking: OperatorBookingDetail }) {
   const latest = b.payments.reduce<(typeof b.payments)[number] | undefined>((a, p) => !a || p.id > a.id ? p : a, undefined);
   return <article className="booking-dossier">
-    <header className="dossier-overview"><div><span className="eyebrow">ĐẶT VÉ</span><h2>{b.bookingCode}</h2><OperationsBadge status={b.status} /><p className="muted">Tạo: {dateTime(b.createdAt)} · Giờ Việt Nam</p></div><div className="dossier-total"><small>Tổng đặt vé</small><strong>{money(b.totalAmount)}</strong></div></header>
+    <header className="dossier-overview"><div><span className="eyebrow">ĐẶT VÉ</span><h2>{b.bookingCode}</h2><p>{b.source} · {paymentMethodLabel(b.paymentMethod)}</p><OperationsBadge status={b.status} /><p className="muted">Tạo: {dateTime(b.createdAt)} · Giờ Việt Nam</p></div><div className="dossier-total"><small>Tổng đặt vé</small><strong>{money(b.totalAmount)}</strong></div></header>
     <div className="dossier-context">
       <section><h2>Hành trình</h2><h3>{b.route.name}</h3><p><Link to={`/operator/trips/${b.trip.id}`}>Chuyến #{b.trip.id}</Link> · <OperatorStatusBadge status={b.trip.status} /></p><dl className="dossier-stops"><div><dt>Đón</dt><dd><Stop stop={b.pickup} /></dd></div><div><dt>Trả</dt><dd><Stop stop={b.dropoff} /></dd></div></dl><p className="fine-print">Giờ toàn chuyến: {dateTime(b.trip.departureTime)} → {dateTime(b.trip.estimatedArrivalTime)}</p></section>
       <section><h2>Liên hệ đặt vé</h2><strong>{b.contact.name}</strong><p>{b.contact.phone}</p><p>{b.contact.email || "Chưa có email"}</p></section>
     </div>
     <section className="dossier-section"><h2>Ghế và vé <span className="muted">· {b.items.length} ghế</span></h2><p className="fine-print">Tên trên vé có thể lấy từ liên hệ đặt vé, không xác minh danh tính người ngồi trên ghế.</p>
-      {b.items.length ? <div className="dossier-seats">{b.items.map(item => <article key={item.bookingItemId} className="dossier-seat"><strong className="operator-seat-code">{item.seatCode}</strong><div><small>Khách trên ghế</small><p>{seatPassenger(item.passengerName)}</p><small>Đơn giá: {money(item.unitPrice)}</small></div><div><small>Vé điện tử</small><strong>{item.ticket?.ticketCode || "Chưa có vé"}</strong>{item.ticket && <><p>Tên trên vé: {item.ticket.passengerName || "—"}</p><details className="row-secondary"><summary>Thông tin vé</summary><p>Ghế trên vé: {item.ticket.seatCode} · Thanh toán #{item.ticket.paymentId}</p><p>Tạo: {dateTime(item.ticket.createdAt)}</p></details></>}</div></article>)}</div> : <p>Chưa có ghế trong đặt vé.</p>}
+      {b.items.length ? <div className="dossier-seats">{b.items.map(item => <article key={item.bookingItemId} className="dossier-seat"><strong className="operator-seat-code">{item.seatCode}</strong><div><small>Khách trên ghế</small><p>{seatPassenger(item.passengerName)}</p><small>Đơn giá: {money(item.unitPrice)}</small></div><div><small>Vé điện tử</small><strong>{item.ticket?.ticketCode || "Chưa có vé"}</strong>{item.ticket && <><p>Tên trên vé: {item.ticket.passengerName || "—"}</p><QRCodeSVG value={item.ticket.ticketCode} size={128} title={`Vé ${item.ticket.ticketCode}`} /><details className="row-secondary"><summary>Thông tin vé</summary><p>Ghế trên vé: {item.ticket.seatCode} · Thanh toán #{item.ticket.paymentId}</p><p>Tạo: {dateTime(item.ticket.createdAt)}</p></details></>}</div></article>)}</div> : <p>Chưa có ghế trong đặt vé.</p>}
     </section>
     <section className="dossier-section"><div className="dossier-payment-heading"><h2>Thanh toán</h2><span className={`operator-badge operator-status-${latest?.status || "NEUTRAL"}`}>{latest ? paymentStatusLabel(latest.status) : "Chưa có giao dịch thanh toán"}</span></div>
       {latest && <p className="dossier-latest">Giao dịch gần nhất · {paymentMethodLabel(latest.method)} · <strong>{money(latest.amount)}</strong>{latest.paidAt && <> · Thanh toán: {dateTime(latest.paidAt)}</>}</p>}
       {!!b.payments.length && <details className="dossier-payment-history"><summary>Lịch sử thanh toán · {b.payments.length} giao dịch</summary><div>{b.payments.map(p => <article className="dossier-payment-row" key={p.id}><div><strong>{paymentMethodLabel(p.method)}</strong><small>Giao dịch #{p.id} · {p.transactionReference || "Chưa có mã tham chiếu"}</small></div><div><small>Tạo: {dateTime(p.createdAt)}</small><small>Thanh toán: {p.paidAt ? dateTime(p.paidAt) : "Chưa thanh toán"}</small></div><div><span className={`operator-badge operator-status-${p.status}`}>{paymentStatusLabel(p.status)}</span><strong>{money(p.amount)}</strong></div></article>)}</div></details>}
     </section>
-    <details className="dossier-internal"><summary>Tài khoản và thông tin nội bộ</summary><h3>Tài khoản khách hàng</h3><p>{b.customer.fullName} · #{b.customer.id}</p><p>{b.customer.email}</p><p>{b.customer.phone || "Chưa có số điện thoại"}</p><p>Đặt vé #{b.bookingId} · Tạo: {dateTime(b.createdAt)} · Cập nhật: {dateTime(b.updatedAt)}</p></details>
+    <details className="dossier-internal"><summary>Tài khoản và thông tin nội bộ</summary><h3>Tài khoản khách hàng</h3>{b.customer ? <><p>{b.customer.fullName} · #{b.customer.id}</p><p>{b.customer.email}</p><p>{b.customer.phone || "Chưa có số điện thoại"}</p></> : <p>Khách đặt qua điện thoại · Không có tài khoản BusGo</p>}<p>Đặt vé #{b.bookingId} · Tạo: {dateTime(b.createdAt)} · Cập nhật: {dateTime(b.updatedAt)}</p></details>
   </article>;
 }
 
@@ -70,5 +77,21 @@ export function OperatorBookingDetailPage() {
   const query = useOperatorBooking(Number(useParams().bookingId));
   return <><OperatorPageHeader title="Chi tiết đặt vé"><Link to="/operator/bookings">Danh sách đặt vé</Link></OperatorPageHeader>
     <RefreshState query={query} />
-    <OperationsQueryState query={query}>{b => <BookingDetailContent booking={b} />}</OperationsQueryState></>;
+    <OperationsQueryState query={query}>{b => <><BookingDetailContent booking={b} /><AssistedBookingActions booking={b} /></>}</OperationsQueryState></>;
+}
+
+export function AssistedBookingActions({ booking: b }: { booking: OperatorBookingDetail }) {
+  const auth = useAuth();
+  const cache = useQueryClient();
+  const [link, setLink] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [note, setNote] = useState("");
+  const [review, setReview] = useState(false);
+  const record = useMutation({ mutationFn: () => operatorApi.recordPayment(b.bookingId, { method: b.paymentMethod, referenceNote: note.trim() || undefined }), onSuccess: () => { setReview(false); void cache.invalidateQueries({ queryKey: ["operator"] }); } });
+  const issue = useMutation({ mutationFn: () => operatorApi.paymentLink(b.bookingId), onSuccess: result => { setLink(new URL(result.path, window.location.origin).href); setCopied(false); } });
+  if (b.source !== "PHONE" || !canManageOperator(auth.user?.roles)) return null;
+  return <section className="card assisted-actions"><h2>Thu tiền đặt vé</h2><p>{paymentMethodLabel(b.paymentMethod)} · {b.status === "CONFIRMED" ? "Đã thanh toán" : "Chưa thanh toán"}</p>
+    {b.status === "PENDING" && <><Field label="Ghi chú / tham chiếu (không bắt buộc)" maxLength={500} value={note} onChange={e => setNote(e.target.value)} />{review ? <><p>Xác nhận đã thu {money(b.totalAmount)} cho {b.bookingCode}. Thao tác sẽ cấp vé điện tử.</p><button disabled={record.isPending} onClick={() => record.mutate()}>Xác nhận đã thu tiền</button><button className="secondary" disabled={record.isPending} onClick={() => setReview(false)}>Quay lại</button></> : <button onClick={() => setReview(true)}>Ghi nhận đã thu tiền</button>}{record.isError && <ErrorState error={record.error} />}</>}
+    {b.paymentMethod === "QR_TRANSFER" && <><p>Gửi link thủ công qua Zalo hoặc kênh liên hệ của khách. Tạo link mới sẽ vô hiệu link cũ.</p><button className="secondary" disabled={issue.isPending} onClick={() => issue.mutate()}>{link ? "Tạo link mới" : "Tạo link thanh toán"}</button>{issue.isError && <ErrorState error={issue.error} />}{link && <><Field label="Link thanh toán" value={link} readOnly /><a href={link} target="_blank" rel="noreferrer">Mở trang thanh toán</a><button className="secondary" onClick={async () => { try { await navigator.clipboard.writeText(link); setCopied(true); } catch { setCopied(false); } }}>Copy link thanh toán</button><p role="status">{copied ? "Đã copy link. Gửi cho khách thủ công." : "Có thể chọn và sao chép link trong ô trên."}</p></>}</>}
+  </section>;
 }

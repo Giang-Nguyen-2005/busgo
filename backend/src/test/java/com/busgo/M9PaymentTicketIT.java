@@ -40,7 +40,7 @@ class M9PaymentTicketIT extends M8BookingTestSupport {
         MvcResult paid = confirm(owner, bookingId)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("data.bookingId").value(bookingId))
-                .andExpect(jsonPath("data.method").value("MOCK_QR"))
+                .andExpect(jsonPath("data.method").value("MOCK_ONLINE"))
                 .andExpect(jsonPath("data.amount").value(400.00))
                 .andExpect(jsonPath("data.paymentStatus").value("PAID"))
                 .andExpect(jsonPath("data.bookingStatus").value("CONFIRMED"))
