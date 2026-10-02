@@ -3,7 +3,7 @@ package com.busgo.admin;
 import static com.busgo.admin.AdminOperatorDtos.*;
 import static com.busgo.common.time.BusGoTime.api;
 import com.busgo.operator.entity.OperatorStatus;
-import java.time.LocalDateTime;
+import com.busgo.common.time.JpaJdbcTime;
 import java.util.*;
 import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.stereotype.Repository;
@@ -35,7 +35,7 @@ public class AdminOperatorQueryRepository {
                 new AdminOperatorListItem(rs.getLong("id"),rs.getString("code"),rs.getString("name"),
                         rs.getString("phone"),rs.getString("email"),OperatorStatus.valueOf(rs.getString("status")),
                         rs.getLong("active_staff_count"),rs.getLong("active_admin_count"),
-                        api(rs.getObject("created_at",LocalDateTime.class)),api(rs.getObject("updated_at",LocalDateTime.class))));
+                        api(JpaJdbcTime.read(rs, "created_at")),api(JpaJdbcTime.read(rs, "updated_at"))));
         return new PageRows(rows,total);
     }
 
@@ -58,7 +58,7 @@ public class AdminOperatorQueryRepository {
                         OperatorStatus.valueOf(rs.getString("status")),new StaffCounts(rs.getLong("staff_total"),
                         rs.getLong("staff_active"),rs.getLong("staff_admins"),rs.getLong("staff_members")),
                         new OperationalCounts(rs.getLong("buses"),rs.getLong("routes"),rs.getLong("trips"),rs.getLong("bookings")),
-                        api(rs.getObject("created_at",LocalDateTime.class)),api(rs.getObject("updated_at",LocalDateTime.class))));
+                        api(JpaJdbcTime.read(rs, "created_at")),api(JpaJdbcTime.read(rs, "updated_at"))));
         return rows.stream().findFirst();
     }
     public record PageRows(List<AdminOperatorListItem> rows,long total) {}

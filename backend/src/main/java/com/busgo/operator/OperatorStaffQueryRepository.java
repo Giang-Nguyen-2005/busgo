@@ -5,7 +5,7 @@ import static com.busgo.common.time.BusGoTime.api;
 
 import com.busgo.common.entity.ActiveStatus;
 import com.busgo.user.entity.UserStatus;
-import java.time.LocalDateTime;
+import com.busgo.common.time.JpaJdbcTime;
 import java.util.*;
 import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.stereotype.Repository;
@@ -46,7 +46,7 @@ public class OperatorStaffQueryRepository {
                         new StaffUser(rs.getLong("user_id"), rs.getString("full_name"),
                                 rs.getString("email"), rs.getString("phone"),
                                 UserStatus.valueOf(rs.getString("user_status"))),
-                        api(rs.getObject("created_at", LocalDateTime.class))));
+                        api(JpaJdbcTime.read(rs, "created_at"))));
         return new PageRows(rows, total);
     }
 

@@ -13,7 +13,9 @@ Các API public:
     • tìm chuyến
     • xem chi tiết chuyến
 Các API booking yêu cầu CUSTOMER đăng nhập.
-Các API /operator/** yêu cầu OPERATOR_STAFF hoặc OPERATOR_ADMIN.
+Các API đọc vận hành /operator/** cho phép OPERATOR_STAFF hoặc OPERATOR_ADMIN
+theo ma trận M13 bên dưới. Quản lý đội xe/tuyến/nhân viên và mọi thay đổi yêu cầu
+OPERATOR_ADMIN. SYSTEM_ADMIN không được sử dụng operator context.
 
 2. Response Format
 2.1 Success response
@@ -1647,3 +1649,27 @@ search, commerce trip detail, seat maps, holds, booking conversion, and new mock
 payment confirmation reject or omit the operator. It does not cancel trips or
 bookings, refund payments, or mutate inventory. Historical customer booking and
 issued-ticket reads remain available. Reactivation changes no trip/inventory state.
+
+Clarification: the mock-confirm endpoint checks inactive operator/association before
+the existing CONFIRMED-payment branch, so repeat confirmation while suspended also
+returns PAYMENT_WINDOW_CLOSED. Read the issued ticket through the ticket endpoint;
+do not use confirmation as a historical read. Confirmed repeat calls after trip
+departure remain idempotent when the operator and association are active.
+
+## M15 local fixtures (no public API change)
+
+Demo seeding is explicit-profile, create-only and transactional. Existing identity
+collisions fail without granting roles or modifying records. Admin/staff initial
+passwords are set only on first creation; account/membership/operator suspension,
+fares, trips, inventory, holds and bookings are preserved. Occupied proposed slots
+are skipped under the production bus scheduling lock. The old demo reset flag has
+no destructive effect. Demo creates no CUSTOMER or SYSTEM_ADMIN account and no
+booking/payment/ticket. See demo-data.md and final-demo.md for local preparation.
+
+M15 also aligns JDBC views of JPA-written timestamps (operator booking/list,
+manifest, admin/staff creation dates) with Hibernate's configured UTC Calendar
+binding. Operator booking date-range parameters use the same binding. This fixes
+cross-view offsets on a non-UTC JVM without rewriting existing records, changing
+businessDate semantics or changing direct-JDBC hold expiry timestamps. Keep JVM
+timezone consistent for an existing database; moving legacy data between JVM
+timezones still needs explicit review of its timestamp conventions.

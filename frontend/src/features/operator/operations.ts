@@ -4,7 +4,7 @@ export const bookingStatuses = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"
 export const paymentStatuses = ["PENDING", "PAID", "FAILED", "REFUNDED"] as const;
 const labels: Record<string, string> = {
   PENDING: "Chờ xác nhận", CONFIRMED: "Đã xác nhận", CANCELLED: "Đã hủy", COMPLETED: "Hoàn thành",
-  AVAILABLE: "Còn trống", HELD: "Đang giữ chỗ", BOOKED: "Đã đặt", BLOCKED: "Đã khóa",
+  AVAILABLE: "Còn trống", HELD: "Đang giữ chỗ", BOOKED: "Đã đặt", BLOCKED: "Đã khóa", MISSING: "Chưa có dữ liệu", PAID: "Đã thanh toán", FAILED: "Thất bại", REFUNDED: "Đã hoàn tiền",
 };
 export const operationLabel = (status: string) => labels[status] || "Chưa xác định";
 export const seatPassenger = (name: string | null) => name || "Chưa có thông tin riêng";

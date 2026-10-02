@@ -68,3 +68,10 @@ export function manifestGroups(rows: PassengerManifestRow[], search: string) {
   }
   return [...groups].map(([key, passengers]) => ({ key, passengers }));
 }
+
+// Mixed journeys use the strongest non-available state while retaining per-segment labels.
+export function boardStatus(cells: (SeatSegmentState | undefined)[]) {
+  if (!cells.length) return "NEUTRAL";
+  const states = cells.map(cellStatus);
+  return (["MISSING", "BOOKED", "HELD", "BLOCKED", "AVAILABLE"] as const).find(s => states.includes(s))!;
+}

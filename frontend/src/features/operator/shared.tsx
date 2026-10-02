@@ -129,7 +129,7 @@ export function useOperatorFilters() {
       if (key !== "page") next.delete("page");
       return next;
     });
-  return { params, page, size, set };
+  return { params, page, size, set, reset: () => setParams({}) };
 }
 export function Pagination({
   pagination,

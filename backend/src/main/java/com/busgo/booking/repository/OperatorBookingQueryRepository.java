@@ -5,6 +5,7 @@ import com.busgo.payment.entity.*;
 import com.busgo.trip.entity.TripStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.busgo.common.time.JpaJdbcTime;
 import java.util.*;
 import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.stereotype.Repository;
@@ -47,7 +48,7 @@ public class OperatorBookingQueryRepository {
                 .addValue("tripId", tripId)
                 .addValue("status", status == null ? null : status.name())
                 .addValue("paymentStatus", paymentStatus == null ? null : paymentStatus.name())
-                .addValue("startTime", startTime).addValue("endTime", endTime)
+                .addValue("startTime", JpaJdbcTime.parameter(startTime)).addValue("endTime", JpaJdbcTime.parameter(endTime))
                 .addValue("limit", size).addValue("offset", Math.multiplyExact(page, size));
         long total = jdbc.queryForObject("SELECT COUNT(*) " + FROM, params, Long.class);
         List<ListRow> rows = jdbc.query("""
@@ -73,12 +74,12 @@ public class OperatorBookingQueryRepository {
                         rs.getString("contact_phone"), rs.getString("contact_email"),
                         rs.getLong("pickup_id"), rs.getLong("pickup_location_id"),
                         rs.getString("pickup_name"),
-                        rs.getObject("pickup_time", LocalDateTime.class),
+                        JpaJdbcTime.read(rs, "pickup_time"),
                         rs.getLong("dropoff_id"), rs.getLong("dropoff_location_id"),
                         rs.getString("dropoff_name"),
-                        rs.getObject("dropoff_time", LocalDateTime.class),
+                        JpaJdbcTime.read(rs, "dropoff_time"),
                         rs.getInt("seat_count"), rs.getBigDecimal("total_amount"),
-                        rs.getObject("created_at", LocalDateTime.class)));
+                        JpaJdbcTime.read(rs, "created_at")));
         return new PageRows(rows, total);
     }
 
@@ -107,20 +108,20 @@ public class OperatorBookingQueryRepository {
                         .addValue("operatorId", operatorId),
                 (rs, rowNum) -> new DetailRow(rs.getLong("id"), rs.getString("booking_code"),
                         BookingStatus.valueOf(rs.getString("status")), rs.getBigDecimal("total_amount"),
-                        rs.getObject("created_at", LocalDateTime.class),
-                        rs.getObject("updated_at", LocalDateTime.class),
+                        JpaJdbcTime.read(rs, "created_at"),
+                        JpaJdbcTime.read(rs, "updated_at"),
                         rs.getString("contact_name"), rs.getString("contact_phone"),
                         rs.getString("contact_email"), rs.getLong("customer_id"),
                         rs.getString("full_name"), rs.getString("customer_email"),
                         rs.getString("customer_phone"), rs.getLong("trip_id"),
                         TripStatus.valueOf(rs.getString("trip_status")),
-                        rs.getObject("departure_time", LocalDateTime.class),
-                        rs.getObject("estimated_arrival_time", LocalDateTime.class),
+                        JpaJdbcTime.read(rs, "departure_time"),
+                        JpaJdbcTime.read(rs, "estimated_arrival_time"),
                         rs.getLong("route_id"), rs.getString("route_name"),
                         rs.getLong("pickup_id"), rs.getLong("pickup_location_id"),
-                        rs.getString("pickup_name"), rs.getObject("pickup_time", LocalDateTime.class),
+                        rs.getString("pickup_name"), JpaJdbcTime.read(rs, "pickup_time"),
                         rs.getLong("dropoff_id"), rs.getLong("dropoff_location_id"),
-                        rs.getString("dropoff_name"), rs.getObject("dropoff_time", LocalDateTime.class)));
+                        rs.getString("dropoff_name"), JpaJdbcTime.read(rs, "dropoff_time")));
         return rows.stream().findFirst();
     }
 
@@ -142,7 +143,7 @@ public class OperatorBookingQueryRepository {
                         rs.getObject("ticket_id", Long.class), rs.getString("ticket_code"),
                         rs.getString("ticket_passenger_name"), rs.getString("ticket_seat_code"),
                         rs.getObject("payment_id", Long.class),
-                        rs.getObject("ticket_created_at", LocalDateTime.class)));
+                        JpaJdbcTime.read(rs, "ticket_created_at")));
     }
 
     public List<PaymentRow> findPayments(Long operatorId, Long bookingId) {
@@ -159,8 +160,8 @@ public class OperatorBookingQueryRepository {
                         rs.getLong("id"), PaymentMethod.valueOf(rs.getString("method")),
                         rs.getBigDecimal("amount"), PaymentStatus.valueOf(rs.getString("status")),
                         rs.getString("transaction_reference"),
-                        rs.getObject("paid_at", LocalDateTime.class),
-                        rs.getObject("created_at", LocalDateTime.class)));
+                        JpaJdbcTime.read(rs, "paid_at"),
+                        JpaJdbcTime.read(rs, "created_at")));
     }
 
     private static MapSqlParameterSource params(Long operatorId, Long bookingId) {

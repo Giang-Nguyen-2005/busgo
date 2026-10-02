@@ -32,7 +32,7 @@ import { useAuth } from "../../features/auth/AuthProvider";
 import { canManageOperator } from "../../features/auth/access";
 export function OperatorTripsPage() {
   const manage = canManageOperator(useAuth().user?.roles);
-  const { params, page, size, set } = useOperatorFilters();
+  const { params, page, size, set, reset } = useOperatorFilters();
   const routes = useRouteChoices(manage);
   const buses = useBusChoices(manage);
   const status = tripStatuses.find((s) => s === params.get("status"));
@@ -105,6 +105,7 @@ export function OperatorTripsPage() {
             ))}
           </select>
         </label>
+        <button className="secondary" onClick={reset}>Xóa bộ lọc</button>
       </div>
       <p className="muted">
         Ngày theo lịch Việt Nam (UTC+7). Giờ hiển thị là giờ dự kiến.

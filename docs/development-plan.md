@@ -1346,6 +1346,29 @@ sửa
 Agent là người triển khai.
 Requirement, architecture và quyết định scope vẫn được kiểm soát bên ngoài agent.
 
+## Delivered V1 and deferred scope (M15)
+
+M0–M14B deliver authentication, customer discovery/holds/bookings/mock payment and
+tickets, operator management/operations, read-only staff and isolated system-admin
+operator management. M15 P0 hardens local setup, create-only demo fixtures and
+release verification. Earlier roadmap/acceptance examples above describe planned
+scope; they are not evidence that cancellation, refund or global catalogue editors
+are delivered.
+
+V2-ready infrastructure: immutable trip snapshots, segment inventory, Flyway,
+role/membership isolation and transaction/concurrency guards. Deferred after V1:
+refunds/cancellation redesign, real gateways, analytics, notifications, check-in,
+global master-data editing, new workflows, broad CSS refactoring and bundle tuning.
+
+M15 implementation retains V1–V10 unchanged, disables operator-code-based reset,
+preserves existing fixture state, adds a deterministic daily timetable and reserved
+create-only staff fixture. CUSTOMER registers once; SYSTEM_ADMIN uses the existing
+opt-in bootstrap. Read docs/demo-data.md and docs/final-demo.md for preparation,
+and docs/m15-verification.md for current-branch results and limits. A live P0 check
+also corrected JDBC/JPA timestamp parity for operator/admin views on non-UTC JVMs,
+without changing stored records or hold-expiry semantics. Historical
+verification below remains unchanged.
+
 ## M12 backend P0 implementation
 
 Implemented operator booking list/detail, confirmed passenger manifest,

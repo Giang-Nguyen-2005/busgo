@@ -45,6 +45,7 @@ export function PaymentPage() {
     );
   return (
     <>
+      <Link className="back-link" to={`/my-bookings/${id}`}>← Quay lại chi tiết đặt vé</Link>
       <Steps current={2} /><RefreshNotice query={booking} />
       <div className="page-heading">
         <div>

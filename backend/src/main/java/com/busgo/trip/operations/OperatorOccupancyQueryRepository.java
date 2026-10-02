@@ -4,6 +4,7 @@ import com.busgo.booking.entity.BookingStatus;
 import com.busgo.payment.entity.PaymentStatus;
 import com.busgo.trip.entity.InventoryStatus;
 import java.time.LocalDateTime;
+import com.busgo.common.time.JpaJdbcTime;
 import java.util.List;
 import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.stereotype.Repository;
@@ -49,9 +50,9 @@ public class OperatorOccupancyQueryRepository {
                         rs.getString("contact_name"), rs.getString("contact_phone"),
                         rs.getString("contact_email"), rs.getLong("pickup_id"),
                         rs.getLong("pickup_location_id"), rs.getString("pickup_name"),
-                        rs.getObject("pickup_time", LocalDateTime.class), rs.getLong("dropoff_id"),
+                        JpaJdbcTime.read(rs, "pickup_time"), rs.getLong("dropoff_id"),
                         rs.getLong("dropoff_location_id"), rs.getString("dropoff_name"),
-                        rs.getObject("dropoff_time", LocalDateTime.class),
+                        JpaJdbcTime.read(rs, "dropoff_time"),
                         rs.getString("ticket_passenger_name"), rs.getString("ticket_code"),
                         PaymentStatus.valueOf(rs.getString("payment_status"))));
     }

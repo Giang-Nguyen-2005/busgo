@@ -1,3 +1,4 @@
+import { bookingRecovery } from "../features/booking/recovery";
 import { searchReturn } from "../features/customer/presentation";
 import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
 import { dateTime } from "../utils/format";
@@ -22,7 +23,7 @@ import {
   clearSelection,
   revalidateSelection,
 } from "../features/trip/selectionDraft";
-import type { Hold, SeatMapData, TripDetail } from "../types/customer";
+import type { Booking, Hold, SeatMapData, TripDetail } from "../types/customer";
 import {
   Empty,
   ErrorState,
@@ -66,6 +67,12 @@ function TripSelection() {
     positiveId(params.get("pickupLocationId")) &&
     positiveId(params.get("dropoffLocationId")) &&
     journey.pickupLocationId !== journey.dropoffLocationId;
+  const recoveryId = bookingRecovery(auth.user?.id, Number(tripId), journey.pickupLocationId, journey.dropoffLocationId);
+  const recovery = useQuery({
+    queryKey: ["booking", auth.user?.id, String(recoveryId)],
+    queryFn: ({ signal }) => get<Booking>(`/bookings/${recoveryId}`, undefined, signal),
+    enabled: !!auth.user && !!recoveryId, staleTime: 0, retry: false,
+  });
   const detail = useQuery({
     queryKey: ["trip", tripId, journey],
     queryFn: ({ signal }) =>
@@ -121,7 +128,7 @@ function TripSelection() {
         operatorName: detail.data?.operator.name,
         routeName: detail.data?.route.name,
       });
-      navigate("/booking");
+      navigate("/booking", { replace: true });
     },
     onError: (error) => {
       if (errorCode(error) === "SEAT_NOT_AVAILABLE") {
@@ -143,6 +150,11 @@ function TripSelection() {
     <>
       <Link className="back-link" to={searchReturn(params.get("search"))}>← Kết quả tìm chuyến</Link>
       <Steps current={0} />
+      {recovery.data && ["PENDING", "CONFIRMED"].includes(recovery.data.status) && <div className="notice info" role="status">
+        <div>Ghế {recovery.data.seats.map(s => s.seatCode).join(", ")} đã thuộc đặt vé {recovery.data.bookingCode} của bạn. {recovery.data.status === "PENDING" ? "Đặt vé đang chờ thanh toán." : "Đặt vé đã được xác nhận."}
+          <p><Link to={`/my-bookings/${recoveryId}`}>Xem chi tiết đặt vé</Link> · {recovery.data.status === "PENDING" && <><Link to={`/payment?bookingId=${recoveryId}`}>Tiếp tục thanh toán</Link> · </>}<Link to="/my-bookings">Vé của tôi</Link></p>
+        </div>
+      </div>}
       <RefreshNotice query={detail} /><RefreshNotice query={seats} />
       {location.state?.notice && (
         <div className="notice warning" role="status">

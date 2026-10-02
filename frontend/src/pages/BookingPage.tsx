@@ -1,3 +1,4 @@
+import { rememberBooking, bookingPaymentNavigation } from "../features/booking/recovery";
 import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -53,10 +54,12 @@ export function BookingPage() {
     mutationFn: (values: z.infer<typeof contactSchema>) =>
       post<Booking>("/bookings", { holdToken: saved!.holdToken, ...values }),
     onSuccess: (data) => {
+      if (auth.user) rememberBooking(auth.user.id, data);
       saveHold(null);
       cache.removeQueries({ queryKey: ["active-hold"] });
       void cache.invalidateQueries({ queryKey: ["bookings"] });
-      navigate(`/payment?bookingId=${data.bookingId}`, { replace: true });
+      const destination = bookingPaymentNavigation(data.bookingId);
+      navigate(destination.to, destination.options);
     },
   });
   const back = saved

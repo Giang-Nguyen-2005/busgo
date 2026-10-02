@@ -1,8 +1,10 @@
+import { useQueries } from "@tanstack/react-query";
+import { operatorApi } from "../../api/operatorApi";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useOccupancy, useOperatorBooking } from "../../features/operator/queries";
 import { useTripWorkspace } from "../../features/operator/TripWorkspace";
-import { cellLabels, cellStatus, holdExpired, intersectingBookings, refreshExpiredHolds, seatCells, seatSummary, selectedSegments, wholeJourneyAvailable } from "../../features/operator/dispatch";
+import { boardStatus, cellLabels, cellStatus, holdExpired, intersectingBookings, refreshExpiredHolds, seatCells, seatSummary, selectedSegments, wholeJourneyAvailable } from "../../features/operator/dispatch";
 import { OperationsBadge, OperationsQueryState } from "../../features/operator/OperationsShared";
 import { seatPassenger } from "../../features/operator/operations";
 import { RefreshState } from "../../features/operator/RefreshState";
@@ -22,16 +24,16 @@ export function HoldState({ cell, now }: { cell: SeatSegmentState; now: number }
 export function BookingInspectionContent({ booking: b, seatId }: { booking: OperatorBookingDetail; seatId: number }) {
   const [copied, setCopied] = useState("");
   const latest = b.payments.reduce<(typeof b.payments)[number] | undefined>((a, p) => !a || p.id > a.id ? p : a, undefined);
-  return <section className="operator-inspection-booking"><h3>{b.bookingCode}</h3><OperationsBadge status={b.status} />
-    <p>Thanh toán: {latest ? paymentStatusLabel(latest.status) : "Chưa có giao dịch thanh toán"}</p>
-    <p><strong>Đón → trả:</strong> {b.pickup.name} → {b.dropoff.name}</p>
-    {b.pickup.time && <p>Giờ đón: {dateTime(b.pickup.time)}</p>}{b.dropoff.time && <p>Giờ trả: {dateTime(b.dropoff.time)}</p>}
-    <h4>Liên hệ đặt vé</h4><p>{b.contact.name}</p><p>{b.contact.phone} <button className="secondary" onClick={async () => { try { await navigator.clipboard.writeText(b.contact.phone); setCopied("Đã sao chép"); } catch { setCopied("Không thể sao chép. Vui lòng chọn số điện thoại."); } }}>Sao chép số</button></p><span role="status">{copied}</span>
-    {b.contact.email && <p>{b.contact.email}</p>}
-    {b.items.filter(item => item.tripSeatId === seatId).map(item => <dl key={item.bookingItemId}>
+  return <section className="operator-inspection-booking"><div className="inspection-group"><h3>{b.bookingCode}</h3><OperationsBadge status={b.status} /></div>
+    <section className="inspection-group"><h4>Thanh toán</h4><p>{latest ? paymentStatusLabel(latest.status) : "Chưa có giao dịch thanh toán"}</p></section>
+    <section className="inspection-group"><h4>Hành trình · Đón → trả</h4><p>{b.pickup.name} → {b.dropoff.name}</p>
+    {b.pickup.time && <p>Giờ đón: {dateTime(b.pickup.time)}</p>}{b.dropoff.time && <p>Giờ trả: {dateTime(b.dropoff.time)}</p>}</section>
+    <section className="inspection-group"><h4>Liên hệ đặt vé</h4><p>{b.contact.name}</p><p>{b.contact.phone} <button className="secondary" onClick={async () => { try { await navigator.clipboard.writeText(b.contact.phone); setCopied("Đã sao chép"); } catch { setCopied("Không thể sao chép. Vui lòng chọn số điện thoại."); } }}>Sao chép số</button></p><span role="status">{copied}</span>
+    {b.contact.email && <p>{b.contact.email}</p>}</section>
+    <section className="inspection-group"><h4>Ghế & vé điện tử</h4>{b.items.filter(item => item.tripSeatId === seatId).map(item => <dl key={item.bookingItemId}>
       <dt>Ghế</dt><dd>{item.seatCode}</dd><dt>Khách trên ghế</dt><dd>{seatPassenger(item.passengerName)}</dd>
       <dt>Tên trên vé</dt><dd>{item.ticket?.passengerName || "Chưa có tên trên vé"}</dd><dt>Mã vé</dt><dd>{item.ticket?.ticketCode || "Chưa có vé"}</dd>
-    </dl>)}<p className="muted">Tên trên vé và liên hệ đặt vé không xác minh danh tính khách trên ghế.</p>
+    </dl>)}<p className="muted">Tên trên vé và liên hệ đặt vé không xác minh danh tính khách trên ghế.</p></section>
     <Link to={`/operator/bookings/${b.bookingId}`}>Xem đầy đủ đặt vé</Link>
   </section>;
 }
@@ -39,21 +41,35 @@ function BookingInspection({ id, seatId }: { id: number; seatId: number }) {
   const query = useOperatorBooking(id);
   return <OperationsQueryState query={query}>{booking => <BookingInspectionContent booking={booking} seatId={seatId} />}</OperationsQueryState>;
 }
-export function SeatBoard({ trip, data, segments, inspect, selectedSeatId }: { trip: TripDetailResponse; data: TripOccupancy; segments: TripSegmentResponse[]; inspect: (id: number) => void; selectedSeatId?: number | null }) {
+export function SeatBoard({ trip, data, segments, inspect, selectedSeatId, bookings = {} }: { bookings?: Record<number, OperatorBookingDetail | undefined>; trip: TripDetailResponse; data: TripOccupancy; segments: TripSegmentResponse[]; inspect: (id: number) => void; selectedSeatId?: number | null }) {
   const floors = [...new Set(trip.seats.map(s => s.floor))].sort((a, b) => a - b);
   return <div className="operator-seat-layout">{floors.map(floor => {
     const seats = trip.seats.filter(s => s.floor === floor);
     const minRow = Math.min(...seats.map(s => s.row)), minCol = Math.min(...seats.map(s => s.column));
-    return <section key={floor}><h3>Tầng {floor}</h3><div className="operator-seat-scroll" tabIndex={0} role="region" aria-label={`Sơ đồ tầng ${floor}`}><div className="operator-seat-grid operator-live-seats">
+    const columns = Array.from({ length: Math.max(...seats.map(s => s.column)) - minCol + 1 }, (_, i) => seats.some(s => s.column === minCol + i) ? "142px" : "26px").join(" ");
+    return <section key={floor}><h3>Tầng {floor}</h3><div className="operator-seat-scroll" tabIndex={0} role="region" aria-label={`Sơ đồ tầng ${floor}`}><div className="operator-seat-grid operator-live-seats" style={{ gridTemplateColumns: columns }}>
       {seats.map(seat => {
         const cells = seatCells(data, seat.id, segments), summary = seatSummary(cells);
-        const status = segments.length === 1 ? cellStatus(cells[0]) : wholeJourneyAvailable(cells) ? "AVAILABLE" : "NEUTRAL";
+        const status = boardStatus(cells);
+        const occupied = intersectingBookings(cells);
         return <button key={seat.id} className={`operator-seat operator-status-${status}`} aria-pressed={selectedSeatId === seat.id} disabled={!segments.length} style={{ gridRow: seat.row - minRow + 1, gridColumn: seat.column - minCol + 1 }} aria-label={`Ghế ${seat.seatCode} · ${summary}`} aria-haspopup="dialog" onClick={() => inspect(seat.id)}>
           <strong>{seat.seatCode}</strong><small>{summary}</small>
+          {occupied.map(({ bookingId }) => <span className="operator-seat-contact" key={bookingId}>
+            <b>{bookings[bookingId]?.contact.name || "Liên hệ: xem chi tiết"}</b>
+            {bookings[bookingId]?.contact.phone && <span>{bookings[bookingId]!.contact.phone}</span>}
+            <span>{cells.find(c => c?.bookingId === bookingId)?.bookingCode || `#${bookingId}`}</span>
+          </span>)}
+          {cells.length === 1 && cellStatus(cells[0]) === "HELD" && cells[0]?.holdExpiresAt && <small>Hết hạn: {dateTime(cells[0].holdExpiresAt)}</small>}
           {cells.length > 1 && <span className="operator-mini-states">{cells.map((cell, i) => <span key={segments[i].id} className={`operator-badge operator-status-${cellStatus(cell)}`} title={`${segmentName(trip, segments[i])}: ${cellLabels[cellStatus(cell)]}`}>{i + 1}. {cellLabels[cellStatus(cell)]}</span>)}</span>}
         </button>;
       })}</div></div></section>;
   })}</div>;
+}
+function BoardWithContacts(props: React.ComponentProps<typeof SeatBoard>) {
+  const ids = [...new Set(props.trip.seats.flatMap(s => intersectingBookings(seatCells(props.data, s.id, props.segments)).map(b => b.bookingId)))];
+  const queries = useQueries({ queries: ids.map(id => ({ queryKey: ["operator", "bookings", id], queryFn: ({ signal }: { signal: AbortSignal }) => operatorApi.booking(id, signal), staleTime: 30_000, retry: 1 })) });
+  const bookings = Object.fromEntries(ids.map((id, i) => [id, queries[i].isError ? undefined : queries[i].data]));
+  return <SeatBoard {...props} bookings={bookings} />;
 }
 export function OperatorSeatsPage() {
   const trip = useTripWorkspace();
@@ -95,7 +111,7 @@ export function OperatorSeatsPage() {
           {params.get("mode") === "journey" && <strong>Trống suốt hành trình: {trip.seats.filter(s => wholeJourneyAvailable(seatCells(data, s.id, segments))).length}</strong>}
           {segments.map(s => { const states = trip.seats.map(seat => cellStatus(seatCells(data, seat.id, [s])[0])); return <p key={s.id}><strong>{segmentName(trip, s)}</strong> · {Object.entries(cellLabels).map(([status,label]) => `${label}: ${states.filter(x => x === status).length}`).join(" · ")}</p>; })}
         </div>}
-        <SeatBoard trip={trip} data={data} segments={segments} selectedSeatId={seatId} inspect={id => { trigger.current = document.activeElement as HTMLElement; setSeatId(id); setBookingId(null); }} />
+        <BoardWithContacts trip={trip} data={data} segments={segments} selectedSeatId={seatId} inspect={id => { trigger.current = document.activeElement as HTMLElement; setSeatId(id); setBookingId(null); }} />
         {!trip.seats.length && <p className="notice">Chuyến chưa có ghế trong bản chụp.</p>}
         <dialog ref={dialog} className="operator-seat-drawer" aria-labelledby="seat-inspection-title" onCancel={e => { e.preventDefault(); close(); }} onClose={() => { setSeatId(null); setBookingId(null); trigger.current?.focus(); }}>
           <div className="operator-heading"><h2 id="seat-inspection-title">Ghế {trip.seats.find(s => s.id === seatId)?.seatCode}</h2><button className="secondary" autoFocus onClick={close}>Đóng</button></div>

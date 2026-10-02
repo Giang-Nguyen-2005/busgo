@@ -1,21 +1,22 @@
 @import "tailwindcss";
+@import "./design-tokens.css";
 
 :root {
   font-family: Inter, "Segoe UI", Arial, sans-serif;
-  color: #1c2c35;
-  background: #f5f7f8;
+  color: var(--color-text);
+  background: var(--color-bg);
   font-synthesis: none;
-  --primary: #087b75;
-  --primary-hover: #05625d;
-  --background: #f6f7f5;
-  --surface: #fff;
-  --text: #142b3a;
-  --muted: #61727c;
-  --border: #dbe3e4;
-  --accent: #e86f45;
-  --success: #137854;
-  --warning: #916009;
-  --danger: #b63535;
+  --primary: var(--color-primary-dark);
+  --primary-hover: var(--color-primary-hover);
+  --background: var(--color-bg);
+  --surface: var(--color-surface);
+  --text: var(--color-text);
+  --muted: var(--color-text-muted);
+  --border: var(--color-border);
+  --accent: var(--color-accent);
+  --success: var(--color-success);
+  --warning: var(--color-warning);
+  --danger: var(--color-danger);
 }
 * {
   box-sizing: border-box;
@@ -2526,4 +2527,26 @@ body {
     width: 100%;
     font-size: 14px;
   }
+}
+
+/* M15.5 shared product foundations. Legacy names resolve to the semantic tokens above. */
+body { font-size: var(--text-body); line-height: 1.5; }
+h1 { font-size: var(--text-page); }
+h2 { font-size: var(--text-section); }
+h3 { font-size: var(--text-card); }
+.card { border-color: transparent; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+button, .button { transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast); }
+button:not(:disabled):active, .button:active { transform: translateY(1px); }
+:where(button, a, input, select, summary, [tabindex]):focus-visible { outline: 3px solid var(--color-info); outline-offset: 3px; }
+:where(.trip-price, .payment-amount, .total, .operator-departure, .admin-counts, .price-summary) { font-variant-numeric: tabular-nums; }
+.notice.info { background: var(--color-info-soft); color: var(--color-info); }
+.notice.warning { background: var(--color-warning-soft); color: var(--color-warning); }
+.notice.danger { background: var(--color-danger-soft); color: var(--color-danger); }
+.notice.success { background: var(--color-success-soft); color: var(--color-success); }
+.badge, .operator-badge { border-radius: var(--radius-pill); }
+.field input, select { border-color: var(--color-border); border-radius: var(--radius-sm); }
+.field > span { color: var(--color-text-secondary); }
+.field input:hover:not(:disabled), select:hover:not(:disabled) { border-color: var(--color-border-strong); }
+@media (prefers-reduced-motion: reduce) {
+ *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }

@@ -1,302 +1,218 @@
-# BusGo
+# BusGo V1
 
-Bus Ticket Booking & Management System. This repository currently implements
-**Milestone 0 — Project Foundation**, **Milestone 1 — Core Database**,
-**Milestone 2 — Authentication**, **Milestone 3 — Operator, Fleet & Route**,
-**Milestone 4 — Trip Generation**, **Milestone 5 — Customer Trip Search**, and
-**Milestone 6 — Customer Seat Availability**, **Milestone 7 — Seat Hold**, and
-**Milestone 8 — Booking**, **Milestone 9 — Mock Payment & Ticket**, and
-**Milestone 10 — Customer Frontend**.
-Requirements and future milestone scope
-are defined in [docs/development-plan.md](docs/development-plan.md) and the other
-files under `docs/`.
+Vietnamese bus ticket booking and management application. M0–M14B are delivered;
+M15 P0 hardens demo seeding, local startup and release verification.
 
-## Prerequisites
+## Delivered V1
 
-- JDK 17+ (set `JAVA_HOME` to a JDK, not a Java 8 runtime)
-- Maven 3.6.3+
-- Node.js 22.12+ and npm
-- Docker with Docker Compose v2
+- Customer: registration/login/profile, trip search, snapshot seat maps, temporary
+  holds, server-priced bookings, mock QR payment, one electronic ticket per seat,
+  and owned booking history.
+- Operator admin: fleet/routes/fares, trip creation, bookings, passenger manifest,
+  physical seat board, segment occupancy, forward trip operations and staff management.
+- Operator staff: read-only owned trips, bookings, manifests, seats, occupancy and
+  bus types. Fleet/routes/staff management and all mutations require operator admin.
+- System admin: separate `/admin` workspace, operator onboarding/contact/status
+  management and read-only staff visibility. It has no operator-context bypass.
+- Inactive operators stop new commerce and operator access; historical customer
+  bookings/tickets remain readable. Suspension does not cancel/refund anything.
 
-## Start MySQL
+Segment inventory, immutable trip snapshots, role/membership isolation and Flyway
+are foundations for later work. Real gateways, refunds/cancellation redesign,
+check-in, analytics, notifications and global catalogue editing are deferred after V1.
+See [development plan](docs/development-plan.md) and [API contract](docs/api-contract.md).
 
-1. Copy `.env.example` to `.env` in the repository root.
-2. Set nonempty `MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD` in `.env`.
-3. Run `docker compose up -d --wait` from the repository root.
+## Prerequisites and Java 17
 
-MySQL 8.4 uses the `busgo_db` database and `busgo` account by default. It binds to
-localhost port **3307** to avoid common conflicts with existing MySQL installations.
-The named volume retains data when running `docker compose down`. Changing the
-passwords in `.env` does not change accounts in an already initialized volume.
+JDK 17, Maven 3.6.3+, Node.js >=22.12 and npm are required. Docker Compose v2 is
+needed only for the Docker database path. A Java 8 runtime on PATH is insufficient.
 
-Flyway applies the M1 core schema and four role seeds from
-`backend/src/main/resources/db/migration/` on backend startup. Hibernate remains
-configured with `ddl-auto=validate`; it never creates or mutates the schema.
-No accounts, operators, routes, locations, or demo records are seeded by the normal
-`dev` or production profiles. The separate, explicit `demo` profile can add the
-fictional portfolio dataset described in [Demo data](docs/demo-data.md).
+PowerShell, replacing the path with your installed JDK:
 
-## Start the backend
-
-Export `DB_PASSWORD` with the same value as `MYSQL_PASSWORD`, and `JWT_SECRET` as
-Base64-encoded cryptographically random bytes (at least 32 bytes). Never commit
-the secret. Optional `JWT_ACCESS_TTL` and `JWT_REFRESH_TTL` default to `1h` and `7d`;
-both must be finite positive durations, with refresh longer than access.
-Then from `backend/`:
-
-```sh
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
+```powershell
+$env:JAVA_HOME = 'C:\path\to\jdk-17'
+$env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
+java -version
+mvn -version
+node --version
 ```
 
-For the realistic, repeatable customer demo dataset, enable both profiles:
+CMD equivalent:
 
-```sh
-mvn spring-boot:run -Dspring-boot.run.profiles=dev,demo
+```bat
+set "JAVA_HOME=C:\path\to\jdk-17"
+set "PATH=%JAVA_HOME%\bin;%PATH%"
+java -version
+mvn -version
 ```
 
-The log prints the current recommended search date. It is always tomorrow in
-`Asia/Ho_Chi_Minh`; search **Bến xe TP. Hồ Chí Minh → Bến xe Đà Lạt** for six trips.
-The `demo` profile is never implied by `dev` and must not be enabled in production.
+Both Java and Maven must report Java 17. This checkout may have an ignored local
+JDK under `.tools/jdk17/`; that directory is not a distributed dependency.
 
-The `dev` profile defaults to `jdbc:mysql://localhost:3307/busgo_db?connectionTimeZone=UTC`
-and username `busgo`. Set `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` to override.
-Without the `dev` profile, all three variables are required. `SERVER_PORT` defaults
-to 8080. Maven/Spring Boot do **not** automatically load the root Compose `.env` file.
-For PowerShell, export a variable using `$env:DB_PASSWORD = 'your-local-password'`.
+## Database: choose one local path
 
-```sh
-curl http://localhost:8080/api/v1/health
+### A. Docker Compose MySQL 8.4
+
+Copy `.env.example` to root `.env`, set nonempty `MYSQL_PASSWORD` and
+`MYSQL_ROOT_PASSWORD`, then run from the repository root:
+
+```powershell
+docker compose up -d --wait
 ```
 
-Expected HTTP 200:
+Default database/user: `busgo_db` / `busgo`; host: localhost:3307. The named volume
+retains data after `docker compose down`. Changing `.env` passwords does not update
+accounts in an already initialized volume. Do not delete a volume to fix credentials
+when it contains development history. Configure the correct existing credentials.
 
-```json
-{"data":{"status":"UP"}}
+### B. Existing local MySQL
+
+Use an empty dedicated BusGo schema and an application user permitted to apply
+Flyway DDL. Configure its actual host/port/schema/user/password explicitly:
+
+```powershell
+$env:DB_URL = 'jdbc:mysql://localhost:3307/busgo_db?connectionTimeZone=UTC'
+$env:DB_USERNAME = 'busgo'
+$env:DB_PASSWORD = '<your local database password>'
 ```
 
-Health is a process liveness endpoint, not a continuous database readiness check.
-Public endpoints are health, `GET /api/v1/locations`, customer trip search/detail,
-`GET /api/v1/trips/{tripId}/seats`, and
-`POST /api/v1/auth/register`, `/login`, and `/refresh`.
+MySQL 8.4 is the Compose reference environment. An existing server on port 3306
+requires a matching DB_URL; merely having a MySQL service running is insufficient.
 
-### Initial system administrator
+Flyway owns V1–V10; Hibernate uses `ddl-auto=validate`. Keep old migration files
+unchanged. Existing schemas require matching Flyway history/checksums. Before
+upgrading a pre-V10 database, run this read-only duplicate check:
 
-The initial `SYSTEM_ADMIN` bootstrap is disabled by default and has no HTTP
-endpoint. To provision it, set all five variables for one application start:
-
-```text
-BUSGO_SYSTEM_ADMIN_BOOTSTRAP_ENABLED=true
-BUSGO_SYSTEM_ADMIN_FULL_NAME=Platform Administrator
-BUSGO_SYSTEM_ADMIN_EMAIL=admin@example.com
-BUSGO_SYSTEM_ADMIN_PHONE=0900000000
-BUSGO_SYSTEM_ADMIN_PASSWORD=<a secret satisfying the normal password policy>
+```sql
+SELECT operator_id, staff_code, COUNT(*) AS duplicates
+FROM operator_staff
+GROUP BY operator_id, staff_code
+HAVING COUNT(*) > 1;
 ```
 
-The password is BCrypt-hashed and never logged. Repeating startup with the exact
-same identity, sole `SYSTEM_ADMIN` role, active status, and password is a no-op.
-If the email already belongs to any different account or configuration, startup
-fails rather than modifying it or granting a role. After successful provisioning,
-disable the bootstrap again. The account signs in through `/api/v1/auth/login`.
-M2 also implements authenticated `GET`/`PATCH /api/v1/users/me` and
-`POST /api/v1/users/me/change-password`. All other application routes remain denied.
-Public registration assigns CUSTOMER; no privileged or default account is seeded.
-Passwords use BCrypt with a minimum of 8 characters and maximum of 72 UTF-8 bytes,
-without composition rules. Blank passwords are rejected.
-Refresh tokens rotate once, with only SHA-256 hashes persisted. Password changes
-revoke all refresh tokens; existing access tokens remain valid until expiry, subject
-to current account status and roles checked on every request. No HTTP session is used.
+Resolve collisions deliberately using the database's collation; never blindly
+delete staff or use Flyway repair to hide an incompatible schema.
 
-## Start the frontend
+## Backend environment and startup
 
-From `frontend/`:
+Spring Boot/Maven do **not** automatically load the root Compose `.env`.
+Export `DB_PASSWORD` separately (same value as Compose MYSQL_PASSWORD).
+With `dev`, DB_URL and DB_USERNAME default to the values above; without `dev`,
+all three DB variables are required. Never commit real credentials.
 
-```sh
-npm ci
-npm run dev
+Generate a JWT secret in PowerShell, once per local environment:
+
+```powershell
+$jwtBytes = New-Object byte[] 32
+$jwtRandom = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+$jwtRandom.GetBytes($jwtBytes)
+$env:JWT_SECRET = [Convert]::ToBase64String($jwtBytes)
+$jwtRandom.Dispose()
 ```
 
-Open http://localhost:5173 for the Vietnamese customer booking website.
-Vite proxies `/api` to http://localhost:8080.
-Optional overrides are shown in `frontend/.env.example`; copy it to
-`frontend/.env.local` to use them. `VITE_*` values are public browser configuration,
-so never put secrets in them. A production host must proxy `/api` to the backend
-or provide a suitable API base URL and origin configuration.
+JWT_SECRET must be Base64 of at least 32 cryptographically random bytes. Keep the
+same secret across local restarts to preserve token validity; save it only in an
+ignored local secret store and re-export it in new shells. Optional JWT_ACCESS_TTL
+and JWT_REFRESH_TTL default to `1h` / `7d`; positive refresh must exceed access.
 
-## Verify
+From `backend/` (quoted Maven arguments also work in PowerShell):
 
-From `backend/`:
+```powershell
+mvn spring-boot:run '-Dspring-boot.run.profiles=dev'
+```
 
-```sh
+Explicit local demo startup:
+
+```powershell
+mvn spring-boot:run '-Dspring-boot.run.profiles=dev,demo'
+```
+
+`dev` does not activate demo. Demo is excluded with `prod`/`production`; never
+enable it on a real deployment. Its create-only fixtures preserve existing state
+and skip occupied/inactive slots. Identity collisions fail clearly and roll back
+the seed transaction; use `dev` alone to inspect them. The old reset flag is
+disabled and cannot delete trips. See [demo data](docs/demo-data.md).
+
+Backend defaults to 8080 (`SERVER_PORT` overrides). Check:
+
+```powershell
+Invoke-RestMethod http://localhost:8080/api/v1/health
+```
+
+Expected: `{"data":{"status":"UP"}}`. This is liveness; also check a database-backed
+location/search endpoint before rehearsal.
+
+## SYSTEM_ADMIN: provision once
+
+Bootstrap is disabled by default and has no HTTP endpoint. Export these five
+variables for one start, with credentials kept locally outside Git:
+
+```powershell
+$env:BUSGO_SYSTEM_ADMIN_BOOTSTRAP_ENABLED = 'true'
+$env:BUSGO_SYSTEM_ADMIN_FULL_NAME = 'Platform Administrator'
+$env:BUSGO_SYSTEM_ADMIN_EMAIL = 'admin@example.com'
+$env:BUSGO_SYSTEM_ADMIN_PHONE = '0900000000'
+$env:BUSGO_SYSTEM_ADMIN_PASSWORD = '<your local secret>'
+```
+
+Start normally, verify login, then disable bootstrap and remove its password
+variable. Exact identity/sole SYSTEM_ADMIN role/status/password repeats are a no-op;
+incompatible existing accounts fail rather than receiving privileges. Demo never
+seeds SYSTEM_ADMIN. Normal password policy: nonblank, >=8 characters, <=72 UTF-8 bytes.
+
+```powershell
+$env:BUSGO_SYSTEM_ADMIN_BOOTSTRAP_ENABLED = 'false'
+Remove-Item Env:BUSGO_SYSTEM_ADMIN_PASSWORD
+```
+
+## Frontend
+
+From `frontend/`: `npm ci`, then `npm run dev`. Open http://localhost:5173.
+Vite uses strict port 5173 and proxies `/api` to localhost:8080. Optional
+`frontend/.env.local` overrides are shown in `.env.example`; changing backend port
+also requires API_PROXY_TARGET. VITE_* values are public, never secrets.
+
+Production hosting must serve index.html for SPA routes and proxy `/api/v1` to the
+backend, or configure a suitable API URL/origin policy. `npm run preview` does not
+configure the repository's development API proxy.
+
+Authentication is tab-scoped session storage with shared refresh rotation and one
+request retry. Logout clears local session/hold/cache; password changes revoke
+refresh tokens. Do not retry an uncertain booking creation automatically: check
+history first. Mock payment is idempotent; it performs no banking transaction.
+
+Operator date filtering uses Vietnam `businessDate`; legacy API `date` retains
+UTC semantics. Supplying both is rejected. Display times use Asia/Ho_Chi_Minh.
+
+JDBC operator/admin timestamp views use the same UTC Calendar binding as JPA,
+including booking date-range filters. Keep JVM timezone consistent when reusing
+a database; do not silently switch a legacy database's timestamp convention.
+Stop a running `java -jar` instance before packaging on Windows to release its
+jar-file lock.
+
+## Verification and final demo
+
+Backend, Java 17, dedicated integration database (not the demo/development DB):
+
+```powershell
 mvn test
+mvn verify -Pmysql-integration
 mvn package -DskipTests
 ```
 
-The default suite tests application web-context startup, the health contract,
-security responses, validation, error handling, and pagination without requiring
-MySQL. Its `test` profile excludes datasource/JPA/Flyway auto-configuration; it
-does not substitute another database.
+Default tests exclude datasource/JPA/Flyway. The integration profile runs real
+MySQL migrations, schema validation, commerce/security/concurrency contracts and
+DB-backed seeder preservation tests; connection failures are not silently skipped.
+Ordinary test fixtures roll back; concurrency tests clean only their own fixtures.
+The seeder IT requires its reserved demo keys to be absent before its first-seed test.
 
-With MySQL running and the database environment variables configured, run:
+Frontend: `npm test`, `npm run build`. Repository: `git diff --check`.
+Retained `frontend/tests/fixtures/` and `dispatch-preview.html` are synthetic
+verification surfaces, not production entry points or live API proof.
 
-```sh
-mvn verify -Pmysql-integration
-```
+[Final 6–8 minute demo](docs/final-demo.md) · [M15 verification](docs/m15-verification.md)
+Historical verification remains in `docs/m10-verification.md` through
+`docs/m14b-verification.md`.
 
-This additionally starts the full application with Flyway and Hibernate schema
-validation, checks MySQL connectivity and health over HTTP, and runs M1 repository
-tests for authentication contracts, token rotation/revocation, account status,
-password handling, mappings, role seeds, uniqueness, foreign keys, check constraints,
-decimal precision, and retained soft-delete relationships. Connection failures
-fail the integration tests; they are not silently skipped. Use a dedicated empty
-MySQL development/test database for a first run. Most test records are rolled back;
-concurrency tests commit isolated fixtures and remove only their own records afterward.
-the migrated schema and role seeds remain. Repeating the command verifies an
-already-migrated database without reapplying versioned migrations.
-
-From `frontend/`:
-
-```sh
-npm run build
-```
-
-This runs strict TypeScript checking and creates the Vite production build.
-
-## Layout
-
-- `backend/`: Spring Boot foundation through M9, including trip snapshots, customer
-  trip search, journey-specific seat availability, temporary holds, and customer bookings
-- `frontend/`: Vietnamese customer UI with React/TypeScript, Router, Axios,
-  TanStack Query, Tailwind, React Hook Form + Zod, Lucide icons and QR rendering
-- `database/`: reserved for later database support files
-- `docs/`: requirements, database design, API contract, UI specification,
-  and development plan
-
-M1 contains 13 core tables; M2 adds `refresh_tokens` in migration V3, and M4 adds the
-transactional trip snapshot and segment-inventory tables in V4. M5 adds only
-search-oriented indexes in V5 and public snapshot/segment-based trip discovery. M6
-adds no migration: it returns the snapshotted seat layout and marks a seat available
-only when that same seat is AVAILABLE on every required journey segment. The seat map
-is observational, does not reserve inventory, and returns a successful sold-out map
-with count zero. M7 adds a hold-token lookup index in V6 and authenticated create/get/delete
-hold endpoints. Holds are server-priced, expire after ten minutes, support up to five seats,
-and atomically lock the complete seat × journey-segment matrix in deterministic order. A
-minute-scale predicate cleanup releases expired HELD rows; create also reclaims relevant
-expired rows while locked. M5/M6 remain observational, so stale expired HELD rows can remain
-unavailable until cleanup/reclamation. M8 migration V7 adds `bookings`, `booking_items`, and
-the nullable inventory-to-item link. Authenticated customers can atomically convert an active
-  owned hold to a server-priced PENDING booking and read only their own paginated history/detail.
-  The conversion marks only the held journey segments BOOKED and clears hold metadata, preserving
-  non-overlapping reuse of the same physical seat. M9 adds an idempotent mock QR payment transaction:
-  it locks the owned booking, verifies that its segment inventory remains BOOKED and correctly linked,
-  records a PAID payment and status history, changes the booking to CONFIRMED, and creates one e-ticket
-  per booking item. Ticket QR values are stable text data for frontend rendering; no image or PDF is
-  generated. Real gateways, cash settlement, cancellation/refund, notifications, reporting, and the
-  advanced operator analytics remain deferred to later milestones. The supported
-  operator management frontend is implemented in M11 (see below).
-Tests generate their own ephemeral JWT signing key.
-
-M1 follows the documented fare foreign keys. As agreed, same-route membership and
-forward stop-order validation are deferred to M3; foreign keys alone cannot enforce
-those cross-table rules. Phone uniqueness and fare-pair uniqueness are not imposed
-because the database design does not specify them. Unspecified lifecycle statuses
-use `ACTIVE`/`INACTIVE`; the only documented seat type is `STANDARD`.
-
-## M10 customer frontend
-
-Public routes: `/`, `/login`, `/register`, `/search`, `/trips/:tripId`.
-Customer routes: `/booking`, `/payment`, `/booking-success`, `/profile`,
-`/my-bookings`, `/my-bookings/:bookingId`. Accounts with CUSTOMER plus other roles
-can use the customer flow. Operator management is a separate route tree at `/operator`.
-
-Copy `frontend/.env.example` to `frontend/.env.local` when configuring the API.
-`VITE_API_BASE_URL=/api/v1` uses the development proxy; `API_PROXY_TARGET` selects
-the backend origin. A separate API deployment can supply a full
-`VITE_API_BASE_URL`, but must configure its origin policy. Production hosting must
-serve `index.html` for SPA routes and proxy `/api/v1` to the backend when using
-the default relative URL. Vite variables are public and contain no secrets.
-
-Register → login → search backend locations and trips → select up to five seats
-→ create a server-priced hold → enter contact details → create booking → confirm
-mock QR payment → view one QR ticket per seat. History/detail and profile editing
-are available from the header. Search uses `pickupLocationId`, `dropoffLocationId`
-and `departureDate`; trip links preserve both location IDs. Payment/ticket links
-use `bookingId`, then fetch the owned resource from the server on every visit.
-
-Authentication uses tab-scoped session storage, a shared refresh request with
-single-use rotation, and a single retry per failed request. Local logout clears
-tokens, the active hold reference and the query cache; it does not revoke already
-issued backend tokens. Password changes sign out locally because the backend
-revokes refresh tokens. Closing the tab normally ends this browser session.
-Use HTTPS in deployment; JavaScript-accessible storage is not an HttpOnly cookie.
-
-Seat maps use backend floor/row/column snapshots. A hold is fetched again on the
-booking page and polled until conversion/expiry; its countdown is informational.
-Expired holds return to seat selection without automatic replacement. Booking
-submission sends only holdToken and contact fields; payment sends no amount.
-Do not automatically retry booking creation after a lost response: check history
-first. The backend does not provide booking-create idempotency; mock payment is
-idempotent and a confirmed booking can reopen its existing tickets.
-
-Price/time filters and all four backend sorts are supported. Operator/bus-type
-filter controls are deferred because there is no public catalogue endpoint;
-no option list is fabricated from one page of results. UI timestamps use
-Asia/Ho_Chi_Minh. No production IDs, locations or seat layouts are hardcoded.
-
-Run `npm run build` in `frontend/` for strict TypeScript and production bundling.
-No frontend lint or test script existed at the start of M10; no large testing
-framework was added. See [M10 verification](docs/m10-verification.md) for the
-audit, browser checks, exact commands/results and remaining limitations.
-
-## M10.5 realistic demo data
-
-M10.5 adds an opt-in application seeder rather than a production Flyway migration.
-It creates three fictional operators, six Vietnamese locations, nine directional
-or multi-stop routes, three real seat layouts (22/34/40), six buses, varied fares,
-and a rolling three-day trip window. Trip creation reuses the production aggregate
-builder, including stop and seat snapshots and the full seat × segment inventory.
-Selected rows are legitimately `BLOCKED`; the seeder never fabricates holds,
-bookings, payments, tickets, or users. See [docs/demo-data.md](docs/demo-data.md) for
-idempotency, reset, route/fare details, and the browser verification checklist.
-
-## M11 operator frontend
-
-Open `/operator` with an authenticated **OPERATOR_ADMIN** account. The backend
-also requires exactly one active operator membership. CUSTOMER, OPERATOR_STAFF
-and SYSTEM_ADMIN without OPERATOR_ADMIN are rejected by the operator guard.
-Unauthenticated requests redirect to login with the requested path/query in
-`returnTo`. Registration and the demo seeder do not create operator accounts.
-Provision the account/membership through your existing administrative process;
-the frontend never fabricates roles, tokens or operator IDs.
-
-| Routes | Supported features |
-| --- | --- |
-| `/operator` | Quick actions, responsive sidebar/topbar, profile disclosure and logout |
-| `/operator/trips`, `/operator/trips/new`, `/operator/trips/:tripId` | Paginated list, date/route/bus/status filters, creation, stop timeline, segments and snapshot seat layout |
-| `/operator/buses`, `/operator/buses/new`, `/operator/buses/:busId` | Paginated plate search, status/type filters, creation, plate/type/status edits |
-| `/operator/bus-types`, `/operator/bus-types/:busTypeId` | Read-only active bus types and seat templates |
-| `/operator/routes`, `/operator/routes/catalog`, `/operator/routes/:operatorRouteId` | Owned routes, active global catalog, attach/reactivate, association activation/deactivation, ordered stops and fare editor |
-
-Filters and pagination are URL-backed. New trips use only active owned routes
-and AVAILABLE buses; selectors fetch every page of real responses. Creation
-time is entered in Vietnam time (UTC+7) and sent as an ISO timestamp with offset.
-The operator list's date filter uses a **UTC day**, matching `TripService`;
-display times remain Vietnam time. Snapshot seats are **not live occupancy**.
-
-Fare saving uses `PUT /api/v1/operator/routes/{operatorRouteId}/fares` with
-`{ fares: [...] }`, replacing the **complete active fare set**. All retained rows
-are sent together. Omitted rows become inactive; an empty list clears the active
-set. The UI validates forward stop order, duplicate pairs and positive prices
-with at most two decimal places, and requires review/confirmation before saving.
-Bus maintenance/inactivation and route deactivation also require confirmation.
-
-Deferred: bookings/actions, passenger manifests, analytics, live occupancy,
-seat blocking, trip edit/cancel/status transitions, bus type/seat-template/global
-route/stop editors, staff, customers, reports, refunds, CMS and system admin.
-The operator home has no invented metrics. Existing customer routes and the
-shared Axios client/token refresh implementation are preserved.
-
-Run `npm run build` and `npm test` from `frontend/` (Node >=22.12).
-Verification evidence, file inventory and the authenticated acceptance checklist:
-[M11 verification](docs/m11-verification.md). Live operator acceptance testing
-requires a provisioned account; the build and static checks do not substitute
-for that test.
+Layout: `backend/` Spring Boot; `frontend/` React/TypeScript/Vite;
+`docs/` contracts/setup/verification; `database/` reserved support directory.

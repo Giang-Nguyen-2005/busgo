@@ -87,7 +87,7 @@ export function CustomerGuard() {
     return (
       <div className="empty card">
         <h1>Cần tài khoản khách hàng</h1>
-        <p>Tài khoản này chưa có quyền CUSTOMER.</p>
+        <p>Vui lòng sử dụng tài khoản khách hàng để đặt vé.</p>
         <button onClick={auth.logout}>Đăng nhập tài khoản khác</button>
       </div>
     );

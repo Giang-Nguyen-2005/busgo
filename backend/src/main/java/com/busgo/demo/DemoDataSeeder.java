@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,14 +60,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 /** Explicit-profile, repeatable portfolio data. Never active in production by default. */
 @Component
 @Profile("demo & !prod & !production")
 public class DemoDataSeeder implements ApplicationRunner {
-    public static final List<String> OPERATOR_CODES = List.of("DEMO-ANPHU", "DEMO-MINHTHANH", "DEMO-TAYNGUYEN");
     public static final String OPERATOR_ADMIN_EMAIL = "operator.admin@anphu-demo.example";
     public static final String OPERATOR_ADMIN_PASSWORD = "DemoOperator!2026";
+    public static final String OPERATOR_STAFF_EMAIL = "operator.staff@anphu-demo.example";
+    public static final String OPERATOR_STAFF_PASSWORD = "DemoStaff!2026";
+    public static final String SECONDARY_ADMIN_EMAIL = "operator.admin@minhthanh-demo.example";
+    public static final String SECONDARY_ADMIN_PASSWORD = "DemoSecondary!2026";
     private static final String OPERATOR_ADMIN_NAME = "Demo An Phu Operator Admin";
     private static final String OPERATOR_ADMIN_PHONE = "0900001101";
     private static final Logger log = LoggerFactory.getLogger(DemoDataSeeder.class);
@@ -122,18 +127,24 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void run(ApplicationArguments args) {
-        if (reset) resetUnbookedDemoTrips();
+        if (reset) log.warn("Demo reset is disabled: existing trips and inventory are never deleted.");
         SeedResult result = seed();
-        log.info("BusGo demo data ready: search {} -> {} on {} ({} trips created, {} reused)",
+        log.info("BusGo demo seed finished: search {} -> {} on {} ({} created, {} reused, {} skipped). Verify availability before the demo.",
                 result.pickup().getName(), result.dropoff().getName(), result.searchDate(),
-                result.createdTrips(), result.reusedTrips());
+                result.createdTrips(), result.reusedTrips(), result.skippedTrips());
     }
 
-    SeedResult seed() {
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public SeedResult seed() {
         Map<String, TransportOperator> operator = seedOperators();
         seedOperatorAdmin(operator.get("DEMO-ANPHU"));
+        seedAccount(operator.get("DEMO-ANPHU"), OPERATOR_STAFF_EMAIL, OPERATOR_STAFF_PASSWORD,
+                "Demo An Phu Operator Staff", "0900001102", RoleCode.OPERATOR_STAFF, "DEMO-ANPHU-STAFF");
+        // A secondary operator must retain a login-capable admin for safe reactivation.
+        seedAccount(operator.get("DEMO-MINHTHANH"), SECONDARY_ADMIN_EMAIL, SECONDARY_ADMIN_PASSWORD,
+                "Demo Minh Thanh Operator Admin", "0900001104", RoleCode.OPERATOR_ADMIN, "DEMO-MINHTHANH-ADMIN");
         Map<String, Location> location = seedLocations();
         Map<String, RouteBundle> route = seedRoutes(location);
         Map<String, BusType> type = seedBusTypes();
@@ -143,22 +154,45 @@ public class DemoDataSeeder implements ApplicationRunner {
         LocalDate searchDate = LocalDate.now(clock.withZone(BUSINESS_ZONE)).plusDays(1);
         int created = 0;
         int reused = 0;
-        for (TripSpec spec : tripSpecs()) {
+        int skipped = 0;
+        for (int day = 0; day < 3; day++) for (TripSpec spec : tripSpecs()) {
             OperatorRoute operatorRoute = association.get(key(spec.operatorCode(), spec.routeKey()));
             Bus assignedBus = bus.get(spec.plate());
-            LocalDateTime departure = businessTime(searchDate.plusDays(spec.dayOffset()), spec.time());
+            LocalDateTime departure = businessTime(searchDate.plusDays(day), spec.time());
             Trip trip = trips.findByOperatorRouteIdAndBusIdAndDepartureTime(
                     operatorRoute.getId(), assignedBus.getId(), departure).orElse(null);
             if (trip == null) {
+                // Lock the same bus used by the production creator before checking its schedule.
+                buses.findOwnedByIdForUpdate(assignedBus.getId(), operatorRoute.getOperator().getId())
+                        .orElseThrow(() -> collision("bus " + spec.plate()));
+                RouteBundle source = route.get(spec.routeKey());
+                LocalDateTime arrival = departure.plusMinutes(source.stops().get(source.stops().size() - 1)
+                        .getEstimatedOffsetMinutes());
+                if (operatorRoute.getOperator().getStatus() != OperatorStatus.ACTIVE
+                        || operatorRoute.getStatus() != ActiveStatus.ACTIVE
+                        || source.route().getStatus() != RouteStatus.ACTIVE
+                        || source.stops().stream().anyMatch(stop -> stop.getStatus() != ActiveStatus.ACTIVE)
+                        || assignedBus.getStatus() != BusStatus.AVAILABLE
+                        || assignedBus.getDeletedAt() != null
+                        || assignedBus.getBusType().getStatus() != ActiveStatus.ACTIVE
+                        || seatTemplates.findByBusTypeIdAndActiveTrueOrderByFloorAscRowAscColumnAsc(
+                                assignedBus.getBusType().getId()).size() != assignedBus.getBusType().getSeatCount()
+                        || !hasUsableFares(operatorRoute, source)
+                        || trips.hasScheduleConflict(assignedBus.getId(), departure, arrival)) {
+                    skipped++;
+                    log.warn("Skipped demo trip: bus={}, route={}, departure={} UTC; existing schedule or inactive/unusable catalogue. Existing data preserved.",
+                            spec.plate(), spec.routeKey(), departure);
+                    continue;
+                }
                 trip = aggregateCreator.create(operatorRoute.getOperator().getId(), operatorRoute.getId(),
                         assignedBus.getId(), departure).trip();
+                applyAvailability(trip.getId(), spec.blockedSeats(), spec.routeKey().equals("COASTAL"));
                 created++;
             } else {
                 reused++;
             }
-            applyAvailability(trip.getId(), spec.blockedSeats(), spec.routeKey().equals("COASTAL"));
         }
-        return new SeedResult(searchDate, location.get("HCM"), location.get("DALAT"), created, reused);
+        return new SeedResult(searchDate, location.get("HCM"), location.get("DALAT"), created, reused, skipped);
     }
 
     /**
@@ -166,54 +200,34 @@ public class DemoDataSeeder implements ApplicationRunner {
      * looked up or changed outside the explicit demo profile.
      */
     private void seedOperatorAdmin(TransportOperator demoOperator) {
-        User user = users.findByEmail(OPERATOR_ADMIN_EMAIL).orElseGet(User::new);
-        boolean newUser = user.getId() == null;
-        if (newUser) {
-            user.setEmail(OPERATOR_ADMIN_EMAIL);
-            user.setFullName(OPERATOR_ADMIN_NAME);
-            user.setPhone(OPERATOR_ADMIN_PHONE);
-        } else if (!OPERATOR_ADMIN_NAME.equals(user.getFullName())
-                || !OPERATOR_ADMIN_PHONE.equals(user.getPhone())
-                || user.getDeletedAt() != null) {
-            throw new IllegalStateException("Reserved demo operator admin email belongs to a non-demo user.");
-        }
-        if (newUser) {
-            user.setPasswordHash(passwords.encode(OPERATOR_ADMIN_PASSWORD));
-            user.setStatus(UserStatus.ACTIVE);
-            user = users.saveAndFlush(user);
-        }
+        seedAccount(demoOperator, OPERATOR_ADMIN_EMAIL, OPERATOR_ADMIN_PASSWORD,
+                OPERATOR_ADMIN_NAME, OPERATOR_ADMIN_PHONE, RoleCode.OPERATOR_ADMIN, "DEMO-ANPHU-ADMIN");
+    }
 
-        List<RoleCode> roleCodes = userRoles.findRoleCodesByUserId(user.getId());
-        if (roleCodes.contains(RoleCode.OPERATOR_STAFF)) {
-            throw new IllegalStateException("Reserved demo operator admin must not have OPERATOR_STAFF access.");
+    private void seedAccount(TransportOperator demoOperator, String email, String password,
+            String name, String phone, RoleCode roleCode, String staffCode) {
+        User user = users.findByEmail(email).orElse(null);
+        if (user != null) {
+            List<OperatorStaff> memberships = operatorStaff.findByUserId(user.getId());
+            if (!name.equals(user.getFullName()) || !phone.equals(user.getPhone()) || user.getDeletedAt() != null
+                    || !userRoles.findRoleCodesByUserId(user.getId()).equals(List.of(roleCode))
+                    || memberships.size() != 1
+                    || !memberships.get(0).getOperator().getId().equals(demoOperator.getId())
+                    || !staffCode.equals(memberships.get(0).getStaffCode())) throw collision("account " + email);
+            // Account/membership status and password are intentionally preserved, including suspension.
+            return;
         }
-        if (!roleCodes.contains(RoleCode.OPERATOR_ADMIN)) {
-            Role adminRole = roles.findByCode(RoleCode.OPERATOR_ADMIN)
-                    .orElseThrow(() -> new IllegalStateException("OPERATOR_ADMIN role seed missing."));
-            userRoles.saveAndFlush(new UserRole(user, adminRole));
-        }
-
-        List<OperatorStaff> memberships = operatorStaff.findByUserId(user.getId());
-        long activeMemberships = memberships.stream()
-                .filter(membership -> membership.getStatus() == ActiveStatus.ACTIVE)
-                .count();
-        if (activeMemberships > 1 || (activeMemberships == 1 && memberships.stream()
-                .filter(membership -> membership.getStatus() == ActiveStatus.ACTIVE)
-                .anyMatch(membership -> !membership.getOperator().getId().equals(demoOperator.getId())))) {
-            throw new IllegalStateException("Reserved demo operator admin already has a different active membership.");
-        }
-
-        if (!newUser) {
-            user.setPasswordHash(passwords.encode(OPERATOR_ADMIN_PASSWORD));
-            user.setStatus(UserStatus.ACTIVE);
-            user = users.saveAndFlush(user);
-        }
-        OperatorStaff membership = memberships.stream()
-                .filter(value -> value.getOperator().getId().equals(demoOperator.getId()))
-                .findFirst().orElseGet(OperatorStaff::new);
+        if (operatorStaff.existsByOperatorIdAndStaffCodeIgnoreCase(demoOperator.getId(), staffCode))
+            throw collision("staff code " + staffCode);
+        user = new User(); user.setEmail(email); user.setFullName(name); user.setPhone(phone);
+        user.setPasswordHash(passwords.encode(password)); user.setStatus(UserStatus.ACTIVE);
+        users.saveAndFlush(user);
+        Role role = roles.findByCode(roleCode).orElseThrow(() -> collision("missing role " + roleCode));
+        userRoles.saveAndFlush(new UserRole(user, role));
+        OperatorStaff membership = new OperatorStaff();
         membership.setOperator(demoOperator);
         membership.setUser(user);
-        membership.setStaffCode("DEMO-ANPHU-ADMIN");
+        membership.setStaffCode(staffCode);
         membership.setStatus(ActiveStatus.ACTIVE);
         operatorStaff.saveAndFlush(membership);
     }
@@ -228,6 +242,13 @@ public class DemoDataSeeder implements ApplicationRunner {
                 new OperatorSpec("DEMO-TAYNGUYEN", "Tây Nguyên Travel", "02623887766",
                         "hello@taynguyen-demo.example", "45 Đường Cao Nguyên, Buôn Ma Thuột"))) {
             TransportOperator value = operators.findByCode(spec.code()).orElseGet(TransportOperator::new);
+            if (value.getId() != null) {
+                if (!spec.name().equals(value.getName()) || !spec.email().equals(value.getEmail())
+                        || !spec.phone().equals(value.getPhone()) || !spec.address().equals(value.getAddress()))
+                    throw collision("operator " + spec.code());
+                result.put(spec.code(), operators.lockById(value.getId()).orElseThrow());
+                continue;
+            }
             value.setCode(spec.code());
             value.setName(spec.name());
             value.setPhone(spec.phone());
@@ -251,6 +272,14 @@ public class DemoDataSeeder implements ApplicationRunner {
                 new LocationSpec("DANANG", "Bến xe Đà Nẵng", "Đà Nẵng", "Cẩm Lệ", "Khu vực cửa ngõ Đà Nẵng"),
                 new LocationSpec("HUE", "Bến xe Huế", "Thừa Thiên Huế", "Huế", "Khu vực trung tâm Huế"))) {
             Location value = locations.findFirstByNameAndProvince(spec.name(), spec.province()).orElseGet(Location::new);
+            requireAtMostOne("location " + spec.key(), "SELECT COUNT(*) FROM locations WHERE name=? AND province=?",
+                    spec.name(), spec.province());
+            if (value.getId() != null) {
+                if (!spec.district().equals(value.getDistrict()) || !spec.address().equals(value.getAddress()))
+                    throw collision("location " + spec.key());
+                result.put(spec.key(), value);
+                continue;
+            }
             value.setName(spec.name());
             value.setProvince(spec.province());
             value.setDistrict(spec.district());
@@ -282,6 +311,26 @@ public class DemoDataSeeder implements ApplicationRunner {
             Location destination = location.get(spec.destination());
             Route value = routes.findFirstByNameAndOriginLocationIdAndDestinationLocationId(
                     spec.name(), origin.getId(), destination.getId()).orElseGet(Route::new);
+            requireAtMostOne("route " + spec.key(),
+                    "SELECT COUNT(*) FROM routes WHERE name=? AND origin_location_id=? AND destination_location_id=?",
+                    spec.name(), origin.getId(), destination.getId());
+            if (value.getId() != null) {
+                List<RouteStop> existingStops = routeStops.findByRouteIdOrderByStopOrderAsc(value.getId());
+                if (value.getEstimatedDistanceKm().compareTo(BigDecimal.valueOf(spec.distanceKm())) != 0
+                        || value.getEstimatedDurationMinutes() != spec.durationMinutes()
+                        || existingStops.size() != spec.stops().size()) throw collision("route " + spec.key());
+                for (int index = 0; index < existingStops.size(); index++) {
+                    RouteStop stop = existingStops.get(index);
+                    StopSpec expected = spec.stops().get(index);
+                    if (stop.getStopOrder() != index + 1
+                            || !stop.getLocation().getId().equals(location.get(expected.location()).getId())
+                            || stop.getEstimatedOffsetMinutes() != expected.offsetMinutes()
+                            || stop.isAllowPickup() != (index < existingStops.size() - 1)
+                            || stop.isAllowDropoff() != (index > 0)) throw collision("route stops " + spec.key());
+                }
+                result.put(spec.key(), new RouteBundle(value, existingStops));
+                continue;
+            }
             value.setName(spec.name());
             value.setOriginLocation(origin);
             value.setDestinationLocation(destination);
@@ -319,6 +368,21 @@ public class DemoDataSeeder implements ApplicationRunner {
                 new BusTypeSpec("SLEEPER34", "Giường nằm 34 chỗ", "Giường nằm hai tầng, lối đi giữa", sleeperSeats()),
                 new BusTypeSpec("STANDARD40", "Ghế ngồi 40 chỗ", "Ghế tiêu chuẩn 2+2, lối đi giữa", standardSeats()))) {
             BusType value = busTypes.findFirstByName(spec.name()).orElseGet(BusType::new);
+            requireAtMostOne("bus type " + spec.key(), "SELECT COUNT(*) FROM bus_types WHERE name=?", spec.name());
+            if (value.getId() != null) {
+                if (value.getSeatCount() != spec.seats().size() || !spec.description().equals(value.getDescription())
+                        || jdbc.queryForObject("SELECT COUNT(*) FROM seat_templates WHERE bus_type_id=?",
+                                Long.class, value.getId()) != spec.seats().size()) throw collision("bus type " + spec.key());
+                for (SeatSpec expected : spec.seats()) {
+                    SeatTemplate seat = seatTemplates.findByBusTypeIdAndSeatCode(value.getId(), expected.code())
+                            .orElseThrow(() -> collision("seat template " + expected.code()));
+                    if (seat.getFloor() != expected.floor() || seat.getRow() != expected.row()
+                            || seat.getColumn() != expected.column() || seat.getSeatType() != SeatType.STANDARD)
+                        throw collision("seat template " + expected.code());
+                }
+                result.put(spec.key(), value);
+                continue;
+            }
             value.setName(spec.name());
             value.setSeatCount(spec.seats().size());
             value.setDescription(spec.description());
@@ -347,11 +411,19 @@ public class DemoDataSeeder implements ApplicationRunner {
         for (BusSpec spec : List.of(
                 new BusSpec("51B-770.01", "DEMO-ANPHU", "SLEEPER34", "/images/busgo/bus-sleeper.jpg"),
                 new BusSpec("51B-770.02", "DEMO-ANPHU", "STANDARD40", "/images/busgo/bus-standard.jpg"),
+                new BusSpec("51B-770.03", "DEMO-ANPHU", "SLEEPER34", "/images/busgo/bus-sleeper.jpg"),
                 new BusSpec("50F-880.01", "DEMO-MINHTHANH", "LIMO22", "/images/busgo/bus-limousine.jpg"),
                 new BusSpec("50F-880.02", "DEMO-MINHTHANH", "SLEEPER34", "/images/busgo/bus-sleeper.jpg"),
                 new BusSpec("47B-660.01", "DEMO-TAYNGUYEN", "STANDARD40", "/images/busgo/bus-standard.jpg"),
                 new BusSpec("47B-660.02", "DEMO-TAYNGUYEN", "LIMO22", "/images/busgo/bus-limousine.jpg"))) {
             Bus value = buses.findByLicensePlateIgnoreCase(spec.plate()).orElseGet(Bus::new);
+            if (value.getId() != null) {
+                if (!value.getOperator().getId().equals(operator.get(spec.operatorCode()).getId())
+                        || !value.getBusType().getId().equals(type.get(spec.busTypeKey()).getId())
+                        || !Objects.equals(value.getImageUrl(), spec.imageUrl())) throw collision("bus " + spec.plate());
+                result.put(spec.plate(), value);
+                continue;
+            }
             value.setLicensePlate(spec.plate());
             value.setOperator(operator.get(spec.operatorCode()));
             value.setBusType(type.get(spec.busTypeKey()));
@@ -397,6 +469,7 @@ public class DemoDataSeeder implements ApplicationRunner {
     private OperatorRoute association(TransportOperator operator, Route route) {
         OperatorRoute value = operatorRoutes.findByOperatorIdAndRouteId(operator.getId(), route.getId())
                 .orElseGet(OperatorRoute::new);
+        if (value.getId() != null) return value;
         value.setOperator(operator);
         value.setRoute(route);
         value.setStatus(ActiveStatus.ACTIVE);
@@ -406,6 +479,9 @@ public class DemoDataSeeder implements ApplicationRunner {
     private void putFare(OperatorRoute operatorRoute, RouteStop from, RouteStop to, BigDecimal price) {
         OperatorRouteFare value = fares.findFirstByOperatorRouteIdAndFromRouteStopIdAndToRouteStopId(
                 operatorRoute.getId(), from.getId(), to.getId()).orElseGet(OperatorRouteFare::new);
+        requireAtMostOne("fare", "SELECT COUNT(*) FROM operator_route_fares WHERE operator_route_id=? AND from_route_stop_id=? AND to_route_stop_id=?",
+                operatorRoute.getId(), from.getId(), to.getId());
+        if (value.getId() != null) return;
         value.setOperatorRoute(operatorRoute);
         value.setFromRouteStop(from);
         value.setToRouteStop(to);
@@ -440,23 +516,25 @@ public class DemoDataSeeder implements ApplicationRunner {
         }
     }
 
-    private void resetUnbookedDemoTrips() {
-        String marks = String.join(",", java.util.Collections.nCopies(OPERATOR_CODES.size(), "?"));
-        List<Long> ids = jdbc.queryForList("""
-                SELECT t.id FROM trips t
-                JOIN operator_routes operator_route ON operator_route.id=t.operator_route_id
-                JOIN transport_operators operator ON operator.id=operator_route.operator_id
-                WHERE operator.code IN (%s)
-                  AND NOT EXISTS (SELECT 1 FROM bookings booking WHERE booking.trip_id=t.id)
-                """.formatted(marks), Long.class, OPERATOR_CODES.toArray());
-        for (Long id : ids) {
-            jdbc.update("DELETE i FROM trip_seat_segment_inventory i JOIN trip_seats s ON s.id=i.trip_seat_id WHERE s.trip_id=?", id);
-            jdbc.update("DELETE FROM trip_segments WHERE trip_id=?", id);
-            jdbc.update("DELETE FROM trip_seats WHERE trip_id=?", id);
-            jdbc.update("DELETE FROM trip_stops WHERE trip_id=?", id);
-            jdbc.update("DELETE FROM trips WHERE id=?", id);
+    private boolean hasUsableFares(OperatorRoute association, RouteBundle source) {
+        for (int from = 0; from < source.stops().size() - 1; from++) {
+            for (int to = from + 1; to < source.stops().size(); to++) {
+                var fare = fares.findFirstByOperatorRouteIdAndFromRouteStopIdAndToRouteStopId(
+                        association.getId(), source.stops().get(from).getId(), source.stops().get(to).getId());
+                if (fare.isEmpty() || fare.get().getStatus() != ActiveStatus.ACTIVE
+                        || fare.get().getPrice().signum() <= 0) return false;
+            }
         }
-        log.info("Reset {} unbooked demo trips; booked demo history was preserved", ids.size());
+        return true;
+    }
+
+    private void requireAtMostOne(String key, String sql, Object... args) {
+        if (jdbc.queryForObject(sql, Long.class, args) > 1) throw collision(key + " (ambiguous duplicates)");
+    }
+
+    private static IllegalStateException collision(String key) {
+        return new IllegalStateException("Demo fixture collision: " + key
+                + ". Existing data will not be repaired or overwritten. Use dev without demo to inspect it.");
     }
 
     static List<SeatSpec> limousineSeats() {
@@ -489,19 +567,13 @@ public class DemoDataSeeder implements ApplicationRunner {
 
     private static List<TripSpec> tripSpecs() {
         return List.of(
-                new TripSpec("DEMO-ANPHU", "HCM-DALAT", "51B-770.01", 0, LocalTime.of(6, 30), 4),
-                new TripSpec("DEMO-MINHTHANH", "HCM-DALAT", "50F-880.01", 0, LocalTime.of(8, 0), 2),
-                new TripSpec("DEMO-TAYNGUYEN", "HCM-DALAT", "47B-660.01", 0, LocalTime.of(9, 30), 8),
-                new TripSpec("DEMO-ANPHU", "HCM-DALAT", "51B-770.02", 0, LocalTime.of(13, 0), 6),
-                new TripSpec("DEMO-MINHTHANH", "HCM-DALAT", "50F-880.02", 0, LocalTime.of(18, 30), 7),
-                new TripSpec("DEMO-TAYNGUYEN", "HCM-DALAT", "47B-660.02", 0, LocalTime.of(22, 0), 5),
-                new TripSpec("DEMO-ANPHU", "HCM-NHATRANG", "51B-770.02", 1, LocalTime.of(6, 0), 5),
-                new TripSpec("DEMO-ANPHU", "NHATRANG-HCM", "51B-770.02", 1, LocalTime.of(18, 0), 3),
-                new TripSpec("DEMO-TAYNGUYEN", "HCM-BMT", "47B-660.01", 1, LocalTime.of(7, 0), 6),
-                new TripSpec("DEMO-TAYNGUYEN", "BMT-HCM", "47B-660.01", 1, LocalTime.of(18, 0), 4),
-                new TripSpec("DEMO-MINHTHANH", "DANANG-HUE", "50F-880.01", 1, LocalTime.of(6, 0), 2),
-                new TripSpec("DEMO-MINHTHANH", "HUE-DANANG", "50F-880.01", 1, LocalTime.of(12, 0), 1),
-                new TripSpec("DEMO-ANPHU", "COASTAL", "51B-770.01", 2, LocalTime.of(6, 0), 0));
+                new TripSpec("DEMO-ANPHU", "HCM-DALAT", "51B-770.01", LocalTime.of(6, 30), 4),
+                new TripSpec("DEMO-MINHTHANH", "HCM-DALAT", "50F-880.01", LocalTime.of(8, 0), 2),
+                new TripSpec("DEMO-TAYNGUYEN", "HCM-DALAT", "47B-660.01", LocalTime.of(9, 30), 8),
+                new TripSpec("DEMO-ANPHU", "HCM-DALAT", "51B-770.02", LocalTime.of(13, 0), 6),
+                new TripSpec("DEMO-MINHTHANH", "HCM-DALAT", "50F-880.02", LocalTime.of(18, 30), 7),
+                new TripSpec("DEMO-TAYNGUYEN", "HCM-DALAT", "47B-660.02", LocalTime.of(22, 0), 5),
+                new TripSpec("DEMO-ANPHU", "COASTAL", "51B-770.03", LocalTime.of(6, 0), 0));
     }
 
     private static RouteSpec direct(String key, String name, String origin, String destination,
@@ -516,7 +588,8 @@ public class DemoDataSeeder implements ApplicationRunner {
 
     private static String key(String operator, String route) { return operator + "|" + route; }
 
-    record SeedResult(LocalDate searchDate, Location pickup, Location dropoff, int createdTrips, int reusedTrips) {}
+    public record SeedResult(LocalDate searchDate, Location pickup, Location dropoff,
+            int createdTrips, int reusedTrips, int skippedTrips) {}
     record SeatSpec(String code, int row, int column, int floor) {}
     private record OperatorSpec(String code, String name, String phone, String email, String address) {}
     private record LocationSpec(String key, String name, String province, String district, String address) {}
@@ -528,5 +601,5 @@ public class DemoDataSeeder implements ApplicationRunner {
     private record BusSpec(String plate, String operatorCode, String busTypeKey, String imageUrl) {}
     private record FarePlan(String operatorCode, String routeKey, long directPrice) {}
     private record TripSpec(String operatorCode, String routeKey, String plate,
-            int dayOffset, LocalTime time, int blockedSeats) {}
+            LocalTime time, int blockedSeats) {}
 }

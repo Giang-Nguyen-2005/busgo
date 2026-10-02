@@ -1,6 +1,8 @@
 import axios from "axios";
 import type { ApiError } from "../types/api";
 const messages: Record<string, string> = {
+  BUS_SCHEDULE_CONFLICT: "Xe đã được phân công cho chuyến khác trong khoảng thời gian này. Vui lòng chọn xe hoặc giờ khởi hành khác.",
+  BUS_NOT_AVAILABLE: "Xe chưa sẵn sàng để tạo chuyến. Vui lòng kiểm tra trạng thái xe.",
   OPERATOR_NOT_FOUND: "Không tìm thấy nhà xe.",
   STAFF_NOT_FOUND: "Không tìm thấy nhân sự trong nhà xe.",
   OPERATOR_CODE_ALREADY_EXISTS: "Mã nhà xe đã được sử dụng.",

@@ -1,5 +1,4 @@
 busgo:
   demo:
-    # Explicitly opt in with the demo profile. Set true only to replace unbooked
-    # demo trips; bookings, payments, tickets, users, and non-demo data are retained.
+    # Compatibility only: true logs a warning. M15 never deletes existing trips.
     reset-unbooked-trips: ${BUSGO_DEMO_RESET_UNBOOKED_TRIPS:false}
