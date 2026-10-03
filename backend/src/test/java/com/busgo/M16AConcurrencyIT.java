@@ -37,6 +37,7 @@ class M16AConcurrencyIT extends M16ATestSupport {
     void cleanOwnedFixture() {
         if (fixture != null) {
             Long tripId = fixture.trip().getId();
+            jdbc.update("DELETE tb FROM ticket_boarding tb JOIN tickets tk ON tk.id=tb.ticket_id JOIN bookings b ON b.id=tk.booking_id WHERE b.trip_id=?", tripId);
             jdbc.update("DELETE ticket FROM tickets ticket JOIN bookings booking ON booking.id=ticket.booking_id WHERE booking.trip_id=?", tripId);
             jdbc.update("DELETE history FROM booking_status_history history JOIN bookings booking ON booking.id=history.booking_id WHERE booking.trip_id=?", tripId);
             jdbc.update("DELETE payment FROM payments payment JOIN bookings booking ON booking.id=payment.booking_id WHERE booking.trip_id=?", tripId);

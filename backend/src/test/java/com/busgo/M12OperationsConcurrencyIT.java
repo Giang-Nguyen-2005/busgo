@@ -48,6 +48,7 @@ class M12OperationsConcurrencyIT extends M8BookingTestSupport {
     void cleanOwnedFixture() {
         if (fixture != null) {
             Long tripId = fixture.trip().getId();
+            M16BFixtures.clear(jdbc, fixture.operator().getId(), tripId);
             jdbc.update("DELETE ticket FROM tickets ticket JOIN bookings booking ON booking.id=ticket.booking_id WHERE booking.trip_id=?", tripId);
             jdbc.update("DELETE history FROM booking_status_history history JOIN bookings booking ON booking.id=history.booking_id WHERE booking.trip_id=?", tripId);
             jdbc.update("DELETE payment FROM payments payment JOIN bookings booking ON booking.id=payment.booking_id WHERE booking.trip_id=?", tripId);
@@ -138,9 +139,9 @@ class M12OperationsConcurrencyIT extends M8BookingTestSupport {
                         TripStatus.DEPARTED)));
         assertThat(outcomes).contains("SUCCESS");
         assertThat(outcomes).allMatch(value -> value.equals("SUCCESS")
-                || value.equals("PAYMENT_WINDOW_CLOSED"));
+                || value.equals("PICKUP_UNRESOLVED"));
         assertThat(jdbc.queryForObject("SELECT status FROM trips WHERE id=?", String.class,
-                fixture.trip().getId())).isEqualTo("DEPARTED");
+                fixture.trip().getId())).isEqualTo("BOARDING");
     }
 
     private CurrentUser admin(Fixture fixture) {
@@ -153,6 +154,7 @@ class M12OperationsConcurrencyIT extends M8BookingTestSupport {
         membership.setUser(user); membership.setStaffCode(UUID.randomUUID().toString());
         membership.setStatus(ActiveStatus.ACTIVE); staff.saveAndFlush(membership);
         userIds.add(user.getId());
+        M16BFixtures.crew(jdbc,fixture.operator().getId(),fixture.trip().getId(),user.getId());
         return new CurrentUser(user.getId(), List.of(RoleCode.OPERATOR_ADMIN));
     }
 

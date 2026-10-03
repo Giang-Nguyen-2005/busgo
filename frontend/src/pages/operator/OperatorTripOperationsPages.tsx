@@ -1,11 +1,13 @@
 import { cellLabels, cellStatus } from "../../features/operator/dispatch";
+import { BoardingManifest } from "../../features/operator/CrewBoarding";
+import { useTripWorkspace } from "../../features/operator/TripWorkspace";
 import { useState } from "react";
 import { manifestGroups } from "../../features/operator/dispatch";
 import { RefreshState } from "../../features/operator/RefreshState";
 import { CompletenessWarning } from "./OperatorSeatsPage";
 import { Link, useParams } from "react-router-dom";
 import { Empty } from "../../components/ui";
-import { useOccupancy, usePassengers } from "../../features/operator/queries";
+import { useOccupancy } from "../../features/operator/queries";
 import { OperationsBadge, OperationsQueryState } from "../../features/operator/OperationsShared";
 import { manifestEmptyText, occupancyMatrix, seatPassenger } from "../../features/operator/operations";
 import { OperatorStatusBadge } from "../../features/operator/shared";
@@ -32,9 +34,8 @@ export function ManifestContent({ manifest }: { manifest: PassengerManifest }) {
 
 export function OperatorPassengersPage() {
   const id = Number(useParams().tripId);
-  const query = usePassengers(id);
-  return <><h2>Hành khách</h2><RefreshState query={query} />
-    <OperationsQueryState query={query}>{data => <ManifestContent manifest={data} />}</OperationsQueryState></>;
+  const trip = useTripWorkspace();
+  return <><h2>Hành khách</h2><BoardingManifest tripId={id} tripStatus={trip.status} /></>;
 }
 export function OccupancyContent({ occupancy: data }: { occupancy: TripOccupancy }) {
   const matrix = occupancyMatrix(data);

@@ -1734,3 +1734,87 @@ WEB authenticated booking/hold/payment/ticket ownership and behavior remain inta
 V11 defaults historical bookings to WEB/MOCK_ONLINE and renames historical MOCK_QR
 payment rows. PHONE never creates a fake customer account. See m16a-assisted-booking.md
 for implementation, concurrency and deferred scope; m16a-verification.md for evidence.
+
+## M16B.1 + M16B.2 crew and boarding
+
+Operator ownership is derived from the active membership. OPERATOR_ADMIN performs
+all mutations; OPERATOR_STAFF reads only. SYSTEM_ADMIN has no operator context.
+Foreign IDs return 404; customer/staff writes return 403; missing/invalid credentials
+return 401. All endpoints retain ApiResponse envelopes and the common error format.
+
+- GET /api/v1/operator/employees -> Employee[] (ordered by code, ID).
+- GET /api/v1/operator/employees/{id} -> Employee.
+- POST /api/v1/operator/employees -> 201 Employee.
+- PATCH /api/v1/operator/employees/{id} -> Employee.
+  Body is the complete editable representation: employeeCode (1-50), fullName
+  (1-100), phone (1-20), status ACTIVE/INACTIVE, nonempty capabilities containing
+  DRIVER and/or ATTENDANT, licenceNumber (<=50), licenceClass (<=30),
+  licenceExpiryDate (ISO date); all licence fields required for DRIVER.
+  PATCH also requires current version. Employee returns id and version.
+- GET /api/v1/operator/trips/{id}/crew -> {assignments, ready, warning}.
+  Assignment: id, employeeId, duty, fullName, status, licenceExpiryDate.
+- PUT /api/v1/operator/trips/{id}/crew -> same result.
+  Body: {assignments:[{employeeId,duty}]}, complete desired active set (0-20).
+  Repeated sets preserve existing assignment/history; removed entries are released.
+- GET /api/v1/operator/trips/{id}/attendance -> AttendanceRow[].
+  bookingItemId, bookingId, bookingCode, bookingAmount (full booking amount),
+  seatCode, passengerName (item/contact fallback), phone, source, paymentMethod,
+  paymentBlocked (boolean: any item in this booking has terminal NO_SHOW),
+  paymentStatus, nullable ticketId/ticketCode/boardingStatus, pickupStopId,
+  pickupName, dropoffName, pickupTime (UTC offset timestamp, planned/advisory).
+  Includes PENDING/CONFIRMED/COMPLETED booking items, unlike the compatible legacy
+  /passengers read. Unpaid rows have no ticket; explicit no-show displays NO_SHOW.
+- POST /api/v1/operator/trips/{tripId}/booking-items/{itemId}/no-show
+  Body: {stopId,reason?}; exact booked pickup, reason <=500. Operator admin only.
+  Unpaid PENDING PHONE PAY_ON_BOARD items receive NO_SHOW without payment/ticket
+  or commercial/inventory changes. Paid items use existing ticket no-show rules.
+  Returns the attendance row including booking_item_id and nullable ticket_id.
+  Duplicates preserve timestamps/history even after closure; history entity is
+  BOOKING_ITEM for ticketless attendance. New payment for any booking containing
+  NO_SHOW rejects BOOKING_ATTENDANCE_TERMINAL; already paid retries remain idempotent.
+- POST /api/v1/operator/trips/{tripId}/tickets/{ticketId}/check-in
+- POST /api/v1/operator/trips/{tripId}/tickets/{ticketId}/board
+- POST /api/v1/operator/trips/{tripId}/tickets/{ticketId}/direct-board
+- POST /api/v1/operator/trips/{tripId}/tickets/{ticketId}/no-show
+  Body: {stopId,reason?}; stopId must be the ticket's booked pickup; reason <=500.
+  Result is the committed ticket_boarding row: id, booking_item_id, ticket_id, status,
+  checked_in_at/by, boarded_at/by, no_show_at/by, actual_boarding_stop_id,
+  pickup_stop_id and version (snake_case fields). EXPECTED -> CHECKED_IN ->
+  BOARDED; direct-board atomically records both transitions; explicit no-show
+  accepts EXPECTED/CHECKED_IN. Repeating target state returns unchanged result.
+- GET /api/v1/operator/trips/{id}/pickups -> [{stopId,name,stopOrder,closedAt}].
+- POST /api/v1/operator/trips/{tripId}/stops/{stopId}/close-pickup
+  Body: {stopId,reason?}, same stop as path. Returns pickups list. Explicitly
+  resolve every valid passenger first; no implicit no-show. Repeat is idempotent.
+- GET /api/v1/operator/trips/{id}/history -> ordered operational_history rows:
+  id, trip_id, entity_type, entity_id, action, actor_id, occurred_at, reason.
+
+Check-in/boarding and ticket commands require eligible paid issued tickets.
+The booking-item command additionally supports unpaid no-show. BOARDING permits
+open pickups; DEPARTED permits only open intermediate pickups. Closed pickup and
+terminal trip reject new attendance. New tickets receive EXPECTED with payment;
+historical tickets are not backfilled and missing state displays Chưa ghi nhận.
+No-show never changes payment/booking/inventory. Lifecycle PATCH remains explicit
+forward-only and idempotent, but BOARDING requires valid ready crew, DEPARTED
+requires closed origin pickup, and COMPLETED requires all pickup stops closed and
+all valid passengers resolved. No automatic attendance based on planned times.
+
+The existing POST /operator/bookings/{id}/payments also allows authenticated PHONE
+collection during DEPARTED at open intermediate pickups; it never records check-in.
+WEB and anonymous payment timing/ownership remains unchanged.
+
+Conflict codes (409): STALE_EMPLOYEE, EMPLOYEE_CODE_EXISTS,
+EMPLOYEE_HAS_ASSIGNMENTS, EMPLOYEE_NOT_ELIGIBLE, DRIVER_PROFILE_REQUIRED,
+DRIVER_LICENCE_EXPIRED, DUPLICATE_CREW, CREW_WINDOW_CLOSED,
+CREW_SCHEDULE_CONFLICT, CREW_NOT_READY, TICKET_NOT_ELIGIBLE,
+WRONG_PICKUP_STOP, BOARDING_WINDOW_CLOSED, PICKUP_CLOSED, CHECK_IN_REQUIRED,
+INVALID_BOARDING_TRANSITION, PICKUP_UNRESOLVED, RESERVATION_NOT_ELIGIBLE,
+BOOKING_ATTENDANCE_TERMINAL. Not-found codes (404):
+EMPLOYEE_NOT_FOUND, TRIP_NOT_FOUND, TICKET_NOT_FOUND, PICKUP_STOP_NOT_FOUND,
+BOOKING_ITEM_NOT_FOUND.
+Malformed/invalid body fields use existing 400 validation errors.
+
+V12 adds operational tables without changing V1-V11 or backfilling attendance.
+V13 anchors attendance to booking items, backfills only references on existing
+attendance, and makes ticket_id nullable. Ticketless records must be NO_SHOW.
+See m16b-crew-boarding.md and m16b-verification.md for rules and evidence.

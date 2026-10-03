@@ -39,13 +39,15 @@ export function occupancyMatrix(data: TripOccupancy) {
 export function nextTripAction(status: TripStatus) {
   const actions = {
     SCHEDULED: { status: "BOARDING" as const, label: "Bắt đầu đón khách", impact: "Chuyến chuyển sang đón khách. Khách hàng sẽ không thể giữ chỗ hoặc tạo đặt vé mới." },
-    BOARDING: { status: "DEPARTED" as const, label: "Khởi hành", impact: "Chuyến chuyển sang đã khởi hành. Cửa sổ xác nhận thanh toán sẽ đóng." },
-    DEPARTED: { status: "COMPLETED" as const, label: "Hoàn thành chuyến", impact: "Chuyến chuyển sang trạng thái kết thúc và không thể chuyển trạng thái tiếp." },
+    BOARDING: { status: "DEPARTED" as const, label: "Khởi hành", impact: "Cần đóng điểm đón đầu chuyến. Điểm đón trung gian còn mở vẫn cho phép thu tiền và lên xe sau khởi hành." },
+    DEPARTED: { status: "COMPLETED" as const, label: "Hoàn thành chuyến", impact: "Cần ghi nhận lên xe hoặc vắng mặt cho mọi hành khách và đóng tất cả điểm đón. Chuyến hoàn thành không thể chuyển trạng thái tiếp." },
   };
   return status === "COMPLETED" || status === "CANCELLED" ? null : actions[status];
 }
 export function operationErrorMessage(code?: string) {
   const messages: Record<string, string> = {
+    CREW_NOT_READY: "Chưa sẵn sàng đón khách. Kiểm tra xe và phân công ít nhất một tài xế hợp lệ.",
+    PICKUP_UNRESOLVED: "Cần ghi nhận lên xe hoặc vắng mặt cho mọi hành khách và đóng các điểm đón trước khi tiếp tục.",
     ACCESS_DENIED: "Tài khoản không có quyền truy cập hoặc nhà xe đã ngừng hoạt động.",
     INVALID_TRIP_STATUS_TRANSITION: "Trạng thái chuyến đã thay đổi hoặc thao tác không còn hợp lệ. Vui lòng kiểm tra trạng thái mới nhất.",
     PAYMENT_WINDOW_CLOSED: "Đã hết thời gian xác nhận thanh toán cho chuyến này.",

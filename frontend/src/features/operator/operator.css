@@ -756,3 +756,4 @@
 .assisted-actions { padding: 20px; margin-top: 20px; }
 .assisted-actions input { max-width: 100%; }
 @media (max-width: 600px) { .assisted-fields { grid-template-columns: 1fr; } .assisted-booking fieldset { padding: 12px; } }
+.operator-actions { display: flex; flex-wrap: wrap; gap: .5rem; }

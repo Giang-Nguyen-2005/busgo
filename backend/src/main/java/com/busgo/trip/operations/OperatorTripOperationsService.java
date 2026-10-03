@@ -21,15 +21,17 @@ public class OperatorTripOperationsService {
     private final OperatorOccupancyQueryRepository queries;
     private final TripSeatRepository tripSeats;
     private final TripSegmentRepository tripSegments;
+    private final com.busgo.operations.OperationsService operations;
 
     public OperatorTripOperationsService(TripRepository trips, OperatorContextService context,
             OperatorOccupancyQueryRepository queries, TripSeatRepository tripSeats,
-            TripSegmentRepository tripSegments) {
+            TripSegmentRepository tripSegments, com.busgo.operations.OperationsService operations) {
         this.trips = trips;
         this.context = context;
         this.queries = queries;
         this.tripSeats = tripSeats;
         this.tripSegments = tripSegments;
+        this.operations = operations;
     }
 
     @Transactional(readOnly = true)
@@ -96,7 +98,7 @@ public class OperatorTripOperationsService {
                 expectedCellCount, actualCellCount, missingCellCount, segments, seats);
     }
 
-    @Transactional
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public TripStatusResponse updateStatus(CurrentUser user, Long tripId, TripStatus requested) {
         Long operatorId = context.requireAdminOperator(user).getId();
         Trip trip = trips.lockOwnedById(tripId, operatorId)
@@ -104,7 +106,12 @@ public class OperatorTripOperationsService {
         TripStatus current = trip.getStatus();
         if (current == requested) return new TripStatusResponse(tripId, current);
         if (!allowed(current, requested)) throw invalidTransition(current, requested);
+        if (requested == TripStatus.BOARDING) operations.requireReady(tripId);
+        if (requested == TripStatus.DEPARTED) operations.requireOriginClosed(tripId);
+        if (requested == TripStatus.COMPLETED) operations.requireComplete(tripId);
         trip.setStatus(requested);
+        trips.flush(); // JDBC operations in the same transaction must see the new lifecycle state.
+        operations.history(tripId, "TRIP", tripId, "TRIP_" + requested.name(), user.id(), current.name() + " -> " + requested.name());
         return new TripStatusResponse(tripId, requested);
     }
 

@@ -104,7 +104,7 @@ class M14AContractTest {
         when(trips.findOwnedById(99L, 7L)).thenReturn(Optional.of(trip));
         when(seats.countByTripId(99L)).thenReturn(seatCount);
         when(segments.countByTripId(99L)).thenReturn(segmentCount);
-        return new OperatorTripOperationsService(trips, context, queries, seats, segments);
+        return new OperatorTripOperationsService(trips, context, queries, seats, segments, mock(com.busgo.operations.OperationsService.class));
     }
 
     private void memberOf(long operatorId) {

@@ -182,3 +182,17 @@ ticket delivery. Zalo remains an external manual communication channel. Creation
 collection are admin-only; staff capabilities move to M16B/M19. Boarding, crew,
 cancellation/refunds, rescheduling, real gateways and reporting remain future scope.
 See [M16A design](m16a-assisted-booking.md) and [verification](m16a-verification.md).
+
+## M16B.1 + M16B.2 implementation
+
+Crew and passenger operations now have their own domain: operational employees
+separate from accounts, multiple duty assignments with overlap protection, ready
+crew before boarding, per-booking-item attendance and explicit pickup closure. Boarding
+at open intermediate stops remains possible after origin departure. Manual PHONE
+collection reuses M16A and is required before check-in/boarding. Unpaid PHONE
+PAY_ON_BOARD reservations may be explicitly marked NO_SHOW without tickets;
+terminal NO_SHOW blocks later new payment for that booking. No-show preserves the
+booking, payment and reserved segment inventory. Admins mutate; staff read.
+Details and verification: m16b-crew-boarding.md and m16b-verification.md.
+Camera scanning, driver mobile, cancellation/refunds, staff mutation capabilities,
+GPS, payroll, rest rules and actual-arrival tracking remain deferred.

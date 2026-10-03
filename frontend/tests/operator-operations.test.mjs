@@ -89,7 +89,7 @@ test("occupancy aligns by segment ID and never collapses a reused seat", () => {
 });
 test("trip actions are forward-only, terminal-safe and explain operational effects", () => {
   assert.equal(nextTripAction("SCHEDULED").status, "BOARDING"); assert.match(nextTripAction("SCHEDULED").impact, /không thể giữ chỗ/);
-  assert.equal(nextTripAction("BOARDING").status, "DEPARTED"); assert.match(nextTripAction("BOARDING").impact, /thanh toán sẽ đóng/);
+  assert.equal(nextTripAction("BOARDING").status, "DEPARTED"); assert.match(nextTripAction("BOARDING").impact, /Điểm đón trung gian còn mở/);
   assert.equal(nextTripAction("DEPARTED").status, "COMPLETED");
   assert.equal(nextTripAction("COMPLETED"), null); assert.equal(nextTripAction("CANCELLED"), null);
 });
@@ -143,7 +143,7 @@ test("status mutation refreshes trips, occupancy, manifest and bookings on succe
     try {
       if (fail) await assert.rejects(mutation.mutateAsync("BOARDING"));
       else await mutation.mutateAsync("BOARDING");
-      assert.deepEqual(invalidated, [["operator", "trips"], ["operator", "bookings"]]);
+      assert.deepEqual(invalidated, [["operator", "trips"], ["operator", "bookings"], ["operator", "crew", 4], ["operator", "attendance", 4], ["operator", "pickups", 4], ["operator", "history", 4]]);
     } finally { apiClient.defaults.adapter = original; cache.clear(); }
   }
 });
@@ -152,7 +152,7 @@ test("trip controls include accessible confirmation and omit terminal actions", 
   const html = status => renderToStaticMarkup(React.createElement(QueryClientProvider, { client: cache }, React.createElement(AuthContext.Provider, { value: { user: { roles: ["OPERATOR_ADMIN"] } } }, React.createElement(TripStatusAction, { id: 4, status }))));
   assert.match(html("SCHEDULED"), /<dialog/);
   assert.match(html("SCHEDULED"), /aria-describedby="trip-status-impact"/);
-  assert.match(html("BOARDING"), /Cửa sổ xác nhận thanh toán sẽ đóng/);
+  assert.match(html("BOARDING"), /Điểm đón trung gian còn mở/);
   assert.doesNotMatch(html("COMPLETED"), /<button|<dialog/);
   assert.doesNotMatch(html("CANCELLED"), /<button|<dialog/);
   cache.clear();
