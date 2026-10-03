@@ -1593,3 +1593,18 @@ Design and verification: docs/m17-cancellation-recovery.md and docs/m17-verifica
 Partial cancellation/refund, seat changes, rescheduling, real bank refunds/gateway,
 accounting integration and batch trip cancellation remain deferred. M18 can use
 persisted cancellation/refund/deadline timestamps for reporting. No commit or push.
+
+## M18A — Operator management reports and analytics
+
+Implemented query-time admin-only summary and paginated trip/route reports using
+M16A–M17 transactional records. Includes truthful mock collections/refund flows,
+booking/ticket cohorts, WEB/PHONE and payment methods, cancellation reasons,
+seat-segment load with completeness, recorded attendance, and management dashboard
+aggregates. Vietnam inclusive business dates, UTC half-open windows, bounded 366-day
+ranges and explicit transaction/departure bases support prior-period requests.
+V15 adds five range indexes only. One Báo cáo page uses shared filters, lightweight
+charts and compact responsive tables. Design: [M18A](m18a-management-reports.md);
+evidence and limitations: [verification](m18a-verification.md).
+CSV, calculated comparisons, customer directory M18B, actual revenue/accounting,
+forecasts/AI, cross-operator BI and materialized aggregates remain deferred.
+No commit or push for this milestone.

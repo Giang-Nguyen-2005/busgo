@@ -208,3 +208,15 @@ reserved. Eligible unpaid WEB customer recovery remains available during operato
 suspension. Reporting screens, real refunds, partial changes and rescheduling remain
 future scope. See [M17 design](m17-cancellation-recovery.md) and
 [verification](m17-verification.md).
+
+## M18A implementation — 2026-10-03
+
+Operator admins now have bounded query-time management reports and dashboard
+aggregates: mock collections/refunds/net flows, booking and ticket cohorts,
+WEB/PHONE, payment methods, trip/route seat-segment load and recorded attendance.
+Vietnam business dates and explicit transaction/departure bases prevent misleading
+money or transported-passenger claims. Incomplete inventory suppresses percentages.
+One Báo cáo page provides shared filters, charts and paginated management tables.
+M18B customer directory, CSV, calculated comparisons, real revenue/settlement,
+prediction/AI and platform BI remain future scope. Design and evidence:
+[M18A reports](m18a-management-reports.md), [verification](m18a-verification.md).
