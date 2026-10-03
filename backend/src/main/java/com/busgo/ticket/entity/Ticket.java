@@ -13,6 +13,14 @@ import lombok.Setter;
 @Entity
 @Table(name = "tickets")
 public class Ticket extends CreatedEntity {
+    @Column(nullable = false, length = 10)
+    private String status = "VALID";
+    @Column(name = "voided_at")
+    private java.time.LocalDateTime voidedAt;
+    @Column(name = "voided_by_user_id")
+    private Long voidedByUserId;
+    @Column(name = "void_reason", length = 30)
+    private String voidReason;
     @Column(name = "ticket_code", length = 50, nullable = false, unique = true)
     private String ticketCode;
 

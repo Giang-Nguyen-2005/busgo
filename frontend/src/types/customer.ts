@@ -95,6 +95,7 @@ export interface Stop {
   time: string;
 }
 export interface Booking {
+  recovery?: import("./recovery").Recovery | null;
   bookingId: number;
   bookingCode: string;
   status: BookingStatus;
@@ -158,6 +159,8 @@ export interface TicketBundle {
     ticketCode: string;
     passengerName: string;
     seatCode: string;
-    qrData: string;
+    qrData: string | null;
+    status: "VALID" | "VOID";
+    voidedAt: string | null;
   }[];
 }

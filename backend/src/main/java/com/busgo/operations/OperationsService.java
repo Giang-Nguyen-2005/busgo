@@ -209,10 +209,10 @@ public class OperationsService {
     }
     public Map<String,Object> transition(CurrentUser actor,long tripId,long ticketId,String command,PickupContext input) {
         var t=trip(actor,tripId,true);
-        var tickets=db.queryForList("SELECT tk.id,b.pickup_trip_stop_id,b.status AS booking_status,p.status AS payment_status FROM tickets tk JOIN bookings b ON b.id=tk.booking_id JOIN booking_items bi ON bi.id=tk.booking_item_id AND bi.booking_id=b.id JOIN trip_seats seat ON seat.id=bi.trip_seat_id AND seat.trip_id=b.trip_id JOIN payments p ON p.id=tk.payment_id AND p.booking_id=b.id WHERE tk.id=? AND b.trip_id=? FOR UPDATE",ticketId,tripId);
+        var tickets=db.queryForList("SELECT tk.id,tk.status AS ticket_status,b.pickup_trip_stop_id,b.status AS booking_status,p.status AS payment_status FROM tickets tk JOIN bookings b ON b.id=tk.booking_id JOIN booking_items bi ON bi.id=tk.booking_item_id AND bi.booking_id=b.id JOIN trip_seats seat ON seat.id=bi.trip_seat_id AND seat.trip_id=b.trip_id JOIN payments p ON p.id=tk.payment_id AND p.booking_id=b.id WHERE tk.id=? AND b.trip_id=? FOR UPDATE",ticketId,tripId);
         if(tickets.isEmpty()) throw missing("TICKET_NOT_FOUND");
         var ticket=tickets.get(0);
-        if(!Set.of("CONFIRMED","COMPLETED").contains(ticket.get("booking_status")) || !"PAID".equals(ticket.get("payment_status"))) throw conflict("TICKET_NOT_ELIGIBLE","Successful payment and a valid booking are required.");
+        if(!"VALID".equals(ticket.get("ticket_status")) || !Set.of("CONFIRMED","COMPLETED").contains(ticket.get("booking_status")) || !"PAID".equals(ticket.get("payment_status"))) throw conflict("TICKET_NOT_ELIGIBLE","Successful payment and a valid booking are required.");
         if(((Number)ticket.get("pickup_trip_stop_id")).longValue()!=input.stopId()) throw conflict("WRONG_PICKUP_STOP","Use the ticket's booked pickup stop.");
         var states=db.queryForList("SELECT * FROM ticket_boarding WHERE ticket_id=? FOR UPDATE",ticketId);
         String state=states.isEmpty()?"EXPECTED":(String)states.get(0).get("status");

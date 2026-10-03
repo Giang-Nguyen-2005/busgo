@@ -16,6 +16,16 @@ import lombok.Setter;
 @Entity
 @Table(name = "bookings")
 public class Booking extends AuditedEntity {
+    @Column(name = "payment_due_at")
+    private java.time.LocalDateTime paymentDueAt;
+    @Column(name = "cancelled_at")
+    private java.time.LocalDateTime cancelledAt;
+    @Column(name = "cancelled_by_user_id")
+    private Long cancelledByUserId;
+    @Column(name = "cancellation_reason", length = 30)
+    private String cancellationReason;
+    @Column(name = "cancellation_note", length = 500)
+    private String cancellationNote;
     @Column(name = "booking_code", length = 50, nullable = false, unique = true)
     private String bookingCode;
 

@@ -9,7 +9,7 @@ import type { PublicPayment } from "../types/assisted";
 // Independent client: anonymous links never attach account access/refresh tokens.
 const publicClient = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL || "/api/v1", timeout: 10_000 });
 export function PublicPaymentContent({ payment: p }: { payment: PublicPayment }) {
-  return <><h1>Thanh toán đặt vé</h1><h2>{p.bookingCode}</h2><p>{p.operator} · {p.journey}</p><p>Đón: {p.pickup.name} · {p.pickup.time && dateTime(p.pickup.time)}</p><p>Trả: {p.dropoff.name} · {p.dropoff.time && dateTime(p.dropoff.time)}</p><p>Ghế: {p.seats.join(", ")}</p><strong>{money(p.amount)}</strong><p>{paymentMethodLabel(p.method)}</p><p>{p.status === "CONFIRMED" ? "Đã thanh toán. Liên hệ nhà xe để nhận vé điện tử." : "Chưa thanh toán"}</p><p className="notice info">Đây là mô phỏng thanh toán. Không chuyển tiền vào tài khoản ngân hàng.</p></>;
+  return <><h1>Thanh toán đặt vé</h1><h2>{p.bookingCode}</h2><p>{p.operator} · {p.journey}</p><p>Đón: {p.pickup.name} · {p.pickup.time && dateTime(p.pickup.time)}</p><p>Trả: {p.dropoff.name} · {p.dropoff.time && dateTime(p.dropoff.time)}</p><p>Ghế: {p.seats.join(", ")}</p><strong>{money(p.amount)}</strong><p>{paymentMethodLabel(p.method)}</p><p>{p.status === "CANCELLED" ? "Đặt vé đã hủy, không còn thanh toán được." : p.status === "CONFIRMED" ? "Đã thanh toán. Liên hệ nhà xe để nhận vé điện tử." : "Chưa thanh toán"}</p><p className="notice info">Đây là mô phỏng thanh toán. Không chuyển tiền vào tài khoản ngân hàng.</p></>;
 }
 export function PublicPaymentPage() {
   const token = useParams().token || "";

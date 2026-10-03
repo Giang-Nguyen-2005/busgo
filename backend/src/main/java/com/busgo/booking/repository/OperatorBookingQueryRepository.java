@@ -129,7 +129,7 @@ public class OperatorBookingQueryRepository {
         return jdbc.query("""
                 SELECT bi.id, bi.trip_seat_id, bi.seat_code, bi.passenger_name, bi.unit_price,
                        tk.id AS ticket_id, tk.ticket_code, tk.passenger_name AS ticket_passenger_name,
-                       tk.seat_code AS ticket_seat_code, tk.payment_id, tk.created_at AS ticket_created_at
+                       tk.seat_code AS ticket_seat_code, tk.payment_id, tk.created_at AS ticket_created_at, tk.status AS ticket_status
                 FROM booking_items bi
                 JOIN bookings b ON b.id = bi.booking_id
                 JOIN trips t ON t.id = b.trip_id
@@ -143,7 +143,7 @@ public class OperatorBookingQueryRepository {
                         rs.getObject("ticket_id", Long.class), rs.getString("ticket_code"),
                         rs.getString("ticket_passenger_name"), rs.getString("ticket_seat_code"),
                         rs.getObject("payment_id", Long.class),
-                        JpaJdbcTime.read(rs, "ticket_created_at")));
+                        JpaJdbcTime.read(rs, "ticket_created_at"), rs.getString("ticket_status")));
     }
 
     public List<PaymentRow> findPayments(Long operatorId, Long bookingId) {
@@ -186,7 +186,7 @@ public class OperatorBookingQueryRepository {
             Long dropoffId, Long dropoffLocationId, String dropoffName, LocalDateTime dropoffTime) {}
     public record ItemRow(Long id, Long tripSeatId, String seatCode, String passengerName,
             BigDecimal unitPrice, Long ticketId, String ticketCode, String ticketPassengerName,
-            String ticketSeatCode, Long paymentId, LocalDateTime ticketCreatedAt) {}
+            String ticketSeatCode, Long paymentId, LocalDateTime ticketCreatedAt, String ticketStatus) {}
     public record PaymentRow(Long id, PaymentMethod method, BigDecimal amount,
             PaymentStatus status, String transactionReference, LocalDateTime paidAt,
             LocalDateTime createdAt, Long collectedByUserId, String referenceNote) {}

@@ -1818,3 +1818,50 @@ V12 adds operational tables without changing V1-V11 or backfilling attendance.
 V13 anchors attendance to booking items, backfills only references on existing
 attendance, and makes ticket_id nullable. Ticketless records must be NO_SHOW.
 See m16b-crew-boarding.md and m16b-verification.md for rules and evidence.
+
+## M17 cancellation and reservation recovery
+
+Explicit commands (ApiResponse<Recovery>):
+- POST /api/v1/bookings/{id}/cancel — CUSTOMER, own WEB booking only.
+- POST /api/v1/operator/bookings/{id}/cancel — OPERATOR_ADMIN, owned booking.
+- GET /api/v1/bookings/{id}/recovery — owning customer.
+- GET /api/v1/operator/bookings/{id}/recovery — owning admin/read-only staff.
+
+Cancellation body: {"note":"optional, maximum 500 characters"}; {} is valid.
+Reason is derived by the server: CUSTOMER_CANCELLED or OPERATOR_CANCELLED.
+PAYMENT_TIMEOUT is reserved for the scheduled expiry service and never refunds.
+
+Recovery fields: bookingId, status, eligible, ineligibleReason, paid,
+paymentDueAt, customerCutoffAt, cancelledAt, cancelledBy, reasonCode, note,
+refunds [{id,paymentId,amount,refundedAt,refundedBy,reasonCode,note}],
+tickets [{id,ticketCode,status,voidedAt}],
+history [{fromStatus,toStatus,actorId,reasonCode,note,changedAt}].
+Timestamps use the existing UTC offset representation. Booking detail adds recovery;
+creation returns recovery:null. Operator item.ticket adds status VALID/VOID.
+Customer ticket reads support historical paid cancellation: paymentStatus REFUNDED,
+ticket status VOID, voidedAt, and qrData:null. Unpaid cancellation has no ticket.
+
+Whole PENDING/CONFIRMED bookings only, terminal CANCELLED. Repeat cancellation
+returns committed metadata without duplicate release/history/refund. Customer
+cutoff is six hours before selected pickup planned departure, inclusive. Both
+commands require SCHEDULED/BOARDING, open pickup, and no CHECKED_IN/BOARDED/NO_SHOW
+item. Admin does not use the customer cutoff. Inactive operator permits only
+eligible unpaid owning WEB customer recovery; suspended paid/PHONE support is deferred.
+
+409 codes: BOOKING_NOT_CANCELLABLE, CANCELLATION_WINDOW_CLOSED,
+CUSTOMER_CANCELLATION_CUTOFF, CANCELLATION_ATTENDANCE_CONFLICT, PICKUP_CLOSED,
+CANCELLATION_OPERATOR_SUSPENDED, CANCELLATION_STATE_INCONSISTENT,
+BOOKING_INVENTORY_INCONSISTENT. Foreign ownership uses 404 BOOKING_NOT_FOUND;
+wrong roles use 403; anonymous callers use 401; invalid note/body uses 400.
+
+New WEB deadlines default to 15 minutes, PHONE QR_TRANSFER to 30 minutes, capped
+at selected pickup departure. PAY_ON_BOARD and legacy null deadlines do not expire.
+Pending payment rejects at/after deadline even before the scheduled job runs.
+Expiry uses the same atomic cancellation guards with PAYMENT_TIMEOUT and no refund.
+Cancelled public links expose only their existing minimal context/status and reject
+confirmation with BOOKING_NOT_PAYABLE; invalid/rotated hashes remain 404. Ticket
+operations explicitly reject VOID. Refunds are simulated full refunds only:
+"Hoàn tiền mô phỏng" never means a bank transfer.
+
+See [M17 design](m17-cancellation-recovery.md) and
+[verification](m17-verification.md) for locking, migration and evidence.

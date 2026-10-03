@@ -20,11 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class OperatorBookingService {
     private final OperatorBookingQueryRepository queries;
     private final OperatorContextService context;
+    private final CancellationService cancellations;
 
     public OperatorBookingService(OperatorBookingQueryRepository queries,
-            OperatorContextService context) {
+            OperatorContextService context, CancellationService cancellations) {
         this.queries = queries;
-        this.context = context;
+        this.context = context; this.cancellations=cancellations;
     }
 
     @Transactional(readOnly = true)
@@ -59,7 +60,7 @@ public class OperatorBookingService {
                         item.passengerName(), item.unitPrice(), item.ticketId() == null ? null
                         : new TicketSummary(item.ticketId(), item.ticketCode(),
                                 item.ticketPassengerName(), item.ticketSeatCode(), item.paymentId(),
-                                api(item.ticketCreatedAt())))).toList();
+                                api(item.ticketCreatedAt()), item.ticketStatus()))).toList();
         var payments = queries.findPayments(operatorId, bookingId).stream().map(payment ->
                 new PaymentSummary(payment.id(), payment.method(), payment.amount(), payment.status(),
                         payment.transactionReference(), api(payment.paidAt()),
@@ -73,7 +74,7 @@ public class OperatorBookingService {
                 new Contact(row.contactName(), row.contactPhone(), row.contactEmail()),
                 new Stop(row.pickupId(), row.pickupLocationId(), row.pickupName(), api(row.pickupTime())),
                 new Stop(row.dropoffId(), row.dropoffLocationId(), row.dropoffName(), api(row.dropoffTime())),
-                items, payments, row.totalAmount(), api(row.createdAt()), api(row.updatedAt()));
+                items, payments, row.totalAmount(), api(row.createdAt()), api(row.updatedAt()), cancellations.operatorRead(user,bookingId));
     }
 
     private static ResourceNotFoundException notFound() {

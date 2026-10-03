@@ -26,6 +26,11 @@ busgo:
     max-seats-per-hold: ${MAX_SEATS_PER_HOLD:5}
     seat-hold-cleanup-interval: ${SEAT_HOLD_CLEANUP_INTERVAL:PT1M}
     seat-hold-cleanup-initial-delay: ${SEAT_HOLD_CLEANUP_INITIAL_DELAY:PT1M}
+    web-payment-window: ${WEB_PAYMENT_WINDOW:PT15M}
+    phone-payment-window: ${PHONE_PAYMENT_WINDOW:PT30M}
+    payment-expiry-interval: ${PAYMENT_EXPIRY_INTERVAL:PT1M}
+    payment-expiry-initial-delay: ${PAYMENT_EXPIRY_INITIAL_DELAY:PT1M}
+    payment-expiry-batch-size: ${PAYMENT_EXPIRY_BATCH_SIZE:100}
   system-admin-bootstrap:
     enabled: ${BUSGO_SYSTEM_ADMIN_BOOTSTRAP_ENABLED:false}
     full-name: ${BUSGO_SYSTEM_ADMIN_FULL_NAME:}

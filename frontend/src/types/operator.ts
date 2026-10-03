@@ -166,7 +166,8 @@ export interface OperatorBookingListItem {
   pickup: BookingStop; dropoff: BookingStop; seatCount: number; totalAmount: number; createdAt: string;
 }
 export interface OperatorTicket {
-  id: number; ticketCode: string; passengerName: string | null; seatCode: string;
+  id: number; ticketCode: string;
+  status?: string; passengerName: string | null; seatCode: string;
   paymentId: number; createdAt: string;
 }
 export interface OperatorBookingItem {

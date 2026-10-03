@@ -23,7 +23,7 @@ export const paymentStatusLabel = (value: string) =>
   ({
     PAID: "Đã thanh toán",
     PENDING: "Chờ thanh toán",
-    REFUNDED: "Đã hoàn tiền",
+    REFUNDED: "Hoàn tiền mô phỏng",
     FAILED: "Thanh toán chưa thành công",
   })[value] || "Chưa xác định";
 export const time = (value: string) =>
