@@ -7,7 +7,7 @@ import { get, post } from "../api/client";
 import type { Booking, Payment } from "../types/customer";
 import { Empty, ErrorState, Loading, Steps } from "../components/ui";
 import { BookingSummary } from "../features/booking/BookingSummary";
-import { money, positiveId } from "../utils/format";
+import { dateTime, money, positiveId } from "../utils/format";
 import { useAuth } from "../features/auth/AuthProvider";
 export function PaymentPage() {
   const [params] = useSearchParams();
@@ -62,6 +62,7 @@ export function PaymentPage() {
           <section className="card payment-card">
             <span className="badge">THANH TOÁN GIẢ LẬP</span><h2>{booking.data!.bookingCode}</h2><div className="payment-amount">{money(booking.data!.totalAmount)}</div><p className="notice info" role="status">{paymentPresentation(booking.data!.status, payment.isPending)}</p>
             <h2>Thanh toán QR giả lập</h2>
+            {booking.data!.status === "PENDING" && booking.data!.recovery?.paymentDueAt && <p>Hạn thanh toán: {dateTime(booking.data!.recovery.paymentDueAt)}</p>}
             <p className="muted">Mã đặt vé {booking.data!.bookingCode}</p>
             {booking.data!.status === "PENDING" && <div className="mock-qr">
               <QrCode size={96} strokeWidth={1} />

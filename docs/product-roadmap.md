@@ -196,3 +196,15 @@ booking, payment and reserved segment inventory. Admins mutate; staff read.
 Details and verification: m16b-crew-boarding.md and m16b-verification.md.
 Camera scanning, driver mobile, cancellation/refunds, staff mutation capabilities,
 GPS, payroll, rest rules and actual-arrival tracking remain deferred.
+
+## M17 implementation — 2026-10-03
+
+Whole-booking cancellation and reservation recovery now extend WEB/PHONE commerce.
+Eligible customers cancel until six hours before their selected pickup; operator
+admins cancel before departure/pickup closure with attendance guards. Paid
+cancellation voids tickets and records a full simulated refund. New WEB/QR payment
+deadlines enable bounded recovery; PAY_ON_BOARD and legacy null deadlines stay
+reserved. Eligible unpaid WEB customer recovery remains available during operator
+suspension. Reporting screens, real refunds, partial changes and rescheduling remain
+future scope. See [M17 design](m17-cancellation-recovery.md) and
+[verification](m17-verification.md).

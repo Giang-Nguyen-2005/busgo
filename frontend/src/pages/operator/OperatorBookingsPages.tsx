@@ -1,4 +1,5 @@
 import { QRCodeSVG } from "qrcode.react";
+import { CancellationSection } from "../../features/booking/CancellationSection";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { operatorApi } from "../../api/operatorApi";
 import { useAuth } from "../../features/auth/AuthProvider";
@@ -63,7 +64,7 @@ export function BookingDetailContent({ booking: b }: { booking: OperatorBookingD
       <section><h2>Liên hệ đặt vé</h2><strong>{b.contact.name}</strong><p>{b.contact.phone}</p><p>{b.contact.email || "Chưa có email"}</p></section>
     </div>
     <section className="dossier-section"><h2>Ghế và vé <span className="muted">· {b.items.length} ghế</span></h2><p className="fine-print">Tên trên vé có thể lấy từ liên hệ đặt vé, không xác minh danh tính người ngồi trên ghế.</p>
-      {b.items.length ? <div className="dossier-seats">{b.items.map(item => <article key={item.bookingItemId} className="dossier-seat"><strong className="operator-seat-code">{item.seatCode}</strong><div><small>Khách trên ghế</small><p>{seatPassenger(item.passengerName)}</p><small>Đơn giá: {money(item.unitPrice)}</small></div><div><small>Vé điện tử</small><strong>{item.ticket?.ticketCode || "Chưa có vé"}</strong>{item.ticket && <><p>Tên trên vé: {item.ticket.passengerName || "—"}</p><QRCodeSVG value={item.ticket.ticketCode} size={128} title={`Vé ${item.ticket.ticketCode}`} /><details className="row-secondary"><summary>Thông tin vé</summary><p>Ghế trên vé: {item.ticket.seatCode} · Thanh toán #{item.ticket.paymentId}</p><p>Tạo: {dateTime(item.ticket.createdAt)}</p></details></>}</div></article>)}</div> : <p>Chưa có ghế trong đặt vé.</p>}
+      {b.items.length ? <div className="dossier-seats">{b.items.map(item => <article key={item.bookingItemId} className="dossier-seat"><strong className="operator-seat-code">{item.seatCode}</strong><div><small>Khách trên ghế</small><p>{seatPassenger(item.passengerName)}</p><small>Đơn giá: {money(item.unitPrice)}</small></div><div><small>Vé điện tử</small><strong>{item.ticket?.ticketCode || "Chưa có vé"}</strong>{item.ticket && <><p>Tên trên vé: {item.ticket.passengerName || "—"}</p>{item.ticket.status === "VOID" || b.status === "CANCELLED" ? <p>Đã vô hiệu (VOID) · Không dùng để lên xe</p> : <QRCodeSVG value={item.ticket.ticketCode} size={128} title={`Vé ${item.ticket.ticketCode}`} />}<details className="row-secondary"><summary>Thông tin vé</summary><p>Ghế trên vé: {item.ticket.seatCode} · Thanh toán #{item.ticket.paymentId}</p><p>Tạo: {dateTime(item.ticket.createdAt)}</p></details></>}</div></article>)}</div> : <p>Chưa có ghế trong đặt vé.</p>}
     </section>
     <section className="dossier-section"><div className="dossier-payment-heading"><h2>Thanh toán</h2><span className={`operator-badge operator-status-${latest?.status || "NEUTRAL"}`}>{latest ? paymentStatusLabel(latest.status) : "Chưa có giao dịch thanh toán"}</span></div>
       {latest && <p className="dossier-latest">Giao dịch gần nhất · {paymentMethodLabel(latest.method)} · <strong>{money(latest.amount)}</strong>{latest.paidAt && <> · Thanh toán: {dateTime(latest.paidAt)}</>}</p>}
@@ -77,7 +78,7 @@ export function OperatorBookingDetailPage() {
   const query = useOperatorBooking(Number(useParams().bookingId));
   return <><OperatorPageHeader title="Chi tiết đặt vé"><Link to="/operator/bookings">Danh sách đặt vé</Link></OperatorPageHeader>
     <RefreshState query={query} />
-    <OperationsQueryState query={query}>{b => <><BookingDetailContent booking={b} /><AssistedBookingActions booking={b} /></>}</OperationsQueryState></>;
+    <OperationsQueryState query={query}>{b => <><BookingDetailContent booking={b} /><AssistedBookingActions booking={b} /><CancellationSection operator bookingId={b.bookingId} bookingCode={b.bookingCode} route={b.route.name + ' · Chuyến #' + b.trip.id} pickup={b.pickup.name + ' · ' + (b.pickup.time ? dateTime(b.pickup.time) : "Chưa có giờ đón")} seats={b.items.map(s=>s.seatCode)} contact={b.contact.name + ' · ' + b.contact.phone} amount={b.totalAmount} /></>}</OperationsQueryState></>;
 }
 
 export function AssistedBookingActions({ booking: b }: { booking: OperatorBookingDetail }) {
@@ -89,7 +90,7 @@ export function AssistedBookingActions({ booking: b }: { booking: OperatorBookin
   const [review, setReview] = useState(false);
   const record = useMutation({ mutationFn: () => operatorApi.recordPayment(b.bookingId, { method: b.paymentMethod, referenceNote: note.trim() || undefined }), onSuccess: () => { setReview(false); void cache.invalidateQueries({ queryKey: ["operator"] }); } });
   const issue = useMutation({ mutationFn: () => operatorApi.paymentLink(b.bookingId), onSuccess: result => { setLink(new URL(result.path, window.location.origin).href); setCopied(false); } });
-  if (b.source !== "PHONE" || !canManageOperator(auth.user?.roles)) return null;
+  if (b.source !== "PHONE" || b.status === "CANCELLED" || !canManageOperator(auth.user?.roles)) return null;
   return <section className="card assisted-actions"><h2>Thu tiền đặt vé</h2><p>{paymentMethodLabel(b.paymentMethod)} · {b.status === "CONFIRMED" ? "Đã thanh toán" : "Chưa thanh toán"}</p>
     {b.status === "PENDING" && <><Field label="Ghi chú / tham chiếu (không bắt buộc)" maxLength={500} value={note} onChange={e => setNote(e.target.value)} />{review ? <><p>Xác nhận đã thu {money(b.totalAmount)} cho {b.bookingCode}. Thao tác sẽ cấp vé điện tử.</p><button disabled={record.isPending} onClick={() => record.mutate()}>Xác nhận đã thu tiền</button><button className="secondary" disabled={record.isPending} onClick={() => setReview(false)}>Quay lại</button></> : <button onClick={() => setReview(true)}>Ghi nhận đã thu tiền</button>}{record.isError && <ErrorState error={record.error} />}</>}
     {b.paymentMethod === "QR_TRANSFER" && <><p>Gửi link thủ công qua Zalo hoặc kênh liên hệ của khách. Tạo link mới sẽ vô hiệu link cũ.</p><button className="secondary" disabled={issue.isPending} onClick={() => issue.mutate()}>{link ? "Tạo link mới" : "Tạo link thanh toán"}</button>{issue.isError && <ErrorState error={issue.error} />}{link && <><Field label="Link thanh toán" value={link} readOnly /><a href={link} target="_blank" rel="noreferrer">Mở trang thanh toán</a><button className="secondary" onClick={async () => { try { await navigator.clipboard.writeText(link); setCopied(true); } catch { setCopied(false); } }}>Copy link thanh toán</button><p role="status">{copied ? "Đã copy link. Gửi cho khách thủ công." : "Có thể chọn và sao chép link trong ô trên."}</p></>}</>}

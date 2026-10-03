@@ -17,7 +17,7 @@ public final class PaymentTicketDtos {
     public record TicketStop(Long tripStopId, Long locationId, String name,
             OffsetDateTime time) {}
     public record TicketItem(Long ticketId, String ticketCode, String passengerName,
-            String seatCode, String qrData) {}
+            String seatCode, String qrData, String status, OffsetDateTime voidedAt) {}
 
     public record TicketBundle(Long bookingId, String bookingCode, BookingStatus status,
             PaymentStatus paymentStatus, PaymentMethod paymentMethod, BigDecimal amount,

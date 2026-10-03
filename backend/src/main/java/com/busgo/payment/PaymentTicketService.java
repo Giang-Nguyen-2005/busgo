@@ -97,6 +97,9 @@ public class PaymentTicketService {
             throw paymentWindowClosed();
         if (!lockedTrip.getId().equals(booking.getTrip().getId())) throw invalidPayment();
         if (booking.getPaymentMethod() != method) throw notPayable();
+        if (booking.getStatus() == BookingStatus.CANCELLED) throw notPayable();
+        if (booking.getStatus() == BookingStatus.PENDING && booking.getPaymentDueAt() != null
+                && !booking.getPaymentDueAt().isAfter(utc(clock.instant()))) throw paymentWindowClosed();
         List<BookingItem> items = bookingItems.findDetailedByBookingId(booking.getId());
         validateInventory(booking, items);
 
@@ -168,14 +171,17 @@ public class PaymentTicketService {
     public TicketBundle ticket(CurrentUser currentUser, Long bookingId) {
         Booking booking = bookings.findOwnedById(bookingId, currentUser.id())
                 .orElseThrow(PaymentTicketService::bookingNotFound);
-        if (booking.getStatus() != BookingStatus.CONFIRMED) throw ticketNotAvailable();
-        Payment payment = payments.findByBookingIdAndStatus(bookingId, PaymentStatus.PAID)
+        if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.CANCELLED) throw ticketNotAvailable();
+        Payment payment = payments.findByBookingIdAndStatus(bookingId,
+                booking.getStatus() == BookingStatus.CANCELLED ? PaymentStatus.REFUNDED : PaymentStatus.PAID)
                 .orElseThrow(PaymentTicketService::ticketNotAvailable);
         List<BookingItem> items = bookingItems.findDetailedByBookingId(bookingId);
         List<Ticket> ticketRows = tickets.findDetailedByBookingId(bookingId);
         if (!completeTicketSet(booking, items, payment, ticketRows)) {
             throw ticketNotAvailable();
         }
+        if (ticketRows.stream().anyMatch(t -> !t.getStatus().equals(
+                booking.getStatus() == BookingStatus.CANCELLED ? "VOID" : "VALID"))) throw ticketNotAvailable();
         return bundle(booking, payment, ticketRows);
     }
 
@@ -241,7 +247,8 @@ public class PaymentTicketService {
         var dropoff = booking.getDropoffTripStop();
         List<TicketItem> result = rows.stream().map(ticket -> new TicketItem(
                 ticket.getId(), ticket.getTicketCode(), ticket.getPassengerName(),
-                ticket.getSeatCode(), ticket.getTicketCode())).toList();
+                ticket.getSeatCode(), "VALID".equals(ticket.getStatus()) ? ticket.getTicketCode() : null,
+                ticket.getStatus(), api(ticket.getVoidedAt()))).toList();
         return new TicketBundle(booking.getId(), booking.getBookingCode(), booking.getStatus(),
                 payment.getStatus(), payment.getMethod(), payment.getAmount(), trip.getId(),
                 new NamedSummary(operator.getId(), operator.getName()),

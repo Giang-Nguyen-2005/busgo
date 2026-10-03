@@ -12,6 +12,8 @@ import lombok.Setter;
 @Entity
 @Table(name = "booking_status_history")
 public class BookingStatusHistory extends BaseEntity {
+    @Column(name = "reason_code", length = 30)
+    private String reasonCode;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "booking_id", nullable = false)
     private Booking booking;

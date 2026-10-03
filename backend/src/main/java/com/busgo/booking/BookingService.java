@@ -33,6 +33,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class BookingService {
+    @org.springframework.beans.factory.annotation.Value("${busgo.booking.web-payment-window:PT15M}")
+    private Duration webPaymentWindow = Duration.ofMinutes(15);
+    @org.springframework.beans.factory.annotation.Value("${busgo.booking.phone-payment-window:PT30M}")
+    private Duration phonePaymentWindow = Duration.ofMinutes(30);
     private final BookingRepository bookings;
     private final BookingItemRepository items;
     private final BookingInventoryRepository inventory;
@@ -43,12 +47,13 @@ public class BookingService {
     private final EntityManager entityManager;
     private final Clock clock;
     private final TransportOperatorRepository operators;
+    private final CancellationService cancellations;
 
     public BookingService(BookingRepository bookings, BookingItemRepository items,
             BookingInventoryRepository inventory, TripRepository trips,
             TripStopSnapshotRepository stops, TripSegmentResolver segmentResolver,
             OperatorRouteFareRepository fares, EntityManager entityManager, Clock clock,
-            TransportOperatorRepository operators) {
+            TransportOperatorRepository operators, CancellationService cancellations) {
         this.bookings = bookings;
         this.items = items;
         this.inventory = inventory;
@@ -58,7 +63,7 @@ public class BookingService {
         this.fares = fares;
         this.entityManager = entityManager;
         this.clock = clock;
-        this.operators = operators;
+        this.operators = operators; this.cancellations=cancellations;
     }
 
     @Transactional
@@ -103,6 +108,13 @@ public class BookingService {
         booking.setContactPhone(request.contactPhone());
         booking.setContactEmail(request.contactEmail());
         booking.setStatus(BookingStatus.PENDING);
+        if (method != com.busgo.payment.entity.PaymentMethod.PAY_ON_BOARD) {
+            Duration window = source == BookingSource.WEB ? webPaymentWindow : phonePaymentWindow;
+            if (window.isNegative() || window.isZero()) throw new IllegalStateException("Payment window must be positive");
+            LocalDateTime deadline = now.plus(window);
+            booking.setPaymentDueAt(deadline.isBefore(pickup.getPlannedDepartureTime())
+                    ? deadline : pickup.getPlannedDepartureTime());
+        }
         booking.setTotalAmount(unitPrice.multiply(BigDecimal.valueOf(hold.seats().size())));
         booking = bookings.saveAndFlush(booking);
 
@@ -146,7 +158,7 @@ public class BookingService {
     @Transactional(readOnly = true)
     public BookingResponse detail(CurrentUser user, Long bookingId) {
         return response(bookings.findOwnedById(bookingId, user.id())
-                .orElseThrow(BookingService::bookingNotFound));
+                .orElseThrow(BookingService::bookingNotFound), cancellations.customerRead(user,bookingId));
     }
 
     private HoldShape validateHold(List<LockedHoldRow> rows, String token, Long userId,
@@ -231,7 +243,8 @@ public class BookingService {
                 "A booking code could not be generated.", HttpStatus.CONFLICT, null);
     }
 
-    private BookingResponse response(Booking booking) {
+    private BookingResponse response(Booking booking) { return response(booking,null); }
+    private BookingResponse response(Booking booking, CancellationDtos.Recovery recovery) {
         List<BookingSeat> bookingSeats = booking.getItems().stream()
                 .map(item -> new BookingSeat(item.getTripSeat().getId(), item.getSeatCode(),
                         item.getPassengerName(), item.getUnitPrice())).toList();
@@ -248,7 +261,7 @@ public class BookingService {
                 new Contact(booking.getContactName(), booking.getContactPhone(),
                         booking.getContactEmail()), bookingSeats,
                 bookingSeats.get(0).unitPrice(), booking.getTotalAmount(),
-                api(booking.getCreatedAt()));
+                api(booking.getCreatedAt()), recovery);
     }
 
     private BookingListItem listItem(Booking booking) {

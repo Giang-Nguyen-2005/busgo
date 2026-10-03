@@ -22,7 +22,7 @@ public final class OperatorBookingDtos {
             int seatCount, BigDecimal totalAmount, OffsetDateTime createdAt) {}
 
     public record TicketSummary(Long id, String ticketCode, String passengerName,
-            String seatCode, Long paymentId, OffsetDateTime createdAt) {}
+            String seatCode, Long paymentId, OffsetDateTime createdAt, String status) {}
     public record BookingItemSummary(Long bookingItemId, Long tripSeatId, String seatCode,
             String passengerName, BigDecimal unitPrice, TicketSummary ticket) {}
     public record PaymentSummary(Long id, PaymentMethod method, BigDecimal amount,
@@ -33,5 +33,5 @@ public final class OperatorBookingDtos {
             BookingStatus status, com.busgo.booking.entity.BookingSource source, PaymentMethod paymentMethod, TripSummary trip, RouteSummary route,
             CustomerSummary customer, Contact contact, Stop pickup, Stop dropoff,
             List<BookingItemSummary> items, List<PaymentSummary> payments,
-            BigDecimal totalAmount, OffsetDateTime createdAt, OffsetDateTime updatedAt) {}
+            BigDecimal totalAmount, OffsetDateTime createdAt, OffsetDateTime updatedAt, CancellationDtos.Recovery recovery) {}
 }

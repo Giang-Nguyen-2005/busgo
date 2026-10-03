@@ -1577,3 +1577,19 @@ Deferred: staff mutation capability grants, camera scanning, driver mobile,
 commercial cancellation/refund, seat changes, payroll, GPS,
 rest-rule optimization, actual-arrival tracking and attendance reversal/reopening.
 No commit or push is performed for this request.
+
+## M17 — Cancellation and reservation recovery
+
+Implemented whole-booking customer/operator cancellation, terminal state,
+structured reason/actor/time history, atomic segment inventory release, one full
+mock refund per paid payment, explicit ticket VOID state, separate payment
+deadlines, bounded scheduled unpaid expiry, and focused customer/operator UI.
+Customer cutoff uses selected pickup minus six hours; admin follows departure,
+pickup closure and attendance boundaries. PAY_ON_BOARD and legacy null deadlines
+never expire. Suspension permits eligible unpaid own WEB recovery only; paid/PHONE
+support remains deferred. V14 is additive after V13; no original migration edited.
+
+Design and verification: docs/m17-cancellation-recovery.md and docs/m17-verification.md.
+Partial cancellation/refund, seat changes, rescheduling, real bank refunds/gateway,
+accounting integration and batch trip cancellation remain deferred. M18 can use
+persisted cancellation/refund/deadline timestamps for reporting. No commit or push.

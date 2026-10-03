@@ -1,6 +1,13 @@
 import axios from "axios";
 import type { ApiError } from "../types/api";
 const messages: Record<string, string> = {
+  BOOKING_NOT_CANCELLABLE: "Đặt vé không còn ở trạng thái có thể hủy.",
+  CANCELLATION_WINDOW_CLOSED: "Chuyến đã khởi hành hoặc kết thúc; không thể hủy.",
+  CANCELLATION_ATTENDANCE_CONFLICT: "Có khách đã điểm danh, lên xe hoặc được ghi nhận vắng mặt; không thể hủy.",
+  CANCELLATION_OPERATOR_SUSPENDED: "Nhà xe tạm ngưng. Hủy vé đã thanh toán cần hỗ trợ từ nền tảng.",
+  CUSTOMER_CANCELLATION_CUTOFF: "Đã qua hạn hủy: 6 giờ trước giờ đón dự kiến.",
+  CANCELLATION_STATE_INCONSISTENT: "Trạng thái thanh toán hoặc vé không nhất quán. Vui lòng liên hệ hỗ trợ.",
+  BOOKING_INVENTORY_INCONSISTENT: "Phân bổ ghế không đầy đủ. Thao tác đã được hủy; vui lòng liên hệ hỗ trợ.",
   EMPLOYEE_NOT_FOUND: "Không tìm thấy nhân sự vận hành trong nhà xe.",
   EMPLOYEE_CODE_EXISTS: "Mã nhân sự vận hành đã được sử dụng.",
   STALE_EMPLOYEE: "Nhân sự đã được cập nhật. Tải lại trước khi chỉnh sửa.",

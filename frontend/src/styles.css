@@ -2552,3 +2552,7 @@ button:not(:disabled):active, .button:active { transform: translateY(1px); }
 }
 
 .public-payment { width: min(680px, calc(100% - 32px)); margin: 32px auto; padding: 24px; overflow-wrap: anywhere; }
+:root .cancellation-section { margin-top: 1rem; overflow-wrap: anywhere; }
+.cancellation-overlay { position: fixed; inset: 0; z-index: 100; background: #0008; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.cancellation-dialog { width: min(100%, 560px); max-height: calc(100dvh - 2rem); overflow-y: auto; overflow-wrap: anywhere; }
+.cancellation-dialog textarea { width: 100%; min-height: 70px; }

@@ -12,7 +12,7 @@ async function call(method,path,token,body) {
 }
 const auth = await call('POST','/auth/login',null,{email:'operator.admin@anphu-demo.example',password:'DemoOperator!2026'});
 assert.equal(auth.status,200); const token=auth.data.accessToken;
-const listed=(await call('GET','/operator/trips?status=SCHEDULED&size=100',token)).data;
+const listed=(await call('GET','/operator/trips?size=100',token)).data;
 const fixtureStart=Math.max(Date.now(),...listed.map(t=>Date.parse(t.estimatedArrivalTime)))+7*86400000;
 const candidates=[];
 for(const summary of listed) {
