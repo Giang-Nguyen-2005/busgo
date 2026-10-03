@@ -1865,3 +1865,55 @@ operations explicitly reject VOID. Refunds are simulated full refunds only:
 
 See [M17 design](m17-cancellation-recovery.md) and
 [verification](m17-verification.md) for locking, migration and evidence.
+
+## M18A operator management reports
+
+Admin only, active trusted operator context; staff/customer/public/system-admin
+denied. No operatorId parameter. Inclusive ISO fromDate/toDate required, 1–366
+Asia/Ho_Chi_Minh dates → half-open UTC window. Optional routeId (global route ID),
+tripId, bookingSource WEB/PHONE, paymentMethod MOCK_ONLINE/QR_TRANSFER/PAY_ON_BOARD.
+Foreign IDs contribute no data. Invalid ranges, enums, IDs or pagination use 400;
+anonymous 401, wrong roles/inactive context 403.
+
+- GET /api/v1/operator/reports/summary → ApiResponse<Summary>.
+  data={metadata,collections,bookings,cancellations,attendance,load,operations}.
+  collections={totals,byPaymentMethod,trend:[{date,money}]}.
+  bookings={bookingsCreated,byStatus,bySource,cancellations,paymentTimeouts,
+  currentUnpaidCount,ticketsIssued,validTickets,voidTickets}.
+  cancellations={totalCancellations,byReason,refundedCancellations,
+  unpaidCancellations,amountRefunded}.
+  operations={trips,boardingTrips,runningTrips,upcomingWithoutDriver,
+  openPickups,incompleteTrips}.
+- GET /api/v1/operator/reports/trips → ApiResponse<Table<TripPerformance>>.
+  Table={metadata,data,pagination:{page,size,totalElements,totalPages}}.
+  Row={tripId,routeId,route,plannedDeparture,status,bus,bookings,validTickets,
+  attendance,money,load,wholeTripAvailableSeats}.
+- GET /api/v1/operator/reports/routes → ApiResponse<Table<RoutePerformance>>.
+  Same table envelope. Row={routeId,route,tripCount,operatedTripCount,bookings,
+  validTickets,attendance,money,load}. Zero-activity owned routes included.
+  Both tables accept page=0..100000 (default 0), size=1..100 (default 20).
+
+Metadata={fromDate,toDate,timezone,asOf,dateBasis,routeId,tripId,bookingSource,
+paymentMethod}. Money={grossMockCollections,mockRefunds,netMockCollections,
+paidPaymentCount,refundedPaymentCount}. Money uses decimal values; all are simulated.
+Load={expectedCells,actualCells,missingCells,sellableCells,reservedCells,paidCells,
+heldCells,complete,reservedSegmentLoad,paidSegmentLoad}. Ratios are fractions (0..1);
+incomplete load or zero capacity → null. Whole-trip availability is null if incomplete.
+Summary/route load counts and completeness aggregate only non-CANCELLED trips.
+An all-cancelled cohort returns zero contributing load counts, complete=true and
+null load ratios (not applicable). CANCELLED trip rows remain in table counts and
+retain inventory counts/completeness, but reservedSegmentLoad/paidSegmentLoad are
+always null. Incomplete cancelled trips do not affect non-cancelled aggregate load.
+Money, refunds, cancellations, booking-created and ticket-issued cohorts retain
+their existing date/status semantics. Response field shapes are unchanged.
+Attendance={eligibleResolvedTickets,boardedTickets,noShowTickets,checkedInNotBoarded,
+unresolvedAttendance,ticketlessNoShows,boardingRate,noShowRate}. Both rates are null
+when no resolved eligible ticket exists; ticketless no-show is separate.
+
+Summary collections use paid_at/refunded_at separately, bookings use created_at,
+tickets use ticket.created_at, cancellation flow uses cancelled_at. Attendance,
+load and operations use planned origin departure. Trip/route money is *lifetime*
+attributed to the departure cohort, not transaction flow during selected dates.
+All date bases are explicit in metadata/UI. Refund today on an older payment does
+not change historical gross. Exact definitions/exclusions/incomplete behavior:
+[M18A reporting design](m18a-management-reports.md).

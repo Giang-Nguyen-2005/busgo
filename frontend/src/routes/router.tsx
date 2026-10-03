@@ -39,6 +39,7 @@ export const router = createBrowserRouter([
           Component: (await import("../layouts/OperatorLayout")).OperatorLayout,
         }),
         children: [
+          { path: "reports", lazy: async () => ({ Component: (await import("../features/operator/Reports")).OperatorReportsPage }) },
           { path: "employees", lazy: async () => ({ Component: (await import("../features/operator/CrewBoarding")).EmployeeDirectory }) },
           {
             path: "staff",
