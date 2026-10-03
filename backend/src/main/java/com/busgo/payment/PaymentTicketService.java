@@ -42,13 +42,14 @@ public class PaymentTicketService {
     private final EntityManager entityManager;
     private final Clock clock;
     private final TransportOperatorRepository operators;
+    private final com.busgo.operations.OperationsService operations;
 
     public PaymentTicketService(BookingRepository bookings,
             BookingItemRepository bookingItems, PaymentRepository payments,
             TicketRepository tickets, BookingStatusHistoryRepository histories,
             BookingPaymentInventoryRepository inventory, TripSegmentResolver segments,
             TripRepository trips, EntityManager entityManager, Clock clock,
-            TransportOperatorRepository operators) {
+            TransportOperatorRepository operators, com.busgo.operations.OperationsService operations) {
         this.bookings = bookings;
         this.bookingItems = bookingItems;
         this.payments = payments;
@@ -60,6 +61,7 @@ public class PaymentTicketService {
         this.entityManager = entityManager;
         this.clock = clock;
         this.operators = operators;
+        this.operations = operations;
     }
 
     @Transactional
@@ -110,12 +112,15 @@ public class PaymentTicketService {
         }
         if (booking.getStatus() != BookingStatus.PENDING) throw notPayable();
         if (paid.isPresent()) throw invalidPayment();
-        if ((lockedTrip.getStatus() != TripStatus.SCHEDULED
+        operations.requirePaymentAttendanceOpen(bookingId);
+        boolean employeePickupOpen = booking.getSource() == BookingSource.PHONE && actorId != null
+                && operations.collectionOpen(tripId, booking.getPickupTripStop().getId());
+        if (((lockedTrip.getStatus() != TripStatus.SCHEDULED
                 && lockedTrip.getStatus() != TripStatus.BOARDING)
+                && !employeePickupOpen)
                 || booking.getPickupTripStop().getPlannedDepartureTime() == null
                 || (!booking.getPickupTripStop().getPlannedDepartureTime().isAfter(now)
-                    && !(booking.getSource() == BookingSource.PHONE && actorId != null
-                         && lockedTrip.getStatus() == TripStatus.BOARDING))) {
+                    && !employeePickupOpen)) {
             throw paymentWindowClosed();
         }
 
@@ -155,6 +160,7 @@ public class PaymentTicketService {
             created.add(ticket);
         }
         tickets.saveAllAndFlush(created);
+        for (Ticket ticket : created) operations.expectTicket(ticket.getId(), booking.getPickupTripStop().getId());
         return confirmation(booking, payment);
     }
 

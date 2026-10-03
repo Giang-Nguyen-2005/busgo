@@ -43,6 +43,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/me/change-password").authenticated()
                         .requestMatchers("/api/v1/admin/**").hasRole("SYSTEM_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/operator/trips", "/api/v1/operator/trips/*",
+                                "/api/v1/operator/employees", "/api/v1/operator/employees/*",
+                                "/api/v1/operator/trips/*/crew", "/api/v1/operator/trips/*/attendance",
+                                "/api/v1/operator/trips/*/pickups", "/api/v1/operator/trips/*/history",
                                 "/api/v1/operator/bookings", "/api/v1/operator/bookings/*",
                                 "/api/v1/operator/trips/*/passengers", "/api/v1/operator/trips/*/occupancy",
                                 "/api/v1/operator/bus-types", "/api/v1/operator/bus-types/*")

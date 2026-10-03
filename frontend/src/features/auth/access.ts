@@ -7,7 +7,7 @@ export function canAccessOperatorPath(roles: string[], path: string) {
   if (!canReadOperator(roles)) return false;
   if (!/^\/operator(\/|$)/.test(path)) return false;
   if (canManageOperator(roles)) return true;
-  return /^\/operator\/?$/.test(path) || /^\/operator\/(trips|bookings|bus-types)\/?$/.test(path) ||
+  return /^\/operator\/?$/.test(path) || /^\/operator\/(trips|bookings|bus-types|employees)\/?$/.test(path) ||
     /^\/operator\/(trips|bookings|bus-types)\/\d+\/?$/.test(path) || /^\/operator\/trips\/\d+\/(seats|passengers|occupancy)\/?$/.test(path);
 }
 export function loginDestination(roles: string[], requested: string | null) {
@@ -20,5 +20,5 @@ export function loginDestination(roles: string[], requested: string | null) {
 export function operatorNavigation(roles: string[] = []) {
   if (!canReadOperator(roles)) return [];
   const items = [["", "Tổng quan"], ["/trips", "Chuyến xe"], ["/bookings", "Đặt vé"], ["/bus-types", "Loại xe"]];
-  return canManageOperator(roles) ? [...items, ["/buses", "Đội xe"], ["/routes", "Tuyến vận hành"], ["/staff", "Nhân sự"]] : items;
+  return canManageOperator(roles) ? [...items, ["/buses", "Đội xe"], ["/routes", "Tuyến vận hành"], ["/employees", "Nhân sự vận hành"], ["/staff", "Tài khoản nhân viên"]] : [...items, ["/employees", "Nhân sự vận hành"]];
 }

@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("dev")
 @Transactional
 class M12OperatorOperationsIT extends M8BookingTestSupport {
+    @Autowired jakarta.persistence.EntityManager em;
     @Autowired MockMvc mvc;
     @Autowired JdbcTemplate jdbc;
     @Autowired UserRepository users;
@@ -168,6 +169,7 @@ class M12OperatorOperationsIT extends M8BookingTestSupport {
         patchStatus(admin, tripId, "BOARDING").andExpect(status().isOk());
         patchStatus(admin, tripId, "SCHEDULED").andExpect(status().isConflict());
         patchStatus(admin, tripId, "CANCELLED").andExpect(status().isConflict());
+        closeEmptyPickups(owned, admin);
         patchStatus(admin, tripId, "DEPARTED").andExpect(status().isOk());
         patchStatus(admin, tripId, "COMPLETED").andExpect(status().isOk());
         patchStatus(admin, tripId, "DEPARTED").andExpect(status().isConflict());
@@ -181,6 +183,9 @@ class M12OperatorOperationsIT extends M8BookingTestSupport {
         long paid = createBooking(before, hold(before, fixture, 0, 1, 0).holdToken());
         confirm(before, paid).andExpect(status().isOk());
         patchStatus(admin, fixture.trip().getId(), "BOARDING").andExpect(status().isOk());
+        long ticketId=jdbc.queryForObject("SELECT id FROM tickets WHERE booking_id=?",Long.class,paid);
+        mvc.perform(post("/api/v1/operator/trips/{id}/tickets/{ticket}/direct-board",fixture.trip().getId(),ticketId).header("Authorization",bearer(admin)).contentType("application/json").content("{\"stopId\":"+fixture.stops().get(0).getId()+"}")).andExpect(status().isOk());
+        closeEmptyPickups(fixture,admin);
         patchStatus(admin, fixture.trip().getId(), "DEPARTED").andExpect(status().isOk());
         confirm(before, paid).andExpect(status().isOk());
 
@@ -189,7 +194,9 @@ class M12OperatorOperationsIT extends M8BookingTestSupport {
         UserAuth after = customer("m12-pay-after");
         long unpaid = createBooking(after, hold(after, departed, 0, 1, 0).holdToken());
         patchStatus(departedAdmin, departed.trip().getId(), "BOARDING").andExpect(status().isOk());
-        patchStatus(departedAdmin, departed.trip().getId(), "DEPARTED").andExpect(status().isOk());
+        // Isolate the customer payment guard using a persisted departed fixture.
+        jdbc.update("UPDATE trips SET status='DEPARTED' WHERE id=?",departed.trip().getId());
+        em.clear();
         confirm(after, unpaid).andExpect(status().isConflict())
                 .andExpect(jsonPath("code").value("PAYMENT_WINDOW_CLOSED"));
     }
@@ -229,7 +236,12 @@ class M12OperatorOperationsIT extends M8BookingTestSupport {
         membership.setStaffCode(UUID.randomUUID().toString());
         membership.setStatus(ActiveStatus.ACTIVE); staff.saveAndFlush(membership);
         CurrentUser current = new CurrentUser(user.getId(), java.util.List.of(RoleCode.OPERATOR_ADMIN));
+        M16BFixtures.crew(jdbc,fixture.operator().getId(),fixture.trip().getId(),user.getId());
         return jwt.issue(current, "access");
+    }
+
+    private void closeEmptyPickups(Fixture fixture,String token) throws Exception {
+        for(var stop:fixture.stops()) if(stop.isAllowPickup()) mvc.perform(post("/api/v1/operator/trips/{id}/stops/{stop}/close-pickup",fixture.trip().getId(),stop.getId()).header("Authorization",bearer(token)).contentType("application/json").content("{\"stopId\":"+stop.getId()+"}")).andExpect(status().isOk());
     }
 
     private static String bearer(String token) { return "Bearer " + token; }

@@ -150,6 +150,7 @@ public class DemoDataSeeder implements ApplicationRunner {
         Map<String, BusType> type = seedBusTypes();
         Map<String, Bus> bus = seedBuses(operator, type);
         Map<String, OperatorRoute> association = seedAssociationsAndFares(operator, route);
+        seedOperationalEmployees(operator.get("DEMO-ANPHU").getId());
 
         LocalDate searchDate = LocalDate.now(clock.withZone(BUSINESS_ZONE)).plusDays(1);
         int created = 0;
@@ -187,12 +188,41 @@ public class DemoDataSeeder implements ApplicationRunner {
                 trip = aggregateCreator.create(operatorRoute.getOperator().getId(), operatorRoute.getId(),
                         assignedBus.getId(), departure).trip();
                 applyAvailability(trip.getId(), spec.blockedSeats(), spec.routeKey().equals("COASTAL"));
+                if (spec.operatorCode().equals("DEMO-ANPHU")) seedNewTripCrew(trip);
                 created++;
             } else {
                 reused++;
             }
         }
         return new SeedResult(searchDate, location.get("HCM"), location.get("DALAT"), created, reused, skipped);
+    }
+
+    private void seedOperationalEmployees(long operatorId) {
+        for (String duty : List.of("DRIVER", "ATTENDANT")) {
+            String code = "DEMO-" + duty;
+            if (jdbc.queryForObject("SELECT COUNT(*) FROM operator_employees WHERE operator_id=? AND employee_code=?", Long.class, operatorId, code) > 0) continue;
+            jdbc.update("INSERT INTO operator_employees(operator_id,employee_code,full_name,phone,status,created_at,updated_at) VALUES(?,?,?,?,'ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))", operatorId, code, duty.equals("DRIVER") ? "Tài xế An Phú Demo" : "Phụ xe An Phú Demo", duty.equals("DRIVER") ? "0900001201" : "0900001202");
+            Long id = jdbc.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
+            jdbc.update("INSERT INTO employee_capabilities VALUES(?,?)", id, duty);
+            if (duty.equals("DRIVER")) jdbc.update("INSERT INTO driver_profiles VALUES(?,'DEMO-LICENCE','DEMO','2035-12-31')", id);
+        }
+    }
+
+    /** Only newly created trips receive seed crew. Never restore released or edited assignments. */
+    private void seedNewTripCrew(Trip trip) {
+        long operatorId = trip.getOperatorRoute().getOperator().getId();
+        Long actorId = users.findByEmail(OPERATOR_ADMIN_EMAIL).orElseThrow().getId();
+        var employees = jdbc.queryForList("SELECT id,employee_code,status FROM operator_employees WHERE operator_id=? AND employee_code IN ('DEMO-DRIVER','DEMO-ATTENDANT') ORDER BY id FOR UPDATE", operatorId);
+        for (var employee : employees) {
+            Long id = ((Number) employee.get("id")).longValue();
+            String duty = employee.get("employee_code").equals("DEMO-DRIVER") ? "DRIVER" : "ATTENDANT";
+            if (!employee.get("status").equals("ACTIVE") || jdbc.queryForObject("SELECT COUNT(*) FROM employee_capabilities WHERE employee_id=? AND capability=?", Long.class,id,duty)==0) continue;
+            if (duty.equals("DRIVER") && jdbc.queryForObject("SELECT COUNT(*) FROM driver_profiles WHERE employee_id=? AND licence_expiry_date>=DATE(?)",Long.class,id,com.busgo.common.time.JpaJdbcTime.parameter(trip.getEstimatedArrivalTime().plusHours(7)))==0) continue;
+            if (jdbc.queryForObject("SELECT COUNT(*) FROM trip_crew_assignments a JOIN trips t ON t.id=a.trip_id WHERE a.employee_id=? AND a.released_at IS NULL AND t.status IN ('SCHEDULED','BOARDING','DEPARTED') AND t.departure_time<? AND t.estimated_arrival_time>?",Long.class,id,com.busgo.common.time.JpaJdbcTime.parameter(trip.getEstimatedArrivalTime()),com.busgo.common.time.JpaJdbcTime.parameter(trip.getDepartureTime()))>0) continue;
+            jdbc.update("INSERT INTO trip_crew_assignments(trip_id,employee_id,duty,assigned_at,assigned_by) VALUES(?,?,?,UTC_TIMESTAMP(6),?)",trip.getId(),id,duty,actorId);
+            Long assignmentId=jdbc.queryForObject("SELECT LAST_INSERT_ID()",Long.class);
+            jdbc.update("INSERT INTO operational_history(trip_id,entity_type,entity_id,action,actor_id,occurred_at,reason) VALUES(?,'CREW',?,'CREW_ASSIGNED',?,UTC_TIMESTAMP(6),'Demo seed: newly created trip')",trip.getId(),assignmentId,actorId);
+        }
     }
 
     /**

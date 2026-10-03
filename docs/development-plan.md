@@ -1561,3 +1561,19 @@ communication channel, not a booking source.
 See [M16A design](m16a-assisted-booking.md) and [verification](m16a-verification.md)
 for source audit, contracts, files, migration, test results and practical limitations.
 No commit or push is performed for this milestone.
+
+M16B.1 + M16B.2 — Crew assignment and passenger boarding foundation
+Implemented: employee directory independent of login staff; DRIVER/ATTENDANT
+capabilities, licence profile, versioned employee edits; crew assignments/releases
+with sorted employee locks and interval conflicts; driver/bus readiness before
+BOARDING; per-ticket check-in, board, direct-board API, explicit no-show;
+intermediate pickups after DEPARTED; explicit pickup closure and completion guard;
+append-only operational history; admin mutations and staff reads; create-only demo
+employees and crew on newly generated demo trips. Manifest includes unpaid items
+and reuses M16A collection, including open intermediate stops after departure.
+V13 anchors attendance to booking items with nullable tickets. Unpaid PHONE PAY_ON_BOARD no-show resolves pickup closure without payment or tickets; terminal NO_SHOW blocks later new payment for the full booking. No historical passenger attendance backfill. No-show changes no commercial state.
+Verification and details: docs/m16b-crew-boarding.md, docs/m16b-verification.md.
+Deferred: staff mutation capability grants, camera scanning, driver mobile,
+commercial cancellation/refund, seat changes, payroll, GPS,
+rest-rule optimization, actual-arrival tracking and attendance reversal/reopening.
+No commit or push is performed for this request.

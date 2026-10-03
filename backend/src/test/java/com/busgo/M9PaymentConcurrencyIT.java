@@ -31,6 +31,7 @@ class M9PaymentConcurrencyIT extends M8BookingTestSupport {
     void cleanOwnedFixture() {
         if (fixture != null) {
             Long tripId = fixture.trip().getId();
+            M16BFixtures.clear(jdbc, fixture.operator().getId(), tripId);
             jdbc.update("DELETE ticket FROM tickets ticket JOIN bookings booking ON booking.id=ticket.booking_id WHERE booking.trip_id=?", tripId);
             jdbc.update("DELETE history FROM booking_status_history history JOIN bookings booking ON booking.id=history.booking_id WHERE booking.trip_id=?", tripId);
             jdbc.update("DELETE payment FROM payments payment JOIN bookings booking ON booking.id=payment.booking_id WHERE booking.trip_id=?", tripId);

@@ -25,6 +25,10 @@ export function useTripStatusMutation(id: number) {
       await Promise.all([
         cache.invalidateQueries({ queryKey: ["operator", "trips"] }),
         cache.invalidateQueries({ queryKey: ["operator", "bookings"] }),
+        cache.invalidateQueries({ queryKey: ["operator", "crew", id] }),
+        cache.invalidateQueries({ queryKey: ["operator", "attendance", id] }),
+        cache.invalidateQueries({ queryKey: ["operator", "pickups", id] }),
+        cache.invalidateQueries({ queryKey: ["operator", "history", id] }),
       ]);
     },
   });

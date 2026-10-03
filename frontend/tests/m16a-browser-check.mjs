@@ -22,7 +22,7 @@ const trip = (await call('GET', '/operator/trips/' + chosen.id, admin)).data;
 const pickup = trip.stops.find(s => s.allowPickup);
 const dropoff = trip.stops.at(-1);
 const journey = `pickupLocationId=${pickup.locationId}&dropoffLocationId=${dropoff.locationId}`;
-const directory = new URL('../../.tools/m16a-browser/', import.meta.url);
+const directory = process.env.BUSGO_BROWSER_OUTPUT ? new URL(process.env.BUSGO_BROWSER_OUTPUT) : new URL('../../.tools/m16a-browser/', import.meta.url);
 mkdirSync(directory, { recursive: true });
 const browser = await chromium.launch({ headless: true, channel: 'msedge' });
 const results = [];
@@ -33,7 +33,7 @@ async function uiLogin(page, email, password) {
   await page.waitForURL(url => url.pathname !== '/login');
 }
 async function overflow(page) { assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Document must not overflow'); }
-async function screenshot(page, name) { await overflow(page); await page.screenshot({ path: new URL(name + '.png', directory).pathname.replace(/^\/([A-Z]:)/, '$1'), fullPage: true }); }
+async function screenshot(page, name) { await page.evaluate(() => window.scrollTo(0, 0)); await overflow(page); await page.screenshot({ path: new URL(name + '.png', directory).pathname.replace(/^\/([A-Z]:)/, '$1'), fullPage: true }); }
 try {
   for (const width of [390, 820, 1440]) {
     const context = await browser.newContext({ viewport: { width, height: 1000 }, permissions: ['clipboard-read', 'clipboard-write'] });
@@ -97,7 +97,12 @@ try {
   await page.getByRole('button', { name: 'Tiếp tục đến thanh toán', exact: true }).click();
   await page.getByRole('button', { name: 'Xác nhận thanh toán giả lập', exact: true }).click();
   await page.waitForURL('**/booking-success?bookingId=*'); await page.locator('.ticket-stub svg').first().waitFor();
-  await screenshot(page, '1440-web-ticket'); results.push({ webCustomerBooking: true }); await context.close();
+  await screenshot(page, '1440-web-ticket');
+  const issuedBookingId = new URL(page.url()).searchParams.get('bookingId');
+  await page.goto(origin + '/my-bookings'); await page.getByRole('link', { name: 'Xem chi tiết', exact: true }).first().click();
+  await page.waitForURL(`**/my-bookings/${issuedBookingId}`);
+  await screenshot(page, '1440-my-booking');
+  results.push({ webCustomerBooking: true, myBookings: true }); await context.close();
   const staffContext = await browser.newContext(); const staffPage = await staffContext.newPage();
   await uiLogin(staffPage, 'operator.staff@anphu-demo.example', 'DemoStaff!2026');
   await staffPage.goto(origin + '/operator/bookings/new'); await staffPage.getByText('403 — Không có quyền truy cập', { exact: true }).waitFor();
