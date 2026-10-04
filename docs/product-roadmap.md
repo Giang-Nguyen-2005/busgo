@@ -220,3 +220,13 @@ One Báo cáo page provides shared filters, charts and paginated management tabl
 M18B customer directory, CSV, calculated comparisons, real revenue/settlement,
 prediction/AI and platform BI remain future scope. Design and evidence:
 [M18A reports](m18a-management-reports.md), [verification](m18a-verification.md).
+
+## M18B implementation — 2026-10-03
+
+Operator admins now have a read-only customer support directory and booking history
+at /operator/customers. Exact account IDs group only operator-owned bookings;
+accountless PHONE contacts remain separate per booking, even with repeated phones.
+Latest booking-local contact snapshots, simulated gross/refund/net amounts and
+recorded per-item attendance preserve identity and privacy boundaries. Staff support
+reads and marketing CRM remain deferred. No new table/index. See
+[M18B design](m18b-customer-management.md) and [verification](m18b-verification.md).
