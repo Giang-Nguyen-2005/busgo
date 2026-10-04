@@ -1621,3 +1621,13 @@ payment/dedicated refund semantics. Staff support reads, marketing CRM and produ
 scale profiling remain deferred. Design: m18b-customer-management.md. Verification:
 m18b-verification.md. User instruction overrides milestone commit guidance: no commit
 or push for M18B.
+
+M18C — FLEET READINESS & MAINTENANCE (2026-10-04)
+Implemented operational maintenance planning/lifecycle, half-open trip protection,
+safe BusStatus restoration and append-only status history, composed M16B readiness,
+Vietnam date due warnings, responsive fleet workspace/list and dashboard warnings.
+Preserve immutable trip assignment and admin-only fleet policy. V16 is additive;
+V1–V15 unchanged. No financial maintenance, inventory, GPS or current odometer.
+Definition of Done/evidence: docs/m18c-verification.md. Design/API details:
+docs/m18c-fleet-maintenance.md and docs/api-contract.md.
+User explicitly requires this work remain uncommitted and unpushed.

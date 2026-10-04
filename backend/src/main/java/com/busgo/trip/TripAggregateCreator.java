@@ -51,13 +51,14 @@ public class TripAggregateCreator {
     private final RouteDefinitionService routeDefinitions;
     private final BusTypeService busTypes;
     private final Clock clock;
+    private final com.busgo.fleet.FleetMaintenanceGuard maintenance;
 
     public TripAggregateCreator(TripRepository trips, TripStopSnapshotRepository tripStops,
             TripSegmentRepository segments, TripSeatRepository tripSeats,
             TripSeatSegmentInventoryRepository inventory, RouteStopRepository routeStops,
             SeatTemplateRepository seatTemplates, BusRepository buses,
             OperatorRouteService operatorRoutes, RouteDefinitionService routeDefinitions,
-            BusTypeService busTypes, Clock clock) {
+            BusTypeService busTypes, Clock clock, com.busgo.fleet.FleetMaintenanceGuard maintenance) {
         this.trips = trips;
         this.tripStops = tripStops;
         this.segments = segments;
@@ -70,9 +71,10 @@ public class TripAggregateCreator {
         this.routeDefinitions = routeDefinitions;
         this.busTypes = busTypes;
         this.clock = clock;
+        this.maintenance = maintenance;
     }
 
-    @Transactional
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public CreatedTrip create(Long operatorId, Long operatorRouteId, Long busId,
             LocalDateTime departure) {
         OperatorRoute association = operatorRoutes.owned(operatorRouteId, operatorId);
@@ -110,6 +112,7 @@ public class TripAggregateCreator {
             throw conflict("BUS_SCHEDULE_CONFLICT",
                     "The selected bus is already assigned to another trip during this period.");
         }
+        maintenance.requireAssignable(bus.getId(), departure, arrival);
 
         Trip trip = new Trip();
         trip.setOperatorRoute(association);

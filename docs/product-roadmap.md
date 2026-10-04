@@ -230,3 +230,16 @@ Latest booking-local contact snapshots, simulated gross/refund/net amounts and
 recorded per-item attendance preserve identity and privacy boundaries. Staff support
 reads and marketing CRM remain deferred. No new table/index. See
 [M18B design](m18b-customer-management.md) and [verification](m18b-verification.md).
+
+## M18C implementation — 2026-10-04
+
+Operational fleet readiness, bounded planned maintenance and explicit
+start/complete/cancel commands extend operator management. Existing AVAILABLE /
+MAINTENANCE / INACTIVE statuses, planned departure/arrival conflicts, M16B readiness,
+operator isolation and immutable trip assignments remain domain truth. Status history
+and safe restoration preserve intentional inactivity; explicit date due metadata
+powers upcoming/overdue warnings. Fleet directory, bus workspace, maintenance list
+and one dashboard fleet warning section are implemented. M18A cohorts stay unchanged.
+See [M18C design](m18c-fleet-maintenance.md) and [verification](m18c-verification.md).
+Staff fleet access, actual mileage/arrival, accounting, parts, GPS/IoT, predictive AI
+and procurement remain deferred.

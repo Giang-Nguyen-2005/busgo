@@ -21,11 +21,18 @@ public class BusService {
     private final BusRepository buses;
     private final BusTypeService busTypes;
     private final OperatorContextService context;
+    private final MaintenanceService maintenance;
+    private final FleetMaintenanceGuard guard;
+    private final java.time.Clock clock;
 
-    public BusService(BusRepository buses, BusTypeService busTypes, OperatorContextService context) {
+    public BusService(BusRepository buses, BusTypeService busTypes, OperatorContextService context,
+            MaintenanceService maintenance, FleetMaintenanceGuard guard, java.time.Clock clock) {
         this.buses = buses;
         this.busTypes = busTypes;
         this.context = context;
+        this.maintenance = maintenance;
+        this.guard = guard;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -56,17 +63,25 @@ public class BusService {
         return response(owned(id, operatorId));
     }
 
-    @Transactional
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public BusResponse update(CurrentUser user, Long id, UpdateBusRequest request) {
         Long operatorId = context.requireAdminOperator(user).getId();
-        Bus bus = owned(id, operatorId);
+        Bus bus = guard.lockFleetBus(operatorId, id);
         if (request.licensePlate() != null) {
             String plate = normalizePlate(request.licensePlate());
             if (buses.existsByLicensePlateIgnoreCaseAndIdNot(plate, id)) throw duplicatePlate();
             bus.setLicensePlate(plate);
         }
         if (request.busTypeId() != null) bus.setBusType(busTypes.requireUsable(request.busTypeId()));
-        if (request.status() != null) bus.setStatus(request.status());
+        if (request.status() != null) {
+            if (request.status() == BusStatus.AVAILABLE && guard.hasActive(id))
+                throw FleetMaintenanceGuard.conflict("BUS_MAINTENANCE_CONFLICT", "Complete active maintenance before restoring availability.", null);
+            if (request.status() != bus.getStatus() && guard.hasActive(id)
+                    && request.status() != BusStatus.INACTIVE)
+                throw FleetMaintenanceGuard.conflict("BUS_MAINTENANCE_CONFLICT", "Only INACTIVE is allowed while maintenance is active.", null);
+            guard.changeStatus(bus, request.status(), "OPERATOR_STATUS_CHANGED", null, user.id(),
+                    com.busgo.common.time.BusGoTime.utc(clock.instant()));
+        }
         return response(save(bus));
     }
 
@@ -86,7 +101,8 @@ public class BusService {
     private BusResponse response(Bus bus) {
         BusType type = bus.getBusType();
         return new BusResponse(bus.getId(), bus.getLicensePlate(), bus.getStatus(),
-                new BusTypeSummary(type.getId(), type.getName(), type.getSeatCount()));
+                new BusTypeSummary(type.getId(), type.getName(), type.getSeatCount()),
+                maintenance.readiness(bus.getOperator().getId(), bus));
     }
 
     private static String normalizePlate(String plate) {

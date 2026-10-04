@@ -1,6 +1,12 @@
 import axios from "axios";
 import type { ApiError } from "../types/api";
 const messages: Record<string, string> = {
+  MAINTENANCE_TRIP_CONFLICT: "Xe đã được phân công cho chuyến trùng lịch. Chọn thời gian bảo trì khác; xe của chuyến cố định sau khi tạo.",
+  BUS_MAINTENANCE_CONFLICT: "Xe đang bảo trì hoặc có lịch bảo trì trùng thời gian vận hành. Hoàn tất hoặc hủy lịch phù hợp trước khi tiếp tục.",
+  INVALID_MAINTENANCE_TRANSITION: "Trạng thái bảo trì đã thay đổi hoặc thao tác không hợp lệ. Tải lại trước khi tiếp tục.",
+  MAINTENANCE_WINDOW_ENDED: "Lịch bảo trì đã kết thúc. Hủy lịch và tạo lịch mới để bắt đầu.",
+  MAINTENANCE_NOT_FOUND: "Không tìm thấy lịch bảo trì trong nhà xe.",
+  FLEET_PLAN_CHANGED: "Lịch chuyến vừa thay đổi. Tải lại và thử lại thao tác đội xe.",
   BOOKING_NOT_CANCELLABLE: "Đặt vé không còn ở trạng thái có thể hủy.",
   CANCELLATION_WINDOW_CLOSED: "Chuyến đã khởi hành hoặc kết thúc; không thể hủy.",
   CANCELLATION_ATTENDANCE_CONFLICT: "Có khách đã điểm danh, lên xe hoặc được ghi nhận vắng mặt; không thể hủy.",

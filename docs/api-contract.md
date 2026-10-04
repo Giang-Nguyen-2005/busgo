@@ -1949,3 +1949,58 @@ sort LATEST (default desc), NAME (asc), BOOKINGS/MOCK_PAID (desc), stable key ti
 Page 0..100000; size 1..100, default 20. Invalid filters/keys 400; owned contact
 absence/foreign keys 404. No writes or operatorId filter. Details:
 [M18B design](m18b-customer-management.md).
+
+## M18C — Fleet maintenance and readiness
+
+Admin-only with active trusted operator context; SYSTEM_ADMIN including mixed roles,
+staff, customer and public denied. No operatorId selector. Missing/foreign owned IDs
+404; wrong roles/context 403; anonymous 401. All timestamps have UTC offset, date
+filters use inclusive Asia/Ho_Chi_Minh business dates.
+
+Existing GET /operator/buses and /operator/buses/{id} append readiness:
+{operationalReady,status,maintenanceState,activeMaintenanceId,nextMaintenanceDate,
+nextMaintenanceType,nextDueDate,nextAssignedTrip,warnings}. Existing list envelope
+is unchanged. BusStatus remains AVAILABLE/MAINTENANCE/INACTIVE.
+
+New endpoints under /api/v1/operator:
+
+- GET /maintenance?busId=&status=&maintenanceType=&fromDate=&toDate=&page=0&size=20
+- GET /buses/{busId}/maintenance (same filters except bus selection)
+- POST /buses/{busId}/maintenance -> 201 ApiResponse<Maintenance>.
+  Body: maintenanceType, title (required <=150), note (<=1000), scheduledStart and
+  scheduledEnd (required offset timestamps; start >=now, end >start).
+- POST /maintenance/{id}/start -> ApiResponse<Maintenance>; no body.
+- POST /maintenance/{id}/complete -> ApiResponse<Maintenance>.
+  Body: odometerKm?, nextDueDate?, nextDueOdometerKm?, note? (<=1000); {} valid.
+- POST /maintenance/{id}/cancel -> ApiResponse<Maintenance>.
+  Body: reason? (<=500); {} valid.
+- GET /buses/{busId}/trips?page=0&size=20 -> ApiResponse<PagedResponse<AssignedTrip>>.
+- GET /buses/{busId}/history -> ApiResponse<StatusHistory[]> (latest 100).
+- GET /fleet/readiness -> ApiResponse<FleetWarnings>.
+
+Maintenance list envelope ApiResponse<PagedResponse<Maintenance>>, page 0–100000,
+size 1–100. Types: PERIODIC_SERVICE/OIL_CHANGE/TIRE/BRAKE/ELECTRICAL/ENGINE/
+AIR_CONDITIONING/INSPECTION/REPAIR/OTHER. Status SCHEDULED/IN_PROGRESS/COMPLETED/CANCELLED.
+Maintenance fields: id,busId,licensePlate,maintenanceType,status,title,note,
+scheduledStart,scheduledEnd,startedAt,completedAt,cancelledAt,odometerKm,nextDueDate,
+nextDueOdometerKm,completionNote,cancellationReason,createdBy,completedBy,cancelledBy,
+createdAt,updatedAt. AssignedTrip={id,route,departureTime,estimatedArrivalTime,status}.
+StatusHistory={id,previousStatus,newStatus,reasonCode,maintenanceId,changedBy,changedAt}.
+FleetWarnings={availableBuses,maintenanceBuses,inactiveBuses,maintenanceDueSoon,
+overdueMaintenance,upcomingNotReady:AssignedTrip[]} (up to 20 upcoming trips).
+
+Lifecycle SCHEDULED -> IN_PROGRESS or CANCELLED; IN_PROGRESS -> COMPLETED.
+Terminal commands cannot repeat/reopen. No DELETE/PATCH maintenance status.
+Completion values nonnegative; next due odometer >recorded value when both provided;
+next due date >=Vietnam today. Date overdue is based only on explicit latest completed
+metadata per type, never unknown current odometer. Bus restoration preserves prior
+and intentionally changed INACTIVE status; originally MAINTENANCE stays unavailable.
+
+409: MAINTENANCE_TRIP_CONFLICT (details.trips includes only safe owned trip data),
+BUS_MAINTENANCE_CONFLICT, INVALID_MAINTENANCE_TRANSITION, MAINTENANCE_WINDOW_ENDED,
+FLEET_PLAN_CHANGED. Existing BUS_NOT_AVAILABLE/BUS_SCHEDULE_CONFLICT/CREW_NOT_READY
+still apply. 404 MAINTENANCE_NOT_FOUND/BUS_NOT_FOUND. Invalid fields/ranges/enums 400.
+Intervals use origin departure/estimated arrival with strict half-open overlap;
+back-to-back allowed. Cancelled/completed records do not conflict. IN_PROGRESS blocks
+assignment irrespective of planned end. Existing immutable trip assignment is unchanged.
+V16 adds maintenance and status audit tables/indexes. See m18c-fleet-maintenance.md.

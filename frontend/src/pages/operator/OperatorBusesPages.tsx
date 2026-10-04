@@ -15,12 +15,12 @@ import {
   OperatorError,
   OperatorPageHeader,
   OperatorStatusBadge,
-  OperatorTable,
   Pagination,
   positiveId,
   QueryState,
   useOperatorFilters,
 } from "../../features/operator/shared";
+import { BusFleetWorkspace, FleetDirectoryContent } from "../../features/operator/FleetMaintenance";
 export function OperatorBusesPage() {
   const { params, page, size, set } = useOperatorFilters();
   const types = useBusTypes();
@@ -91,23 +91,7 @@ export function OperatorBusesPage() {
       <QueryState query={query}>
         {(result) => (
           <>
-            <OperatorTable
-              headers={["Biển số", "Loại xe", "Số ghế", "Trạng thái"]}
-              empty={!result.data.length}
-            >
-              {result.data.map((b) => (
-                <tr key={b.id}>
-                  <td>
-                    <Link to={`/operator/buses/${b.id}`}>{b.licensePlate}</Link>
-                  </td>
-                  <td>{b.busType.name}</td>
-                  <td>{b.busType.seatCount}</td>
-                  <td>
-                    <OperatorStatusBadge status={b.status} />
-                  </td>
-                </tr>
-              ))}
-            </OperatorTable>
+            <FleetDirectoryContent buses={result.data} />
             <Pagination pagination={result.pagination} set={set} />
           </>
         )}
@@ -282,7 +266,7 @@ export function OperatorBusDetailPage() {
                 Xem loại xe / mẫu ghế
               </Link>
             </p>
-            <BusForm key={bus.id} bus={bus} />
+            <BusFleetWorkspace bus={bus} overview={<BusForm key={bus.id} bus={bus} />} />
           </>
         )}
       </QueryState>

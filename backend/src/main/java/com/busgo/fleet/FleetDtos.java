@@ -28,7 +28,7 @@ public final class FleetDtos {
             BusStatus status) {}
 
     public record BusResponse(Long id, String licensePlate, BusStatus status,
-            BusTypeSummary busType) {}
+            BusTypeSummary busType, MaintenanceDtos.Readiness readiness) {}
 
     public record BusTypeSummary(Long id, String name, Integer seatCount) {}
 }

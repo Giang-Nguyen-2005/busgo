@@ -19,8 +19,11 @@ public class OperationsService {
     private final JdbcTemplate db;
     private final OperatorContextService context;
     private final Clock clock;
-    public OperationsService(JdbcTemplate db, OperatorContextService context, Clock clock) {
+    private final com.busgo.fleet.FleetMaintenanceGuard maintenance;
+    public OperationsService(JdbcTemplate db, OperatorContextService context, Clock clock,
+            com.busgo.fleet.FleetMaintenanceGuard maintenance) {
         this.db=db; this.context=context; this.clock=clock;
+        this.maintenance=maintenance;
     }
     private Timestamp now() { return Timestamp.from(clock.instant()); }
     private static BusinessException conflict(String code, String message) {
@@ -130,6 +133,8 @@ public class OperationsService {
         if(lock) db.queryForObject("SELECT id FROM buses WHERE id=(SELECT bus_id FROM trips WHERE id=?) FOR UPDATE",Long.class,tripId);
         var t=db.queryForMap("SELECT t.*,r.operator_id,b.status AS bus_status,b.deleted_at AS bus_deleted_at,bt.status AS bus_type_status FROM trips t JOIN operator_routes r ON r.id=t.operator_route_id JOIN buses b ON b.id=t.bus_id JOIN bus_types bt ON bt.id=b.bus_type_id WHERE t.id=?",tripId);
         if(!"AVAILABLE".equals(t.get("bus_status")) || t.get("bus_deleted_at")!=null || !"ACTIVE".equals(t.get("bus_type_status"))) return "Xe chưa sẵn sàng vận hành";
+        String maintenanceWarning=db.queryForObject("SELECT bus_id,departure_time,estimated_arrival_time FROM trips WHERE id=?",(rs,n)->maintenance.warning(rs.getLong("bus_id"),com.busgo.common.time.JpaJdbcTime.read(rs,"departure_time"),com.busgo.common.time.JpaJdbcTime.read(rs,"estimated_arrival_time")),tripId);
+        if(!maintenanceWarning.isEmpty()) return maintenanceWarning;
         boolean driver=false;
         for(var row:crewRows(tripId)) {
             long id=((Number)row.get("employeeId")).longValue();
