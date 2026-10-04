@@ -20,7 +20,7 @@ export const seatTypeLabel = (type: string) => ({ STANDARD: "Chỗ tiêu chuẩn
 export const seatLimitDisabled = (available: boolean, selected: boolean, count: number) => available && !selected && count >= 5;
 export const passengerLabel = (name: string | null) => name || "Chưa cung cấp tên khách trên chỗ";
 export const historyEmpty = (filtered: boolean) => filtered ? "Không có đặt vé khớp bộ lọc" : "Bạn chưa có đặt vé nào";
-export const paymentPresentation = (status: BookingStatus, submitting = false) => submitting ? "Đang xác nhận thanh toán giả lập…" : status === "CONFIRMED" ? "Đặt vé đã xác nhận" : status === "PENDING" ? "Chờ thanh toán giả lập" : "Đặt vé không thể thanh toán";
+export const paymentPresentation = (status: BookingStatus, submitting = false) => submitting ? "Đang xác nhận thanh toán mô phỏng…" : status === "CONFIRMED" ? "Đặt vé đã xác nhận" : status === "PENDING" ? "Chờ thanh toán mô phỏng" : "Đặt vé không thể thanh toán";
 export const ticketHeading = (fresh: boolean) => fresh ? "Đặt vé thành công!" : "Vé điện tử của bạn";
 export const readonlyEmailExplanation = "Email dùng để đăng nhập và hiện chưa hỗ trợ thay đổi.";
 export const passwordCompletion = "Đã đổi mật khẩu thành công. Vui lòng đăng nhập lại.";

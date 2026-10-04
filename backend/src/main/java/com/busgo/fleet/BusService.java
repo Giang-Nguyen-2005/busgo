@@ -41,7 +41,8 @@ public class BusService {
         Long operatorId = context.requireAdminOperator(user).getId();
         var result = buses.search(operatorId, status, busTypeId, query == null ? "" : query.strip(),
                 PageRequest.of(page, size, Sort.by("licensePlate").ascending().and(Sort.by("id"))));
-        return PagedResponse.from(result.map(this::response));
+        var readiness = maintenance.readiness(operatorId, result.getContent());
+        return PagedResponse.from(result.map(bus -> response(bus, readiness.get(bus.getId()))));
     }
 
     @Transactional
@@ -99,10 +100,14 @@ public class BusService {
     }
 
     private BusResponse response(Bus bus) {
+        return response(bus, maintenance.readiness(bus.getOperator().getId(), bus));
+    }
+
+    private BusResponse response(Bus bus, MaintenanceDtos.Readiness readiness) {
         BusType type = bus.getBusType();
         return new BusResponse(bus.getId(), bus.getLicensePlate(), bus.getStatus(),
                 new BusTypeSummary(type.getId(), type.getName(), type.getSeatCount()),
-                maintenance.readiness(bus.getOperator().getId(), bus));
+                readiness);
     }
 
     private static String normalizePlate(String plate) {

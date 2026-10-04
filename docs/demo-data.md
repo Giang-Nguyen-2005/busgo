@@ -1,8 +1,8 @@
-# Local demo data — M15 P0
+# Local demo data — V1.5
 
 The fictional catalogue is for local portfolio use only. `dev,demo` explicitly
 activates DemoDataSeeder; `dev` alone creates no demo data. The seeder is excluded
-with `prod` or `production`. No fictional users/data occur in Flyway V1–V10.
+with `prod` or `production`. No fictional users/data occur in Flyway V1–V16.
 
 ## Enable
 
@@ -113,3 +113,13 @@ prepare a separate empty demo database; do not repair through seeding.
 
 The operator dashboard defaults to today. Choose the logged future date in the
 trip list to find the customer demo trip. See [final demo](final-demo.md).
+
+## V1.5 rehearsal fixtures
+
+The create-only seed remains deliberately non-transactional in its business story:
+it does not manufacture paid/cancelled bookings, refunds or attendance. Create those
+through the real UI before presenting, preserving their actual history. New An Phú
+trips receive eligible deterministic crew assignments; existing assignments are not
+restored or overwritten. Maintenance records are created/start/completed through
+normal admin commands on a spare bus. Follow the preparation and backup paths in
+[v1.5-demo-script.md](v1.5-demo-script.md); no SQL reset is required.

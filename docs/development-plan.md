@@ -1631,3 +1631,14 @@ V1–V15 unchanged. No financial maintenance, inventory, GPS or current odometer
 Definition of Done/evidence: docs/m18c-verification.md. Design/API details:
 docs/m18c-fleet-maintenance.md and docs/api-contract.md.
 User explicitly requires this work remain uncommitted and unpushed.
+
+## M19 — V1.5 feature freeze and release readiness (2026-10-04)
+
+M16A–M18C business scope is feature-complete. M19 adds targeted terminology,
+assisted-booking clarity, shared statuses/errors, session response isolation,
+cancellation keyboard focus, route splitting and read-only fleet batching.
+No new module, migration, staff privilege or payment semantics. Earlier “future”
+notes are milestone history; current scope is [V1.5 release notes](v1.5-release-notes.md).
+See [audit](m19-audit.md), [verification](m19-verification.md),
+[demo script](v1.5-demo-script.md), [deployment](deployment.md) and
+[architecture](architecture.md). M19 changes must remain uncommitted/unpushed.

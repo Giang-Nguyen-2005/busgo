@@ -1,6 +1,12 @@
 import axios from "axios";
 import type { ApiError } from "../types/api";
 const messages: Record<string, string> = {
+  INVALID_TRIP_STATUS_TRANSITION: "Trạng thái chuyến đã thay đổi hoặc thao tác không còn hợp lệ. Vui lòng tải lại.",
+  BUS_NOT_FOUND: "Không tìm thấy xe trong nhà xe.",
+  LICENSE_PLATE_ALREADY_EXISTS: "Biển số xe đã được sử dụng.",
+  NOT_FOUND: "Không tìm thấy thông tin yêu cầu.",
+  FORBIDDEN: "Tài khoản không có quyền thực hiện thao tác này.",
+  PAYMENT_ALREADY_COMPLETED: "Thanh toán đã hoàn tất. Vui lòng tải lại để xem vé.",
   MAINTENANCE_TRIP_CONFLICT: "Xe đã được phân công cho chuyến trùng lịch. Chọn thời gian bảo trì khác; xe của chuyến cố định sau khi tạo.",
   BUS_MAINTENANCE_CONFLICT: "Xe đang bảo trì hoặc có lịch bảo trì trùng thời gian vận hành. Hoàn tất hoặc hủy lịch phù hợp trước khi tiếp tục.",
   INVALID_MAINTENANCE_TRANSITION: "Trạng thái bảo trì đã thay đổi hoặc thao tác không hợp lệ. Tải lại trước khi tiếp tục.",
@@ -74,13 +80,11 @@ const messages: Record<string, string> = {
   VALIDATION_ERROR:
     "Thông tin chưa hợp lệ. Vui lòng kiểm tra các trường đã nhập.",
 };
+export const domainErrorMessage = (code?: string) => messages[code || ""] || "Không thể hoàn tất yêu cầu. Vui lòng thử lại.";
 export const errorCode = (error: unknown) =>
   axios.isAxiosError<ApiError>(error) ? error.response?.data?.code : undefined;
 export function errorMessage(error: unknown) {
   if (axios.isAxiosError(error) && !error.response)
     return "Không thể kết nối máy chủ. Vui lòng kiểm tra mạng rồi thử lại.";
-  return (
-    messages[errorCode(error) || ""] ||
-    "Không thể hoàn tất yêu cầu. Vui lòng thử lại."
-  );
+  return domainErrorMessage(errorCode(error));
 }

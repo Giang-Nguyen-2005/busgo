@@ -9,8 +9,8 @@ import { RefreshState } from "../../features/operator/RefreshState";
 import { useOccupancy } from "../../features/operator/queries";
 import { departureClock, dispatchOrder, overdue, vietnamToday } from "../../features/operator/dispatch";
 import type { TripSummaryResponse } from "../../types/operator";
-import { dateTime } from "../../utils/format";
-import { ManagementOverview } from "../../features/operator/Reports";
+import { date, dateTime } from "../../utils/format";
+import { ManagementOverview, useManagementOverview } from "../../features/operator/Reports";
 import { FleetDashboardWarnings } from "../../features/operator/FleetMaintenance";
 
 function TripShortcuts({ id }: { id: number }) {
@@ -42,11 +42,11 @@ function HighlightTrip({ trip, upcoming }: { trip: TripSummaryResponse; upcoming
 export function OperatorHomePage() {
   const manage = canManageOperator(useAuth().user?.roles);
   const today = vietnamToday();
+  const overview = useManagementOverview(manage);
   const query = useQuery({ queryKey: ["operator", "trips", "today", today], queryFn: ({ signal }) => allPages(p => operatorApi.trips({ ...p, businessDate: today }, signal)), refetchInterval: 60_000, retry: 1 });
   return <div className="operator-dashboard"><OperatorPageHeader title="Điều hành"><Link className="button secondary" to="/operator/bookings">Tra cứu đặt vé</Link></OperatorPageHeader>
-    <p className="muted">Ngày vận hành · {today} · Giờ Việt Nam</p><RefreshState query={query} />
-    {manage && <ManagementOverview />}
-    {manage && <FleetDashboardWarnings />}
+    <p className="muted">Ngày vận hành · {date(today)} · Giờ Việt Nam</p><RefreshState query={query} />
+    {manage && <ManagementOverview query={overview} operational />}
     <OperationsQueryState query={query}>{trips => {
       const ordered = dispatchOrder(trips);
       const upcoming = ordered.filter(t => t.status === "SCHEDULED" && Date.parse(t.departureTime) >= Date.now()).sort((a,b) => Date.parse(a.departureTime)-Date.parse(b.departureTime))[0];
@@ -57,6 +57,8 @@ export function OperatorHomePage() {
         {!!trips.length && <div className="operator-trip-rows">{ordered.map(t=><article key={t.id} className="operator-trip-row"><strong className="operator-departure">{departureClock(t.departureTime)}</strong><div><Link to={`/operator/trips/${t.id}`}><strong>{t.route.name}</strong></Link><p>{t.bus.licensePlate} · {t.bus.busTypeName}</p></div><div><OperatorStatusBadge status={t.status} />{overdue(t) && <p className="operator-overdue">Quá giờ dự kiến</p>}</div><Link className="button secondary" to={`/operator/trips/${t.id}/seats`}>Sơ đồ ghế</Link></article>)}</div>}
       </>;
     }}</OperationsQueryState>
+    {manage && <FleetDashboardWarnings />}
+    {manage && <ManagementOverview query={overview} />}
     <p className="fine-print">Giờ dự kiến không xác nhận chuyến đã khởi hành.</p>
     {manage && <section className="dispatch-management"><h2>Quản lý</h2><nav className="dispatch-shortcuts" aria-label="Quản lý nhà xe"><Link to="/operator/trips/new">Tạo chuyến</Link><Link to="/operator/buses">Đội xe</Link><Link to="/operator/routes">Tuyến vận hành</Link><Link to="/operator/staff">Nhân sự</Link></nav></section>}
   </div>;

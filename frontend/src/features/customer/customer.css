@@ -262,3 +262,5 @@ body:has(.customer-shell) { min-width: 0; }
 
 /* Keep display text legible over the photographic hero at every breakpoint. */
 .customer-shell .hero h1 { color: #fff; }
+.customer-shell .ticket-layout .ticket-list { grid-template-columns:minmax(0,1fr); width:100%; margin:0; }
+.customer-shell .ticket-layout .ticket-journey { margin:0; }

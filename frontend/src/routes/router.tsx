@@ -1,12 +1,12 @@
+import { RouteProgress } from "../components/RouteProgress";
 import { operatorTripRoute } from "./operatorTripRoutes";
-import { createBrowserRouter, Link } from "react-router-dom";
+import { createBrowserRouter, Link, Outlet } from "react-router-dom";
 import { CustomerLayout } from "../layouts/CustomerLayout";
 import { CustomerGuard } from "../features/auth/AuthProvider";
-import { HomePage } from "../pages/HomePage";
-import { AuthPage } from "../pages/AuthPage";
+
 import { Empty } from "../components/ui";
 
-export const router = createBrowserRouter([
+export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet /></>, children: [
   { path: "/pay/:token", lazy: async () => ({ Component: (await import("../pages/PublicPaymentPage")).PublicPaymentPage }) },
   {
     path: "/admin",
@@ -161,9 +161,9 @@ export const router = createBrowserRouter([
       </Empty>
     ),
     children: [
-      { path: "/", element: <HomePage /> },
-      { path: "/login", element: <AuthPage /> },
-      { path: "/register", element: <AuthPage register /> },
+      { path: "/", lazy: async () => ({ Component: (await import("../pages/HomePage")).HomePage }) },
+      { path: "/login", lazy: async () => ({ Component: (await import("../pages/AuthPage")).AuthPage }) },
+      { path: "/register", lazy: async () => ({ Component: (await import("../pages/AuthPage")).RegisterPage }) },
       {
         path: "/search",
         lazy: async () => ({
@@ -231,4 +231,4 @@ export const router = createBrowserRouter([
       },
     ],
   },
-]);
+] }]);

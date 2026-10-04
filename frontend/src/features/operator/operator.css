@@ -757,3 +757,99 @@
 .assisted-actions input { max-width: 100%; }
 @media (max-width: 600px) { .assisted-fields { grid-template-columns: 1fr; } .assisted-booking fieldset { padding: 12px; } }
 .operator-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+/* M19.1: operational identity first; metadata and secondary actions stay quiet. */
+.operator-nav-section { display:grid; gap:4px; }
+.operator-shell .operator-nav-section .operator-nav-group { margin-top:10px; }
+.quick-filters { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 12px; }
+.quick-filters button[aria-pressed=true] { background:var(--color-primary); color:white; border-color:var(--color-primary); }
+.operator-shell .attention-links { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 24px; }
+.attention-links a { display:flex; gap:12px; align-items:center; min-height:60px; border-bottom:1px solid var(--color-border); }
+.attention-links strong { font-size:26px; font-variant-numeric:tabular-nums; }
+.attention-links span:first-of-type { flex:1; font-size:14px; }
+.operator-shell .dispatch-attention { border-left:3px solid var(--color-accent-bright); }
+.operator-shell .dispatch-totals dd { font-size:24px; }
+.operator-shell .dispatch-totals > div { padding:14px 18px; }
+.operator-shell .management-overview .report-metrics dd { font-size:20px; }
+.operator-shell .operator-trip-row { padding:16px 20px; }
+.operator-shell .operator-trip-row p { margin:6px 0; font-size:13px; }
+.operator-shell .operator-trip-row small { font-size:12px; color:var(--color-text-muted); }
+.operator-shell .operator-trip-header .trip-readiness { grid-column:1 / -1; margin:0; font-size:13px; color:#ffe0b7; }
+.employee-list { background:white; border:1px solid var(--color-border); border-radius:10px; overflow:hidden; }
+.employee-row { display:grid; grid-template-columns:minmax(150px,1.4fr) minmax(80px,.65fr) minmax(90px,.75fr) minmax(120px,1fr) auto auto; gap:16px; align-items:center; padding:18px; border-bottom:1px solid var(--color-border); }
+.employee-row:last-child { border-bottom:0; }
+.operator-shell .employee-row h2 { font-size:16px; margin:0 0 5px; }
+.employee-row p { margin:4px 0; font-size:13px; }
+.employee-row small { font-size:12px; }
+.employee-capabilities { display:flex; gap:4px; flex-wrap:wrap; }
+.employee-row .secondary { font-size:12px; }
+.crew-person { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 0; border-bottom:1px solid var(--color-border); }
+.crew-person strong { font-size:15px; }
+.crew-person p { margin:6px 0 0; font-size:13px; color:var(--color-text-secondary); }
+.crew-assignment > summary { cursor:pointer; min-height:44px; padding:14px 0; color:var(--color-primary); font-weight:600; }
+.operator-shell .boarding-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 20px; padding:18px 20px; margin-bottom:0; }
+.operator-shell .boarding-row h3 { font-size:17px; margin:0 0 8px; display:flex; align-items:center; gap:12px; }
+.boarding-row .operator-seat-code { font-size:20px; }
+.boarding-state { display:flex; align-items:start; flex-wrap:wrap; gap:6px; }
+.operator-shell .boarding-row p { margin:2px 0; font-size:13px; grid-column:1; }
+.operator-shell .boarding-row .fine-print { font-size:12px; color:var(--color-text-muted); }
+.boarding-row .operator-actions { grid-column:2; grid-row:2 / span 4; justify-content:flex-end; align-content:center; max-width:240px; }
+.boarding-row .operator-actions button { font-size:13px; }
+@media(max-width:1150px) { .employee-row { grid-template-columns:minmax(150px,1fr) 1fr 1fr; } }
+@media(max-width:700px) {
+ .operator-shell .attention-links { grid-template-columns:1fr; }
+ .employee-row { grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; }
+ .employee-row > div:first-child { grid-column:1 / -1; }
+ .employee-row button { grid-column:1 / -1; justify-self:start; }
+ .crew-person { flex-wrap:wrap; }
+ .operator-shell .boarding-row { grid-template-columns:minmax(0,1fr); padding:16px; }
+ .boarding-state { grid-row:2; }
+ .boarding-row .operator-actions { grid-column:1; grid-row:auto; justify-content:flex-start; max-width:none; margin-top:10px; }
+}
+@media(min-width:1060px) {
+ .operator-shell .operator-trip-header .trip-readiness { grid-column:1; grid-row:3; align-self:center; }
+ .operator-shell .operator-trip-header .operator-workspace-counts { grid-row:4; margin:8px 0; }
+}
+.operator-shell .operator-trip-header .operator-heading .button.secondary { background:transparent; color:#f4faf7; border:1px solid #658783; }
+
+/* M19.2: consistent section rhythm, compact operational summaries. */
+.operator-shell .assisted-booking form { display:grid; gap:20px; }
+.operator-shell .assisted-booking fieldset.card,
+.operator-shell .assisted-booking .assisted-review { margin:0; padding:24px; border:1px solid var(--color-border); border-radius:12px; background:white; min-width:0; }
+.operator-shell .assisted-booking fieldset.card { display:block; }
+.assisted-booking legend { float:left; width:100%; padding:0; margin:0 0 20px; }
+.assisted-booking legend + * { clear:both; }
+.assisted-step-label { display:block; font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--color-text-muted); margin-bottom:6px; }
+.assisted-step-title { display:block; font-size:18px; font-weight:650; color:var(--color-structural); line-height:1.4; border-left:3px solid var(--color-accent-bright); padding-left:10px; }
+.assisted-booking .muted { font-size:13px; margin:0 0 16px; }
+.assisted-booking > .muted { margin:8px 0 16px; }
+.assisted-booking .assisted-progress { font-size:12px; margin:0 0 24px; gap:8px 20px; }
+.assisted-booking .field { font-size:13px; margin:0; min-width:0; }
+.assisted-booking input { width:100%; min-width:0; }
+.assisted-seat-heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; }
+.assisted-price { display:block; font-size:24px; font-weight:650; color:var(--color-structural); font-variant-numeric:tabular-nums; }
+.assisted-price small { font-size:13px; font-weight:400; color:var(--color-text-muted); }
+.assisted-availability { display:block; font-size:13px; color:var(--color-text-secondary); margin-top:4px; }
+.operator-shell .assisted-booking .assisted-refresh { width:auto; font-size:13px; padding:8px 12px; flex:none; }
+.assisted-booking .seat-legend { justify-content:flex-start; font-size:12px; gap:8px 16px; margin:16px 0; flex-wrap:wrap; }
+.assisted-booking .seat-floors { justify-content:flex-start; align-items:flex-start; gap:24px; margin:0 0 16px; }
+.assisted-booking .seat-floor h3 { text-align:left; margin:0 0 10px; font-size:14px; font-weight:600; }
+.assisted-booking .bus-interior { padding:16px; }
+.assisted-selection { display:flex; flex-wrap:wrap; gap:16px 40px; justify-content:space-between; padding:14px 16px; background:var(--color-bg); border-left:3px solid var(--color-primary); border-radius:6px; }
+.assisted-selection span, .assisted-total > span:first-child { display:block; font-size:12px; color:var(--color-text-secondary); margin-bottom:4px; }
+.assisted-selection strong { font-size:17px; font-weight:650; }
+.assisted-review h2 { margin:0 0 20px; }
+.assisted-review-grid { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:24px; }
+.assisted-journey { font-size:17px; font-weight:600; margin:0 0 6px; overflow-wrap:anywhere; }
+.assisted-key-values { display:grid; gap:12px; margin:16px 0; }
+.assisted-key-values > div { display:grid; grid-template-columns:90px minmax(0,1fr); gap:12px; }
+.assisted-key-values dd { margin:0; font-size:14px; overflow-wrap:anywhere; }
+.assisted-total { border-left:1px solid var(--color-border); padding-left:24px; }
+.assisted-total > strong { display:block; font-size:26px; color:var(--color-structural); margin:6px 0 12px; font-variant-numeric:tabular-nums; }
+@media(max-width:600px) {
+ .operator-shell .assisted-booking fieldset.card, .operator-shell .assisted-booking .assisted-review { padding:16px; }
+ .assisted-review-grid { grid-template-columns:minmax(0,1fr); gap:12px; }
+ .assisted-total { padding:14px 0 0; border-left:0; border-top:1px solid var(--color-border); }
+ .assisted-booking .seat-floor { width:100%; }
+ .assisted-price { font-size:22px; }
+}

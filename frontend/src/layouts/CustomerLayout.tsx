@@ -74,7 +74,7 @@ export function CustomerLayout() {
           </div>
           <div>
             <strong>Đặt vé xe khách trực tuyến</strong>
-            <p>Dự án học tập · Thanh toán giả lập</p>
+            <p>Dự án học tập · Thanh toán mô phỏng</p>
             <small>Giờ hiển thị theo Việt Nam (UTC+7).</small>
           </div>
           <div>

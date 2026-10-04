@@ -134,3 +134,12 @@ body:has(.admin-shell) { min-width: 0; }
  .admin-shell .admin-stat strong { font-size: 28px; }
  .admin-shell .admin-counts { gap: 10px; }
 }
+
+.admin-shell .admin-operator-directory th:first-child { width:24%; }
+.admin-shell .admin-operator-directory th:last-child { width:100px; }
+.admin-shell .admin-operator-directory td:first-child a { font-size:16px; }
+.admin-shell .admin-operator-directory td:nth-child(2) { font-size:13px; color:var(--color-text-secondary); }
+.admin-shell .admin-staff-count { font-weight:600; }
+.admin-shell .admin-filters { padding:14px 16px; background:#eaf0ec; border-radius:8px; gap:12px; }
+.admin-shell .admin-operator-directory th:last-child { width:120px; }
+.admin-shell .admin-operator-directory .button { white-space:nowrap; }

@@ -1,3 +1,4 @@
+import { DomainStatusBadge } from "../../components/DomainStatusBadge";
 import type { ReactNode } from "react";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
@@ -13,22 +14,9 @@ export const tripStatuses = [
   "COMPLETED",
   "CANCELLED",
 ] as const;
-const labels: Record<string, string> = {
-  ACTIVE: "Hoạt động",
-  INACTIVE: "Ngừng hoạt động",
-  AVAILABLE: "Sẵn sàng",
-  MAINTENANCE: "Bảo trì",
-  SCHEDULED: "Đã lên lịch",
-  BOARDING: "Đang đón khách",
-  DEPARTED: "Đang chạy",
-  COMPLETED: "Hoàn thành",
-  CANCELLED: "Đã hủy",
-};
 export function OperatorStatusBadge({ status }: { status: string }) {
   return (
-    <span className={`operator-badge operator-status-${status}`}>
-      {labels[status] || status}
-    </span>
+    <DomainStatusBadge domain={busStatuses.includes(status as typeof busStatuses[number]) ? "bus" : tripStatuses.includes(status as typeof tripStatuses[number]) ? "trip" : "operator"} status={status} />
   );
 }
 export function OperatorPageHeader({

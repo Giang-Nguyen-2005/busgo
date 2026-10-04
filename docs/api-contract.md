@@ -1,3 +1,17 @@
+# V1.5 contract status (M19)
+
+The implementation sections M12–M18C below supersede the historical numbered
+proposal where they differ. All routes use /api/v1. No API was renamed in M19.
+PENDING booking = a successfully reserved booking (“Đã giữ chỗ”); payment PENDING
+is separately “Chưa thanh toán”. Every payment/refund remains simulated.
+
+Current corrections: no /operator/dashboard endpoint (UI composes trips, reports
+summary and fleet/readiness); no /bookings/{id}/confirm or /payment/confirm; no
+/reports/revenue or /reports/occupancy and no whole-trip cancellation endpoint.
+Use M16A collection, M17 whole-booking cancellation and M18A report endpoints.
+POST booking is not generally safe to replay after an uncertain response: check
+history first. Successful payment/cancellation use their documented idempotency.
+
 BUSGO – REST API CONTRACT v1
 1. API Overview
 Base URL:
@@ -821,23 +835,8 @@ Một BookingItem/ghế có đúng một ticket. Nếu passengerName của item 
 Frontend render QR từ `qrData`; backend không tạo QR image hoặc PDF trong M9.
 
 40. Operator Dashboard
-GET /operator/dashboard
-Roles:
-OPERATOR_ADMIN
-Response:
-{
-  "data": {
-    "tripsToday": 12,
-    "bookingsToday": 45,
-    "ticketsSoldToday": 57,
-    "revenueToday": 24500000,
-    "occupancyRate": 72.4,
-
-    "recentBookings": [
-    ]
-  }
-}
-Dữ liệu phải scope theo operator của current user.
+UI composition, not GET /operator/dashboard: operator trips/occupancy/bookings,
+M18A /operator/reports/summary and M18C /operator/fleet/readiness.
 
 41. Operator Bus Types
 GET /operator/bus-types
@@ -1110,30 +1109,11 @@ phone
 GET /operator/bookings/{bookingId}
 Chỉ booking thuộc operator hiện tại.
 
-61. Staff Confirm Booking
-POST /operator/bookings/{bookingId}/confirm
-Dùng cho CASH/PENDING booking.
-Backend:
-PENDING → CONFIRMED
-và seat:
-HELD → BOOKED
-nếu booking flow yêu cầu.
-
-62. Confirm Cash Payment
-POST /operator/bookings/{bookingId}/payment/confirm
-{
-  "note": "Paid at ticket counter"
-}
-Payment:
-PENDING → PAID
-
-63. Staff Cancel Booking
-POST /operator/bookings/{bookingId}/cancel
-{
-  "reason": "Trip cancelled by operator"
-}
-Staff cancellation không nhất thiết áp dụng rule 6 giờ như CUSTOMER.
-Phải release seat inventory.
+61–63. Assisted booking, collection and cancellation
+See M16A/M17 below. POST /operator/bookings creates a PENDING reservation with
+BOOKED inventory. POST /operator/bookings/{id}/payments records mock collection.
+POST /operator/bookings/{id}/cancel accepts {note?}; OPERATOR_ADMIN only.
+No staff mutation or separate booking-confirm endpoint is implemented.
 
 64. Customers
 GET /operator/customers
@@ -1174,55 +1154,11 @@ PATCH /operator/staff/{staffId}
 }
 Không hard delete.
 
-67. Reports – Revenue
-GET /operator/reports/revenue
-Parameters:
-from
-to
-groupBy
-groupBy:
-DAY
-MONTH
-ROUTE
-Example:
-GET /api/v1/operator/reports/revenue?from=2026-09-01&to=2026-09-30&groupBy=DAY
+67–69. Management reports
+See M18A: /operator/reports/summary, /trips and /routes; fromDate/toDate,
+maximum 366 Vietnam business dates. Simulated collections/refunds/net, not revenue.
 
-68. Revenue Response
-{
-  "data": {
-    "totalRevenue": 125000000,
-
-    "series": [
-      {
-        "label": "2026-09-01",
-        "revenue": 5500000
-      },
-      {
-        "label": "2026-09-02",
-        "revenue": 7200000
-      }
-    ]
-  }
-}
-
-69. Occupancy Report
-GET /operator/reports/occupancy
-Parameters:
-from
-to
-routeId
-Response:
-{
-  "data": [
-    {
-      "tripId": 101,
-      "route": "Đắk Lắk - Hà Nội",
-      "occupancyRate": 72.4
-    }
-  ]
-}
-
-70. Trip Cancellation
+70. Trip Cancellation — HISTORICAL PROPOSAL, NOT IMPLEMENTED
 POST /operator/trips/{tripId}/cancel
 Request:
 {
