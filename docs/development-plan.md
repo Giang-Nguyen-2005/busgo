@@ -1608,3 +1608,16 @@ evidence and limitations: [verification](m18a-verification.md).
 CSV, calculated comparisons, customer directory M18B, actual revenue/accounting,
 forecasts/AI, cross-operator BI and materialized aggregates remain deferred.
 No commit or push for this milestone.
+
+## M18B — Operator customer management (2026-10-03)
+
+Implemented admin-only derived customer/contact directory, literal snapshot search,
+allowlisted stable sorting/pagination, customer summary and paginated booking history
+with payment/refund events, mixed attendance and links to existing booking detail.
+No new customer master, fake account, customer mutations or cross-operator profile.
+ACCOUNT groups by customer_id inside owned bookings; CONTACT is one accountless
+booking. Repeated phone values do not merge. Money follows M18A successful original
+payment/dedicated refund semantics. Staff support reads, marketing CRM and production
+scale profiling remain deferred. Design: m18b-customer-management.md. Verification:
+m18b-verification.md. User instruction overrides milestone commit guidance: no commit
+or push for M18B.

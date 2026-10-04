@@ -4,7 +4,7 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthProvider";
 import "../features/operator/operator.css";
 import { canManageOperator, operatorNavigation } from "../features/auth/access";
-const navigationIcons = { "": LayoutDashboard, "/trips": CalendarDays, "/bookings": Ticket, "/bus-types": Armchair, "/buses": BusFront, "/routes": Route, "/staff": Users };
+const navigationIcons = { "": LayoutDashboard, "/trips": CalendarDays, "/bookings": Ticket, "/customers": Users, "/bus-types": Armchair, "/buses": BusFront, "/routes": Route, "/staff": Users };
 function NavigationIcon({ path }: { path: string }) {
   const Icon = navigationIcons[path as keyof typeof navigationIcons] || BusFront;
   return <Icon size={18} aria-hidden="true" />;

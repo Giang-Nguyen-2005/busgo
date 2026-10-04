@@ -1917,3 +1917,35 @@ attributed to the departure cohort, not transaction flow during selected dates.
 All date bases are explicit in metadata/UI. Refund today on an older payment does
 not change historical gross. Exact definitions/exclusions/incomplete behavior:
 [M18A reporting design](m18a-management-reports.md).
+
+## M18B — Operator customer management
+
+Admin-only read endpoints, active operator membership required; SYSTEM_ADMIN
+(including mixed roles), staff, customer and anonymous callers are denied.
+
+- GET /api/v1/operator/customers?q=&customerType=&sort=&page=0&size=20
+  returns ApiResponse<PagedResponse<Summary>>.
+- GET /api/v1/operator/customers/{customerKey}?page=0&size=20
+  returns ApiResponse<{summary,bookings:PagedResponse<BookingHistory>}>.
+
+Keys are ACCOUNT:{customer_id} or CONTACT:{booking_id}; URL-encode them. Account
+grouping includes only this operator's bookings; each accountless booking is a
+separate OFFLINE_CONTACT even with repeated phone/email. No user profile fields.
+Summary: customerKey/customerType/displayName/phone/email/latestBookingAt/
+latestJourney, total/confirmed/cancelled/web/phone booking counts, boardedJourneys,
+attendance {boarded,noShow,checkedIn,unrecorded}, money
+{grossMockPaid,mockRefunds,netMockPaid}. Contact display uses latest owned snapshot.
+
+History includes booking ID/code/source/contact snapshots, routeName/pickup/dropoff/
+seats, bookingStatus/paymentMethod/paymentStatus, validTickets/voidTickets,
+attendance/money, cancellationReason/cancelledAt/createdAt, payments
+[{id,method,status,amount,paidAt,createdAt}], refunds [{id,amount,reason,refundedAt}].
+Timestamps carry UTC offset. All transactions are simulated. Boarding counts refer
+to booked items and never verify that the account holder/contact travelled.
+
+Search literal case-normalized substring name/phone/email/code, max 150 chars;
+historical matches preserve complete owned aggregates. Type ACCOUNT/OFFLINE_CONTACT;
+sort LATEST (default desc), NAME (asc), BOOKINGS/MOCK_PAID (desc), stable key ties.
+Page 0..100000; size 1..100, default 20. Invalid filters/keys 400; owned contact
+absence/foreign keys 404. No writes or operatorId filter. Details:
+[M18B design](m18b-customer-management.md).
