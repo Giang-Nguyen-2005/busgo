@@ -16,6 +16,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class FoundationTest extends JwtTestSupport {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.fleet.MaintenanceService maintenance;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.fleet.FleetMaintenanceGuard fleetGuard;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.reporting.ReportRepository reports;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.booking.CancellationService cancellations;
     @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.booking.PaymentExpiryJob paymentExpiry;

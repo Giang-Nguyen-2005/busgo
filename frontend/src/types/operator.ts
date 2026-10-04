@@ -31,6 +31,7 @@ export interface BusResponse {
   licensePlate: string;
   status: BusStatus;
   busType: BusTypeSummary;
+  readiness?: import('./fleet').FleetReadiness;
 }
 export interface CreateBusRequest {
   licensePlate: string;

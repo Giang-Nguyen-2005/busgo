@@ -42,7 +42,7 @@ public class TripService {
         this.aggregateCreator = aggregateCreator;
     }
 
-    @Transactional
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public TripSummaryResponse create(CurrentUser user, CreateTripRequest request) {
         var operator = context.requireAdminOperator(user);
         LocalDateTime departure = utc(request.departureTime());

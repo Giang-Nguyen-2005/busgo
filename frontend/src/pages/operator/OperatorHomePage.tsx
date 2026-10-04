@@ -11,6 +11,7 @@ import { departureClock, dispatchOrder, overdue, vietnamToday } from "../../feat
 import type { TripSummaryResponse } from "../../types/operator";
 import { dateTime } from "../../utils/format";
 import { ManagementOverview } from "../../features/operator/Reports";
+import { FleetDashboardWarnings } from "../../features/operator/FleetMaintenance";
 
 function TripShortcuts({ id }: { id: number }) {
   return <nav className="dispatch-shortcuts" aria-label="Công cụ chuyến xe">
@@ -45,6 +46,7 @@ export function OperatorHomePage() {
   return <div className="operator-dashboard"><OperatorPageHeader title="Điều hành"><Link className="button secondary" to="/operator/bookings">Tra cứu đặt vé</Link></OperatorPageHeader>
     <p className="muted">Ngày vận hành · {today} · Giờ Việt Nam</p><RefreshState query={query} />
     {manage && <ManagementOverview />}
+    {manage && <FleetDashboardWarnings />}
     <OperationsQueryState query={query}>{trips => {
       const ordered = dispatchOrder(trips);
       const upcoming = ordered.filter(t => t.status === "SCHEDULED" && Date.parse(t.departureTime) >= Date.now()).sort((a,b) => Date.parse(a.departureTime)-Date.parse(b.departureTime))[0];

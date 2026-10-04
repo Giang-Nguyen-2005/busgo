@@ -1,0 +1,8 @@
+import type { BusStatus } from './operator';
+export type MaintenanceStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type MaintenanceType = 'PERIODIC_SERVICE' | 'OIL_CHANGE' | 'TIRE' | 'BRAKE' | 'ELECTRICAL' | 'ENGINE' | 'AIR_CONDITIONING' | 'INSPECTION' | 'REPAIR' | 'OTHER';
+export interface AssignedTrip { id:number; route:string; departureTime:string; estimatedArrivalTime:string; status:string }
+export interface FleetReadiness { operationalReady:boolean; status:BusStatus; maintenanceState:string; activeMaintenanceId:number|null; nextMaintenanceDate:string|null; nextMaintenanceType:MaintenanceType|null; nextDueDate:string|null; nextAssignedTrip:AssignedTrip|null; warnings:string[] }
+export interface Maintenance { id:number; busId:number; licensePlate:string; maintenanceType:MaintenanceType; status:MaintenanceStatus; title:string; note:string|null; scheduledStart:string; scheduledEnd:string; startedAt:string|null; completedAt:string|null; cancelledAt:string|null; odometerKm:number|null; nextDueDate:string|null; nextDueOdometerKm:number|null; completionNote:string|null; cancellationReason:string|null; createdBy:number; completedBy:number|null; cancelledBy:number|null; createdAt:string; updatedAt:string }
+export interface StatusHistory { id:number; previousStatus:BusStatus; newStatus:BusStatus; reasonCode:string; maintenanceId:number|null; changedBy:number; changedAt:string }
+export interface FleetWarnings { availableBuses:number; maintenanceBuses:number; inactiveBuses:number; maintenanceDueSoon:number; overdueMaintenance:number; upcomingNotReady:AssignedTrip[] }

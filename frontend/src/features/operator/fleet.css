@@ -1,0 +1,19 @@
+.fleet-readiness { font-size:.875rem; overflow-wrap:anywhere; }
+.fleet-readiness p { margin:.35rem 0; }
+.fleet-mobile { display:none; }
+.fleet-tabs { display:flex; gap:.5rem; flex-wrap:wrap; margin:1rem 0; }
+.fleet-tabs [aria-pressed=true] { background:#0f766e; color:white; }
+.fleet-form { margin:1rem 0; max-width:42rem; }
+.fleet-form fieldset,.fleet-actions fieldset { display:grid; gap:.75rem; min-width:0; }
+.fleet-form textarea,.fleet-actions textarea { width:100%; min-height:5rem; }
+.maintenance-list { display:grid; gap:.75rem; margin:1rem 0; }
+.maintenance-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,22rem); gap:1rem; overflow-wrap:anywhere; }
+.fleet-actions { display:flex; gap:.5rem; flex-wrap:wrap; align-content:start; }
+.fleet-actions form { width:100%; }
+@media(max-width:640px) {
+ .fleet-desktop { display:none; }
+ .fleet-mobile { display:grid; gap:.75rem; }
+ .maintenance-row { grid-template-columns:minmax(0,1fr); }
+ .fleet-tabs button { flex:1 1 40%; }
+ .fleet-form input,.fleet-form select,.fleet-actions input { width:100%; min-width:0; }
+}
