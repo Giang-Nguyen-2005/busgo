@@ -1,9 +1,11 @@
+import { domainErrorMessage } from "../../api/errors";
+import { statusLabels } from "../../utils/status";
 import type { BookingFilters, TripStatus, TripOccupancy } from "../../types/operator";
 
 export const bookingStatuses = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"] as const;
 export const paymentStatuses = ["PENDING", "PAID", "FAILED", "REFUNDED"] as const;
 const labels: Record<string, string> = {
-  PENDING: "Chờ xác nhận", CONFIRMED: "Đã xác nhận", CANCELLED: "Đã hủy", COMPLETED: "Hoàn thành",
+  ...statusLabels.booking,
   AVAILABLE: "Còn trống", HELD: "Đang giữ chỗ", BOOKED: "Đã đặt", BLOCKED: "Đã khóa", MISSING: "Chưa có dữ liệu", PAID: "Đã thanh toán", FAILED: "Thất bại", REFUNDED: "Đã hoàn tiền",
 };
 export const operationLabel = (status: string) => labels[status] || "Chưa xác định";
@@ -44,15 +46,19 @@ export function nextTripAction(status: TripStatus) {
   };
   return status === "COMPLETED" || status === "CANCELLED" ? null : actions[status];
 }
-export function operationErrorMessage(code?: string) {
-  const messages: Record<string, string> = {
-    CREW_NOT_READY: "Chưa sẵn sàng đón khách. Kiểm tra xe và phân công ít nhất một tài xế hợp lệ.",
-    PICKUP_UNRESOLVED: "Cần ghi nhận lên xe hoặc vắng mặt cho mọi hành khách và đóng các điểm đón trước khi tiếp tục.",
-    ACCESS_DENIED: "Tài khoản không có quyền truy cập hoặc nhà xe đã ngừng hoạt động.",
-    INVALID_TRIP_STATUS_TRANSITION: "Trạng thái chuyến đã thay đổi hoặc thao tác không còn hợp lệ. Vui lòng kiểm tra trạng thái mới nhất.",
-    PAYMENT_WINDOW_CLOSED: "Đã hết thời gian xác nhận thanh toán cho chuyến này.",
-    TRIP_NOT_FOUND: "Không tìm thấy chuyến xe trong nhà xe của bạn.",
-    BOOKING_NOT_FOUND: "Không tìm thấy đặt vé trong nhà xe của bạn.",
-  };
-  return messages[code || ""] || "Không thể hoàn tất yêu cầu. Vui lòng thử lại.";
+export const operationErrorMessage = domainErrorMessage;
+
+export function operationEventLabel(action: string) {
+  if (action.startsWith("TRIP_")) return statusLabels.trip[action.slice(5) as keyof typeof statusLabels.trip] || "Cập nhật chuyến";
+  const labels: Record<string, string> = { CREW_ASSIGNED: "Phân công nhân sự", CREW_RELEASED: "Gỡ phân công", CHECK_IN: "Check-in", BOARD: "Lên xe", NO_SHOW: "Vắng mặt", PICKUP_CLOSED: "Đóng điểm đón" };
+  return labels[action] || "Cập nhật vận hành";
+}
+export function operationEntityLabel(entity: string) {
+  const labels: Record<string, string> = { CREW: "Phân công", TICKET: "Vé", BOOKING_ITEM: "Chỗ đặt", STOP: "Điểm đón", TRIP: "Chuyến" };
+  return labels[entity] || "Bản ghi";
+}
+export function operationHistoryReason(action: string, reason: string | null) {
+  // Lifecycle reasons are server-generated enum transitions; user-entered notes stay intact.
+  if (!reason) return "";
+  return action.startsWith("TRIP_") ? reason.split(" -> ").map(value => statusLabels.trip[value as keyof typeof statusLabels.trip] || "Chưa xác định").join(" → ") : reason;
 }

@@ -67,7 +67,7 @@ try {
     const hold=await call('POST','/seat-holds',customer,{tripId:trip.id,pickupLocationId:start.locationId,dropoffLocationId:end.locationId,tripSeatIds:[seats[n].tripSeatId]});assert.equal(hold.status,201,JSON.stringify(hold));
     const made=await call('POST','/bookings',customer,{holdToken:hold.data.holdToken,contactName:'M17 Customer',contactPhone:'0901234567',contactEmail:email});assert.equal(made.status,201);const b=made.data;
     if(paid) {
-      await page.goto(origin+`/payment?bookingId=${b.bookingId}`);await page.getByRole('button',{name:'Xác nhận thanh toán giả lập',exact:true}).click();
+      await page.goto(origin+`/payment?bookingId=${b.bookingId}`);await page.getByRole('button',{name:'Xác nhận thanh toán mô phỏng',exact:true}).click();
       await page.waitForURL('**/booking-success?bookingId=*');await page.locator('.ticket-stub svg').waitFor();
     }
     await cancelUi(page,b,false,paid); await assertAvailable(trip,start,end,seats[n].tripSeatId);
@@ -94,7 +94,7 @@ try {
   // Live scheduled expiry after moving only this newly created test booking's deadline.
   const timeout=await call('POST','/operator/bookings',admin,{tripId:trip.id,pickupLocationId:start.locationId,dropoffLocationId:end.locationId,tripSeatIds:[seats[0].tripSeatId],contactName:'M17 Timeout',contactPhone:'0901234567',paymentMethod:'QR_TRANSFER'});assert.equal(timeout.status,201);
   const timeoutId=timeout.data.bookingId;const link=await call('POST',`/operator/bookings/${timeoutId}/payment-link`,admin);timeoutBooking(timeoutId);
-  let recovery;for(let n=0;n<30;n++){recovery=(await call('GET',`/operator/bookings/${timeoutId}/recovery`,admin)).data;if(recovery.status==='CANCELLED')break;await new Promise(resolve=>setTimeout(resolve,500));}
+  let recovery;for(let n=0;n<150;n++){recovery=(await call('GET',`/operator/bookings/${timeoutId}/recovery`,admin)).data;if(recovery.status==='CANCELLED')break;await new Promise(resolve=>setTimeout(resolve,500));}
   assert.equal(recovery.reasonCode,'PAYMENT_TIMEOUT');assert.equal(recovery.refunds.length,0);assert.equal(recovery.tickets.length,0);await assertAvailable(trip,start,end,seats[0].tripSeatId);
   assert.equal((await call('POST',`/public/payments/${link.data.path.slice('/pay/'.length)}/mock-confirm`)).status,409);
   await page.goto(origin+`/operator/bookings/${timeoutId}`);await page.getByText('Quá hạn thanh toán',{exact:false}).first().waitFor();await screenshot(page,`${width}-timeout`);

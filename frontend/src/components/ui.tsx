@@ -1,3 +1,5 @@
+import { DomainStatusBadge } from "./DomainStatusBadge";
+import { statusLabels } from "../utils/status";
 import { useId, useState } from "react";
 import { fallbackBusAlt } from "../features/customer/presentation";
 import type { InputHTMLAttributes, ReactNode } from "react";
@@ -75,14 +77,9 @@ export function PasswordField(props: Parameters<typeof Field>[0]) {
  const [visible, setVisible] = useState(false);
  return <div className="password-control"><Field {...props} type={visible ? "text" : "password"} /><button type="button" className="secondary" aria-label={(visible ? "Ẩn " : "Hiện ") + props.label.toLowerCase()} aria-pressed={visible} onClick={() => setVisible(!visible)}>{visible ? "Ẩn" : "Hiện"}</button></div>;
 }
-export const statuses: Record<BookingStatus, string> = {
-  PENDING: "Chờ thanh toán",
-  CONFIRMED: "Đã xác nhận",
-  CANCELLED: "Đã hủy",
-  COMPLETED: "Hoàn thành",
-};
+export const statuses: Record<BookingStatus, string> = statusLabels.booking;
 export function StatusBadge({ status }: { status: BookingStatus }) {
-  return <span className={`badge status-${status}`}>{statuses[status]}</span>;
+  return <DomainStatusBadge domain="booking" status={status} />;
 }
 export function Steps({ current }: { current: number }) {
   return (

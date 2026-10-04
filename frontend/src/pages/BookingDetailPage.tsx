@@ -20,6 +20,6 @@ export function BookingDetailPage() {
  <section className="detail-section"><h2>Chỗ và khách trên chỗ</h2>{b.seats.map(seat => <div className="detail-row" key={seat.tripSeatId}><span><b>Chỗ {seat.seatCode}</b> · {passengerLabel(seat.passengerName)}</span><span>{money(seat.unitPrice)}</span></div>)}</section>
  <section className="detail-section"><h2>Liên hệ đặt vé</h2><div className="contact-details"><strong>{b.contact.name}</strong><span>{b.contact.phone}</span><span>{b.contact.email}</span></div><p className="fine-print">Thông tin liên hệ không thay thế tên khách trên từng chỗ. Tên trên vé được hiển thị trong vé điện tử do hệ thống phát hành.</p></section>
  <PriceSummary seats={b.seats.map(s => s.seatCode)} unit={b.pricePerSeat} total={b.totalAmount} />
- {b.status === "PENDING" && <p className="notice info">Đặt vé đang chờ thanh toán giả lập. Khả năng thanh toán được hệ thống kiểm tra khi xác nhận.</p>}
+ {b.status === "PENDING" && <p className="notice info">Đặt vé đang chờ thanh toán mô phỏng. Khả năng thanh toán được hệ thống kiểm tra khi xác nhận.</p>}
  <p className="fine-print">Đặt lúc {dateTime(b.createdAt)}</p></div><CancellationSection bookingId={b.bookingId} bookingCode={b.bookingCode} route={b.route.name + ' · Chuyến #' + b.tripId} pickup={b.pickup.name + ' · ' + dateTime(b.pickup.time)} seats={b.seats.map(s=>s.seatCode)} contact={b.contact.name} amount={b.totalAmount} /></>;
 }

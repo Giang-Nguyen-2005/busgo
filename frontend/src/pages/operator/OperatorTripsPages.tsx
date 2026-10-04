@@ -27,7 +27,7 @@ import {
 } from "../../features/operator/shared";
 import { TripTimeline } from "../../features/operator/TripTimeline";
 
-import { dateTime } from "../../utils/format";
+import { date as formatDate, dateTime } from "../../utils/format";
 
 import { useAuth } from "../../features/auth/AuthProvider";
 import { canManageOperator } from "../../features/auth/access";
@@ -108,6 +108,7 @@ export function OperatorTripsPage() {
         </label>
         <button className="secondary" onClick={reset}>Xóa bộ lọc</button>
       </div>
+      <nav className="quick-filters" aria-label="Lọc nhanh chuyến">{[["", "Tất cả"], ["SCHEDULED", "Đã lên lịch"], ["BOARDING", "Đang đón khách"], ["DEPARTED", "Đang chạy"]].map(([value, label]) => <button key={value} className="secondary" aria-pressed={(status || "") === value} onClick={() => set("status", value)}>{label}</button>)}</nav>
       <p className="muted">
         Ngày theo lịch Việt Nam (UTC+7). Giờ hiển thị là giờ dự kiến.
       </p>
@@ -122,10 +123,10 @@ export function OperatorTripsPage() {
         {(result) => (
           <>
             {!result.data.length ? <p className="notice">Không có chuyến phù hợp với bộ lọc.</p> : <div className="operator-trip-rows">{result.data.map(t => <article className="operator-trip-row" key={t.id}>
-              <div><strong className="operator-departure">{departureClock(t.departureTime)}</strong><small>{dateTime(t.departureTime)}</small></div>
-              <div><Link to={"/operator/trips/" + t.id}><strong>{t.route.name}</strong></Link><p>{t.bus.licensePlate} · {t.bus.busTypeName}</p><small className="muted">Chuyến #{t.id}</small></div>
+              <div><strong className="operator-departure">{departureClock(t.departureTime)}</strong><small>{formatDate(t.departureTime)}</small></div>
+              <div><Link to={"/operator/trips/" + t.id}><strong>{t.route.name}</strong></Link><p>{t.bus.licensePlate} · {t.bus.busTypeName} · {t.seatCount} ghế</p><small className="muted">Chuyến #{t.id}</small></div>
               <div><OperatorStatusBadge status={t.status} />{overdue(t) && <p className="operator-overdue">Quá giờ dự kiến</p>}</div>
-              <Link className="button secondary" to={"/operator/trips/" + t.id}>Xem chuyến</Link>
+              <Link className="button secondary" to={"/operator/trips/" + t.id}>Mở chuyến</Link>
             </article>)}</div>}
             <Pagination pagination={result.pagination} set={set} />
           </>

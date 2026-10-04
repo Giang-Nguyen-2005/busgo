@@ -25,7 +25,8 @@ export function TripWorkspace() {
       <Link to="/operator/trips">← Chuyến xe</Link>
       <div className="operator-heading"><div><strong className="operator-departure">{departureClock(trip.departureTime)}</strong><h1>{trip.route.name}</h1>
         <p>{dateTime(trip.departureTime)} · Giờ Việt Nam</p><p><strong>{trip.bus.licensePlate}</strong> · {trip.bus.busTypeName} · <OperatorStatusBadge status={trip.status} /></p></div>
-        <div>{canManageOperator(auth.user?.roles) && trip.status === "SCHEDULED" && <Link className="button" to={`/operator/bookings/new?tripId=${id}`}>Đặt chỗ cho khách</Link>}<TripStatusAction key={id} id={id} status={trip.status} crewReady={crew.data?.ready} /></div></div>
+        <div>{canManageOperator(auth.user?.roles) && trip.status === "SCHEDULED" && <Link className="button secondary" to={`/operator/bookings/new?tripId=${id}`}>Đặt chỗ cho khách</Link>}<TripStatusAction key={id} id={id} status={trip.status} crewReady={crew.data?.ready} /></div></div>
+      {crew.data && !crew.isError && <p className="trip-readiness">{crew.data.ready ? "Nhân sự đã sẵn sàng" : crew.data.warning || "Nhân sự chưa sẵn sàng"}</p>}
       {occupancy.data && !occupancy.isError && <p className="operator-workspace-counts"><strong>{occupancy.data.wholeTripAvailableSeatCount} ghế trống suốt chuyến</strong> · {occupancy.data.seats.filter(s => s.segments.some(c => !c.missing && c.status === "BOOKED")).length} ghế có đặt vé · {occupancy.data.seatCount} ghế{!occupancy.data.complete && " · Tồn kho chưa đầy đủ"}</p>}
       <RefreshState query={query} onRefresh={() => { void cache.invalidateQueries({ queryKey: ["operator", "trips", id] }); }} />
       <nav className="operator-tabs" aria-label="Không gian chuyến xe">{tripTabs.map(([path, label]) => <NavLink end key={path} to={`/operator/trips/${id}${path ? `/${path}` : ""}`}>{label}</NavLink>)}</nav>

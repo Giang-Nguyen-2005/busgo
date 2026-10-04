@@ -1,3 +1,4 @@
+import { statusPresentation } from "./status";
 export const money = (value: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
     value,
@@ -14,18 +15,12 @@ export const date = (value: string) => {
     year: "numeric",
   }).format(parsed);
 };
-export const dateTime = (value: string) => `${time(value)} • ${date(value)}`;
+export const dateTime = (value: string) => `${date(value)} ${time(value)}`;
 export const duration = (minutes: number) =>
   `${Math.floor(minutes / 60)} giờ${minutes % 60 ? ` ${minutes % 60} phút` : ""}`;
 export const paymentMethodLabel = (value: string) =>
-  ({ MOCK_QR: "QR giả lập", MOCK_ONLINE: "Thanh toán trực tuyến mô phỏng", PAY_ON_BOARD: "Thu tiền khi khách lên xe", QR_TRANSFER: "QR / link thanh toán mô phỏng" })[value] || "Phương thức khác";
-export const paymentStatusLabel = (value: string) =>
-  ({
-    PAID: "Đã thanh toán",
-    PENDING: "Chờ thanh toán",
-    REFUNDED: "Hoàn tiền mô phỏng",
-    FAILED: "Thanh toán chưa thành công",
-  })[value] || "Chưa xác định";
+  ({ MOCK_QR: "QR mô phỏng", MOCK_ONLINE: "Thanh toán trực tuyến mô phỏng", PAY_ON_BOARD: "Thu tiền khi khách lên xe", QR_TRANSFER: "QR / link thanh toán mô phỏng" })[value] || "Phương thức khác";
+export const paymentStatusLabel = (value: string) => statusPresentation("payment", value).label;
 export const time = (value: string) =>
   new Intl.DateTimeFormat("vi-VN", {
     timeZone: "Asia/Ho_Chi_Minh",

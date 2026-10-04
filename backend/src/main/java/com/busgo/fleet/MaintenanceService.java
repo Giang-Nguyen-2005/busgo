@@ -122,20 +122,45 @@ public class MaintenanceService {
         db.update("UPDATE bus_maintenance_records SET status='CANCELLED',cancelled_at=?,cancelled_by=?,cancellation_reason=?,updated_at=? WHERE id=?",JpaJdbcTime.parameter(now()),actor.id(),input.reason(),JpaJdbcTime.parameter(now()),id);
         return record(operator,id,false);
     }
-    public Readiness readiness(long operator,Bus bus) {
-        var records=db.query(SELECT+" AND m.bus_id=? AND (m.status IN ('SCHEDULED','IN_PROGRESS') OR m.id=(SELECT latest.id FROM bus_maintenance_records latest WHERE latest.bus_id=m.bus_id AND latest.maintenance_type=m.maintenance_type AND latest.status='COMPLETED' ORDER BY latest.completed_at DESC,latest.id DESC LIMIT 1)) ORDER BY m.scheduled_start,m.id",this::row,operator,bus.getId());
+    private record Planning(Map<Long,List<Maintenance>> records, Map<Long,List<AssignedTrip>> trips) {}
+    // Two scoped reads per page. Mutation guards keep their existing locks and live SQL checks.
+    private Planning planning(long operator,List<Bus> page) {
+        var records=new HashMap<Long,List<Maintenance>>();
+        var trips=new HashMap<Long,List<AssignedTrip>>();
+        if(page.isEmpty()) return new Planning(records,trips);
+        if(page.size()>100) throw new IllegalArgumentException("Fleet planning page exceeds 100 buses");
+        String marks=String.join(",",Collections.nCopies(page.size(),"?"));
+        var args=new ArrayList<Object>();args.add(operator);page.forEach(b->args.add(b.getId()));
+        for(var m:db.query(SELECT+" AND m.bus_id IN ("+marks+") AND (m.status IN ('SCHEDULED','IN_PROGRESS') OR m.id=(SELECT latest.id FROM bus_maintenance_records latest WHERE latest.bus_id=m.bus_id AND latest.maintenance_type=m.maintenance_type AND latest.status='COMPLETED' ORDER BY latest.completed_at DESC,latest.id DESC LIMIT 1)) ORDER BY m.scheduled_start,m.id",this::row,args.toArray()))
+            records.computeIfAbsent(m.busId(),id->new ArrayList<>()).add(m);
+        db.query("SELECT t.bus_id,t.id,r.name,t.departure_time,t.estimated_arrival_time,t.status FROM trips t JOIN operator_routes o ON o.id=t.operator_route_id JOIN routes r ON r.id=o.route_id WHERE o.operator_id=? AND t.bus_id IN ("+marks+") AND t.status IN ('SCHEDULED','BOARDING','DEPARTED') ORDER BY t.departure_time,t.id",(org.springframework.jdbc.core.RowCallbackHandler)r->{
+            var t=new AssignedTrip(r.getLong("id"),r.getString("name"),time(r,"departure_time"),time(r,"estimated_arrival_time"),r.getString("status"));
+            trips.computeIfAbsent(r.getLong("bus_id"),id->new ArrayList<>()).add(t);
+        },args.toArray());
+        return new Planning(records,trips);
+    }
+    private boolean conflicts(List<Maintenance> records,AssignedTrip trip) {
+        return records.stream().anyMatch(m->m.status()==Status.IN_PROGRESS || m.status()==Status.SCHEDULED &&
+            MaintenanceRules.overlaps(m.scheduledStart().toLocalDateTime(),m.scheduledEnd().toLocalDateTime(),trip.departureTime().toLocalDateTime(),trip.estimatedArrivalTime().toLocalDateTime()));
+    }
+    public Map<Long,Readiness> readiness(long operator,List<Bus> page) {
+        var plan=planning(operator,page);var result=new HashMap<Long,Readiness>();
+        for(var bus:page) result.put(bus.getId(),readiness(bus,plan.records().getOrDefault(bus.getId(),List.of()),plan.trips().getOrDefault(bus.getId(),List.of())));
+        return result;
+    }
+    public Readiness readiness(long operator,Bus bus) { return readiness(operator,List.of(bus)).get(bus.getId()); }
+    private Readiness readiness(Bus bus,List<Maintenance> records,List<AssignedTrip> assigned) {
         var active=records.stream().filter(m->m.status()==Status.IN_PROGRESS).findFirst().orElse(null);
         var next=records.stream().filter(m->m.status()==Status.SCHEDULED).findFirst().orElse(null);
         // Only a later completed record of the same maintenance type supersedes its due metadata.
         var dueDates=records.stream().filter(m->m.status()==Status.COMPLETED).map(Maintenance::nextDueDate).filter(Objects::nonNull).toList();
         LocalDate due=dueDates.stream().min(Comparator.naturalOrder()).orElse(null);
-        var assigned=trips(operator,bus.getId()).stream().filter(t->Set.of("SCHEDULED","BOARDING","DEPARTED").contains(t.status())).sorted(Comparator.comparing(AssignedTrip::departureTime)).toList();
         var warnings=new ArrayList<String>();
         if(active!=null || bus.getStatus()==BusStatus.MAINTENANCE) warnings.add("Đang bảo trì");
         if(bus.getStatus()==BusStatus.INACTIVE) warnings.add("Ngừng hoạt động");
         if(next!=null && !next.scheduledStart().toLocalDateTime().isBefore(now()) && !next.scheduledStart().toLocalDateTime().isAfter(now().plusDays(7)) || dueDates.stream().anyMatch(d->MaintenanceRules.dueSoon(d,today()))) warnings.add("Bảo trì sắp tới");
         if(MaintenanceRules.overdue(due,today())) warnings.add("Bảo trì quá hạn");
-        if(assigned.stream().anyMatch(t->!guard.warning(bus.getId(),t.departureTime().toLocalDateTime(),t.estimatedArrivalTime().toLocalDateTime()).isEmpty())) warnings.add("Trùng kế hoạch chuyến");
+        if(assigned.stream().anyMatch(t->conflicts(records,t))) warnings.add("Trùng kế hoạch chuyến");
         boolean plannedNow=records.stream().anyMatch(m->m.status()==Status.SCHEDULED && !now().isBefore(m.scheduledStart().toLocalDateTime()) && now().isBefore(m.scheduledEnd().toLocalDateTime()));
         if(plannedNow) warnings.add("Trong lịch bảo trì");
         boolean ready=MaintenanceRules.ready(bus.getStatus(),bus.getBusType().getStatus()==com.busgo.common.entity.ActiveStatus.ACTIVE,active!=null,plannedNow);
@@ -153,10 +178,13 @@ public class MaintenanceService {
         int page=0;org.springframework.data.domain.Page<Bus> rows;
         do {
             rows=buses.search(operator,null,null,"",org.springframework.data.domain.PageRequest.of(page++,100));
+            var plan=planning(operator,rows.getContent());
             for(Bus bus:rows) {
+                var records=plan.records().getOrDefault(bus.getId(),List.of());
+                var assigned=plan.trips().getOrDefault(bus.getId(),List.of());
                 switch(bus.getStatus()) {case AVAILABLE -> available++;case MAINTENANCE -> maintenance++;case INACTIVE -> inactive++;}
-                var r=readiness(operator,bus);if(r.warnings().contains("Bảo trì sắp tới")) soon++;if(r.warnings().contains("Bảo trì quá hạn")) overdue++;
-                for(var t:trips(operator,bus.getId())) if(Set.of("SCHEDULED","BOARDING").contains(t.status()) && !t.departureTime().toLocalDateTime().isBefore(now()) && !t.departureTime().toLocalDateTime().isAfter(now().plusDays(7)) && (!r.operationalReady() || !guard.warning(bus.getId(),t.departureTime().toLocalDateTime(),t.estimatedArrivalTime().toLocalDateTime()).isEmpty())) notReady.add(t);
+                var r=readiness(bus,records,assigned);if(r.warnings().contains("Bảo trì sắp tới")) soon++;if(r.warnings().contains("Bảo trì quá hạn")) overdue++;
+                for(var t:assigned) if(Set.of("SCHEDULED","BOARDING").contains(t.status()) && !t.departureTime().toLocalDateTime().isBefore(now()) && !t.departureTime().toLocalDateTime().isAfter(now().plusDays(7)) && (!r.operationalReady() || conflicts(records,t))) notReady.add(t);
             }
         } while(rows.hasNext());
         notReady.sort(Comparator.comparing(AssignedTrip::departureTime));

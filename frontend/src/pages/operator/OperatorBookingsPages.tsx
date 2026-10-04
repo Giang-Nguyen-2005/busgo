@@ -7,7 +7,7 @@ import { canManageOperator } from "../../features/auth/access";
 import { ErrorState } from "../../components/ui";
 import { useEffect, useState } from "react";
 import { RefreshState } from "../../features/operator/RefreshState";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { Field } from "../../components/ui";
 import { useOperatorBooking, useOperatorBookings } from "../../features/operator/queries";
 import { OperationsBadge, OperationsQueryState } from "../../features/operator/OperationsShared";
@@ -76,9 +76,10 @@ export function BookingDetailContent({ booking: b }: { booking: OperatorBookingD
 
 export function OperatorBookingDetailPage() {
   const query = useOperatorBooking(Number(useParams().bookingId));
+  const created = useLocation().state?.reservationCreated;
   return <><OperatorPageHeader title="Chi tiết đặt vé"><Link to="/operator/bookings">Danh sách đặt vé</Link></OperatorPageHeader>
     <RefreshState query={query} />
-    <OperationsQueryState query={query}>{b => <><BookingDetailContent booking={b} /><AssistedBookingActions booking={b} /><CancellationSection operator bookingId={b.bookingId} bookingCode={b.bookingCode} route={b.route.name + ' · Chuyến #' + b.trip.id} pickup={b.pickup.name + ' · ' + (b.pickup.time ? dateTime(b.pickup.time) : "Chưa có giờ đón")} seats={b.items.map(s=>s.seatCode)} contact={b.contact.name + ' · ' + b.contact.phone} amount={b.totalAmount} /></>}</OperationsQueryState></>;
+    <OperationsQueryState query={query}>{b => <>{created && b.status === "PENDING" && <div className="notice success" role="status">Đã tạo đặt vé {b.bookingCode} và giữ chỗ thành công. Chưa thanh toán không có nghĩa là giữ chỗ thất bại. Vé điện tử được cấp sau khi thu tiền mô phỏng.</div>}<BookingDetailContent booking={b} /><AssistedBookingActions booking={b} /><CancellationSection operator bookingId={b.bookingId} bookingCode={b.bookingCode} route={b.route.name + ' · Chuyến #' + b.trip.id} pickup={b.pickup.name + ' · ' + (b.pickup.time ? dateTime(b.pickup.time) : "Chưa có giờ đón")} seats={b.items.map(s=>s.seatCode)} contact={b.contact.name + ' · ' + b.contact.phone} amount={b.totalAmount} /></>}</OperationsQueryState></>;
 }
 
 export function AssistedBookingActions({ booking: b }: { booking: OperatorBookingDetail }) {
@@ -91,8 +92,8 @@ export function AssistedBookingActions({ booking: b }: { booking: OperatorBookin
   const record = useMutation({ mutationFn: () => operatorApi.recordPayment(b.bookingId, { method: b.paymentMethod, referenceNote: note.trim() || undefined }), onSuccess: () => { setReview(false); void cache.invalidateQueries({ queryKey: ["operator"] }); } });
   const issue = useMutation({ mutationFn: () => operatorApi.paymentLink(b.bookingId), onSuccess: result => { setLink(new URL(result.path, window.location.origin).href); setCopied(false); } });
   if (b.source !== "PHONE" || b.status === "CANCELLED" || !canManageOperator(auth.user?.roles)) return null;
-  return <section className="card assisted-actions"><h2>Thu tiền đặt vé</h2><p>{paymentMethodLabel(b.paymentMethod)} · {b.status === "CONFIRMED" ? "Đã thanh toán" : "Chưa thanh toán"}</p>
-    {b.status === "PENDING" && <><Field label="Ghi chú / tham chiếu (không bắt buộc)" maxLength={500} value={note} onChange={e => setNote(e.target.value)} />{review ? <><p>Xác nhận đã thu {money(b.totalAmount)} cho {b.bookingCode}. Thao tác sẽ cấp vé điện tử.</p><button disabled={record.isPending} onClick={() => record.mutate()}>Xác nhận đã thu tiền</button><button className="secondary" disabled={record.isPending} onClick={() => setReview(false)}>Quay lại</button></> : <button onClick={() => setReview(true)}>Ghi nhận đã thu tiền</button>}{record.isError && <ErrorState error={record.error} />}</>}
-    {b.paymentMethod === "QR_TRANSFER" && <><p>Gửi link thủ công qua Zalo hoặc kênh liên hệ của khách. Tạo link mới sẽ vô hiệu link cũ.</p><button className="secondary" disabled={issue.isPending} onClick={() => issue.mutate()}>{link ? "Tạo link mới" : "Tạo link thanh toán"}</button>{issue.isError && <ErrorState error={issue.error} />}{link && <><Field label="Link thanh toán" value={link} readOnly /><a href={link} target="_blank" rel="noreferrer">Mở trang thanh toán</a><button className="secondary" onClick={async () => { try { await navigator.clipboard.writeText(link); setCopied(true); } catch { setCopied(false); } }}>Copy link thanh toán</button><p role="status">{copied ? "Đã copy link. Gửi cho khách thủ công." : "Có thể chọn và sao chép link trong ô trên."}</p></>}</>}
+  return <section className="card assisted-actions"><h2>Thu tiền mô phỏng</h2><p className="muted">BusGo demo: không có giao dịch ngân hàng hoặc thu tiền thực tế.</p><p>{paymentMethodLabel(b.paymentMethod)} · {b.status === "CONFIRMED" ? "Đã thanh toán" : "Chưa thanh toán"}</p>
+    {b.status === "PENDING" && <><Field label="Ghi chú / tham chiếu (không bắt buộc)" maxLength={500} value={note} onChange={e => setNote(e.target.value)} />{review ? <><p>Xác nhận thu tiền mô phỏng {money(b.totalAmount)} cho {b.bookingCode}. Thao tác sẽ cấp vé điện tử.</p><button disabled={record.isPending} onClick={() => record.mutate()}>Xác nhận thu tiền mô phỏng</button><button className="secondary" disabled={record.isPending} onClick={() => setReview(false)}>Quay lại</button></> : <button onClick={() => setReview(true)}>Ghi nhận thu tiền mô phỏng</button>}{record.isError && <ErrorState error={record.error} />}</>}
+    {b.paymentMethod === "QR_TRANSFER" && <><p>Gửi link thủ công qua Zalo hoặc kênh liên hệ của khách. Tạo link mới sẽ vô hiệu link cũ.</p><button className="secondary" disabled={issue.isPending} onClick={() => issue.mutate()}>{link ? "Tạo link mới" : "Tạo link thanh toán"}</button>{issue.isError && <ErrorState error={issue.error} />}{link && <><Field label="Link thanh toán" value={link} readOnly /><a href={link} target="_blank" rel="noreferrer">Mở trang thanh toán</a><button className="secondary" onClick={async () => { try { await navigator.clipboard.writeText(link); setCopied(true); } catch { setCopied(false); } }}>Sao chép link thanh toán mô phỏng</button><p role="status">{copied ? "Đã sao chép link. Gửi cho khách thủ công." : "Có thể chọn và sao chép link trong ô trên."}</p></>}</>}
   </section>;
 }

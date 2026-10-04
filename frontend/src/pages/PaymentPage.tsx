@@ -60,8 +60,8 @@ export function PaymentPage() {
       ) : (
         <div className="checkout-layout">
           <section className="card payment-card">
-            <span className="badge">THANH TOÁN GIẢ LẬP</span><h2>{booking.data!.bookingCode}</h2><div className="payment-amount">{money(booking.data!.totalAmount)}</div><p className="notice info" role="status">{paymentPresentation(booking.data!.status, payment.isPending)}</p>
-            <h2>Thanh toán QR giả lập</h2>
+            <span className="badge">THANH TOÁN MÔ PHỎNG</span><h2>{booking.data!.bookingCode}</h2><div className="payment-amount">{money(booking.data!.totalAmount)}</div><p className="notice info" role="status">{paymentPresentation(booking.data!.status, payment.isPending)}</p>
+            <h2>Thanh toán QR mô phỏng</h2>
             {booking.data!.status === "PENDING" && booking.data!.recovery?.paymentDueAt && <p>Hạn thanh toán: {dateTime(booking.data!.recovery.paymentDueAt)}</p>}
             <p className="muted">Mã đặt vé {booking.data!.bookingCode}</p>
             {booking.data!.status === "PENDING" && <div className="mock-qr">
@@ -83,7 +83,7 @@ export function PaymentPage() {
               >
                 {payment.isPending
                   ? "Đang xác nhận…"
-                  : "Xác nhận thanh toán giả lập"}
+                  : "Xác nhận thanh toán mô phỏng"}
               </button>
             ) : booking.data!.status === "CONFIRMED" ? (
               <>

@@ -44,7 +44,7 @@ export function AuthPage({ register = false }: { register?: boolean }) {
         </p>
         <div>
           <Ticket />
-          <span>Vé điện tử ngay sau thanh toán giả lập</span>
+          <span>Vé điện tử ngay sau thanh toán mô phỏng</span>
         </div>
         <div>
           <ShieldCheck />
@@ -192,3 +192,5 @@ function RegisterForm() {
     </form>
   );
 }
+
+export function RegisterPage() { return <AuthPage register />; }

@@ -32,7 +32,11 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.config._sessionVersion !== getSessionVersion())
+      throw new axios.CanceledError("Session changed");
+    return response;
+  },
   async (error) => {
     const config = error.config;
     const session = getTokens();

@@ -1,8 +1,9 @@
+import { statusLabels } from "../../utils/status";
 import type { AdminOperatorFilters, CreateOperatorRequest } from "../../types/admin";
 import type { CreateOperatorStaffRequest, StaffFilters, UpdateOperatorStaffRequest } from "../../types/operator";
 export const activeStatuses = ["ACTIVE", "INACTIVE"] as const;
 export const staffRoles = ["OPERATOR_ADMIN", "OPERATOR_STAFF"] as const;
-export const managementLabel = (value: string) => ({ ACTIVE: "Hoạt động", INACTIVE: "Ngừng hoạt động", LOCKED: "Đã khóa", OPERATOR_ADMIN: "Quản trị viên nhà xe", OPERATOR_STAFF: "Nhân viên nhà xe" })[value] || "Chưa xác định";
+export const managementLabel = (value: string) => ({ ...statusLabels.user, OPERATOR_ADMIN: "Quản trị viên nhà xe", OPERATOR_STAFF: "Nhân viên nhà xe" })[value] || "Chưa xác định";
 export function adminOperatorFilters(params: URLSearchParams): AdminOperatorFilters {
   const size = [10, 20, 50, 100].includes(Number(params.get("size"))) ? Number(params.get("size")) : 20;
   const page = Number(params.get("page"));

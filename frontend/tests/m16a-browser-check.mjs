@@ -63,13 +63,13 @@ try {
       const conflict = await call('POST', '/operator/bookings', admin, { tripId: trip.id, pickupLocationId: pickup.locationId, dropoffLocationId: dropoff.locationId, tripSeatIds: booking.seats.map(s => s.tripSeatId), contactName: 'Conflict', contactPhone: '0901234567', paymentMethod: method });
       assert.equal(conflict.status, 409); assert.equal(conflict.code, 'SEAT_NOT_AVAILABLE');
       if (method === 'PAY_ON_BOARD') {
-        await page.getByRole('button', { name: 'Ghi nhận đã thu tiền', exact: true }).click();
-        await page.getByRole('button', { name: 'Xác nhận đã thu tiền', exact: true }).click();
+        await page.getByRole('button', { name: 'Ghi nhận thu tiền mô phỏng', exact: true }).click();
+        await page.getByRole('button', { name: 'Xác nhận thu tiền mô phỏng', exact: true }).click();
         await page.locator('.dossier-seat svg').waitFor();
       } else {
         await page.getByRole('button', { name: 'Tạo link thanh toán', exact: true }).click();
         const input = page.getByLabel('Link thanh toán', { exact: true }); await input.waitFor(); const link = await input.inputValue();
-        await page.getByRole('button', { name: 'Copy link thanh toán', exact: true }).click();
+        await page.getByRole('button', { name: 'Sao chép link thanh toán mô phỏng', exact: true }).click();
         assert.equal(await page.evaluate(() => navigator.clipboard.readText()), link);
         const anon = await browser.newContext({ viewport: { width, height: 1000 } }); const payment = await anon.newPage();
         await payment.goto(link); await payment.getByRole('heading', { name: 'Thanh toán đặt vé', exact: true }).waitFor();
@@ -95,7 +95,7 @@ try {
   await page.locator('.seat:not(:disabled)').first().click(); await page.getByRole('button', { name: 'Tiếp tục', exact: true }).click();
   await page.getByLabel('Họ và tên', { exact: true }).fill('Browser Customer'); await page.getByLabel('Số điện thoại', { exact: true }).fill('0901234567');
   await page.getByRole('button', { name: 'Tiếp tục đến thanh toán', exact: true }).click();
-  await page.getByRole('button', { name: 'Xác nhận thanh toán giả lập', exact: true }).click();
+  await page.getByRole('button', { name: 'Xác nhận thanh toán mô phỏng', exact: true }).click();
   await page.waitForURL('**/booking-success?bookingId=*'); await page.locator('.ticket-stub svg').first().waitFor();
   await screenshot(page, '1440-web-ticket');
   const issuedBookingId = new URL(page.url()).searchParams.get('bookingId');

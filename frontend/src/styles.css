@@ -1,6 +1,20 @@
 @import "tailwindcss";
 @import "./design-tokens.css";
 
+.domain-badge { display: inline-flex; align-items: center; border-radius: var(--radius-pill); padding: 4px 9px; font-size: var(--text-small); font-weight: 650; line-height: 1.4; }
+.tone-success { color: var(--color-success); background: var(--color-success-soft); }
+.tone-warning { color: var(--color-warning); background: var(--color-warning-soft); }
+.tone-danger { color: var(--color-danger); background: var(--color-danger-soft); }
+.tone-info { color: var(--color-info); background: var(--color-info-soft); }
+.tone-neutral { color: var(--color-text-secondary); background: var(--color-bg-subtle); }
+.route-progress { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 100; padding: 8px 16px; border-radius: var(--radius-md); background: var(--color-structural); color: white; box-shadow: var(--shadow-sm); }
+.assisted-progress { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 0; list-style: none; color: var(--color-text-secondary); }
+.assisted-progress [aria-current="step"] { color: var(--color-primary-dark); font-weight: 750; text-decoration: underline; text-underline-offset: 5px; }
+.assisted-booking fieldset { min-width: 0; }
+.assisted-actions { overflow-wrap: anywhere; }
+textarea:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+
 :root {
   font-family: Inter, "Segoe UI", Arial, sans-serif;
   color: var(--color-text);
@@ -2556,3 +2570,13 @@ button:not(:disabled):active, .button:active { transform: translateY(1px); }
 .cancellation-overlay { position: fixed; inset: 0; z-index: 100; background: #0008; display: flex; align-items: center; justify-content: center; padding: 1rem; }
 .cancellation-dialog { width: min(100%, 560px); max-height: calc(100dvh - 2rem); overflow-y: auto; overflow-wrap: anywhere; }
 .cancellation-dialog textarea { width: 100%; min-height: 70px; }
+
+/* Ticket identity and journey remain together at a useful desktop width. */
+.ticket-layout { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:24px; max-width:1000px; margin:0 auto; align-items:start; }
+.ticket-layout .ticket-journey { margin:0; width:100%; min-width:0; }
+.ticket-layout .ticket-list { min-width:0; }
+.ticket-layout .digital-ticket { width:100%; margin:0 0 16px; grid-template-columns:1fr; }
+.ticket-layout .ticket-body { padding:20px; }
+.ticket-layout .ticket-stub { padding:18px; }
+.ticket-actions { max-width:1000px; margin:20px auto; justify-content:flex-start; }
+@media(max-width:760px) { .ticket-layout { grid-template-columns:minmax(0,1fr); gap:16px; } }

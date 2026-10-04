@@ -93,7 +93,7 @@ try {
   assert.ok(await row(unpaidAbsent).getByRole('button',{name:'Vắng mặt',exact:true}).isEnabled());
   await mutation(page,'POST',`/operator/trips/${trip.id}/booking-items/${(await call('GET',`/operator/trips/${trip.id}/attendance`,token)).data.find(p=>p.bookingId===unpaidAbsent.bookingId).bookingItemId}/no-show`,()=>page.getByRole('region',{name:'Xác nhận hành khách'}).getByRole('button',{name:'Xác nhận',exact:true}).click());
   await row(unpaidAbsent).locator('strong').filter({hasText:'Vắng mặt'}).waitFor();
-  assert.equal(await row(unpaidAbsent).getByRole('button',{name:'Ghi nhận đã thu tiền',exact:true}).count(),0);
+  assert.equal(await row(unpaidAbsent).getByRole('button',{name:'Ghi nhận thu tiền mô phỏng',exact:true}).count(),0);
   const absentState=(await call('GET',`/operator/trips/${trip.id}/attendance`,token)).data.find(p=>p.bookingId===unpaidAbsent.bookingId);
   assert.equal(absentState.ticketId,null); assert.equal(absentState.paymentStatus,'PENDING'); assert.equal(absentState.paymentBlocked,true);
   const deniedPayment=await call('POST',`/operator/bookings/${unpaidAbsent.bookingId}/payments`,token,{method:'PAY_ON_BOARD'});
@@ -101,7 +101,7 @@ try {
   await close(page,trip.id,start); await screenshot(page,width+'-origin-resolved');
   await lifecycle(page,trip.id,'Khởi hành'); await lifecycle(page,trip.id,'Hoàn thành chuyến',409);
   // Existing M16A collection is reused after origin departure at the intermediate pickup.
-  await row(unpaid).getByRole('button',{name:'Ghi nhận đã thu tiền',exact:true}).click();
+  await row(unpaid).getByRole('button',{name:'Ghi nhận thu tiền mô phỏng',exact:true}).click();
   assert.doesNotMatch(await page.getByRole('region',{name:'Xác nhận hành khách'}).innerText(),/NaN|undefined/);
   await page.getByRole('region',{name:'Xác nhận hành khách'}).getByRole('button',{name:'Xác nhận',exact:true}).click();
   await row(unpaid).getByRole('button',{name:'Check-in',exact:true}).click(); await row(unpaid).getByText('Đã check-in',{exact:true}).waitFor(); await row(unpaid).getByRole('button',{name:'Lên xe',exact:true}).click(); await row(unpaid).getByText('Đã lên xe',{exact:true}).waitFor();

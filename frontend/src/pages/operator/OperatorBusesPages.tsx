@@ -1,3 +1,4 @@
+import { statusPresentation } from "../../utils/status";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -191,7 +192,7 @@ function BusForm({ bus }: { bus?: BusResponse }) {
                 Trạng thái
                 <select {...form.register("status")}>
                   {busStatuses.map((s) => (
-                    <option key={s}>{s}</option>
+                    <option key={s} value={s}>{statusPresentation("bus", s).label}</option>
                   ))}
                 </select>
               </label>
@@ -214,7 +215,7 @@ function BusForm({ bus }: { bus?: BusResponse }) {
           </fieldset>
           {confirmation && (
             <Confirm
-              text={`Chuyển xe ${bus?.licensePlate} sang ${confirmation.status}? Xe sẽ không sẵn sàng để tạo chuyến mới.`}
+              text={`Chuyển xe ${bus?.licensePlate} sang ${statusPresentation("bus", confirmation.status).label}? Xe sẽ không sẵn sàng để tạo chuyến mới.`}
               pending={mutation.isPending}
               confirm={() => mutation.mutate(confirmation)}
               cancel={() => setConfirmation(null)}
@@ -261,7 +262,7 @@ export function OperatorBusDetailPage() {
         {(bus) => (
           <>
             <p>
-              <OperatorStatusBadge status={bus.status} /> ·{" "}
+              {bus.status !== "AVAILABLE" && <><OperatorStatusBadge status={bus.status} /> ·{" "}</>}
               <Link to={`/operator/bus-types/${bus.busType.id}`}>
                 Xem loại xe / mẫu ghế
               </Link>

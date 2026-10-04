@@ -22,3 +22,58 @@
   .customer-card { overflow-wrap:anywhere; }
   .customer-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+.customer-name { font-weight:650; font-size:15px; }
+.customer-contact > span { font-size:12px; color:var(--color-text-muted); }
+.customer-desktop .operator-table { min-width:880px; }
+.customer-desktop td:nth-child(2) { min-width:170px; }
+.customer-metric-groups { display:grid; grid-template-columns:1fr 1fr 1.2fr; gap:16px; margin:20px 0; }
+.customer-metric-groups > section { background:white; padding:18px; border:1px solid var(--color-border); border-radius:10px; min-width:0; }
+.customer-metric-groups h2 { font-size:16px; margin:0 0 16px; }
+.customer-metric-groups .customer-metrics { display:block; margin:0; }
+.customer-metric-groups .customer-metrics > div { border:0; border-radius:0; padding:9px 0; display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+.customer-metric-groups dt { font-size:13px; color:var(--color-text-secondary); }
+.customer-metric-groups dd { font-size:17px; margin:0; white-space:nowrap; font-weight:600; }
+.customer-metric-groups p { font-size:13px; }
+.customer-history-row p { font-size:13px; }
+@media(max-width:900px) { .customer-metric-groups { grid-template-columns:1fr; } }
+
+/* M19.2: identity, journey, operational state and money in separate scan lines. */
+.customer-secondary, .customer-source { font-size:12px; color:var(--color-text-muted); }
+.customer-secondary { display:block; margin-top:4px; }
+.customer-contact .customer-phone { color:var(--color-text); font-size:13px; }
+.customer-desktop td.customer-contact { display:table-cell; }
+.customer-desktop td.customer-contact > span { display:block; margin-bottom:4px; }
+.customer-value { font-size:17px; font-weight:650; font-variant-numeric:tabular-nums; }
+.customer-currency { font-size:15px; white-space:nowrap; }
+.customer-journey { font-size:14px; font-weight:500; color:var(--color-text); }
+.customer-summary-heading { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.customer-summary .customer-name { font-size:20px; }
+.customer-summary-helper { font-size:12px; color:var(--color-text-muted); margin:12px 0 0; max-width:760px; }
+.customer-metric-groups h2 { font-size:17px; margin-bottom:12px; }
+.customer-metric-groups .customer-metrics > .customer-metric-primary { flex-direction:column-reverse; align-items:flex-start; gap:4px; padding:0 0 14px; margin-bottom:6px; border-bottom:1px solid var(--color-border); }
+.customer-metric-groups .customer-metric-primary dd { font-size:28px; font-weight:650; white-space:normal; overflow-wrap:anywhere; }
+.customer-metric-groups .fine-print { color:var(--color-text-muted); font-size:12px; }
+.customer-history-row { grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px 28px; padding:20px; }
+.customer-booking-heading { grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding-bottom:12px; border-bottom:1px solid var(--color-border); }
+.customer-booking-heading > div { display:flex; align-items:baseline; flex-wrap:wrap; gap:12px; }
+.customer-booking-code { font-size:17px; font-weight:650; }
+.customer-history-row .customer-history-journey { font-size:16px; font-weight:600; margin:0 0 4px; }
+.customer-history-facts { display:grid; gap:10px; margin:14px 0; }
+.customer-history-facts > div { display:grid; grid-template-columns:84px minmax(0,1fr); gap:10px; }
+.customer-history-facts dd { margin:0; font-size:13px; }
+.customer-history-facts dd > span { display:block; }
+.customer-history-contact { display:flex; flex-wrap:wrap; gap:4px 12px; color:var(--color-text-muted); font-size:12px; }
+.customer-payment-state { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; }
+.customer-payment-state .customer-secondary { margin:0; }
+.customer-cancellation { border-left:3px solid var(--color-accent-bright); padding-left:10px; color:#8d450a; }
+.customer-history-money { grid-column:1 / -1; border-top:1px solid var(--color-border); padding-top:12px; margin:0; gap:16px 32px; }
+.customer-history-money dd { font-size:14px; font-weight:500; }
+.customer-history-money .customer-metric-primary dd { font-size:18px; font-weight:650; color:var(--color-structural); }
+.customer-history-row details { grid-column:1 / -1; font-size:12px; color:var(--color-text-secondary); }
+.customer-history-row summary { cursor:pointer; padding:8px 0; min-height:44px; }
+@media(max-width:640px) {
+ .customer-history-row { grid-template-columns:minmax(0,1fr); padding:16px; gap:14px; }
+ .customer-history-money { gap:12px 20px; }
+ .customer-history-facts { margin:10px 0; }
+}

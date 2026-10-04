@@ -31,7 +31,7 @@ test("staff and system admin cannot see assisted mutation controls or open creat
     assert.equal(render(AssistedBookingActions, { booking }, [role]), "");
     assert.match(render(OperatorBookingCreatePage, {}, [role]), /Không có quyền/);
   }
-  assert.match(render(AssistedBookingActions, { booking }), /Ghi nhận đã thu tiền/);
+  assert.match(render(AssistedBookingActions, { booking }), /Ghi nhận thu tiền mô phỏng/);
   assert.match(render(AssistedBookingActions, { booking: { ...booking, paymentMethod: "QR_TRANSFER" } }), /Gửi link thủ công qua Zalo/);
-  assert.doesNotMatch(render(AssistedBookingActions, { booking: { ...booking, status: "CONFIRMED" } }), /Ghi nhận đã thu tiền/);
+  assert.doesNotMatch(render(AssistedBookingActions, { booking: { ...booking, status: "CONFIRMED" } }), /Ghi nhận thu tiền mô phỏng/);
 });
