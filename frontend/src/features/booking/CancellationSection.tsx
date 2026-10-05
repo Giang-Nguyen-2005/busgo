@@ -63,7 +63,7 @@ export function CancellationSection({ bookingId, bookingCode, route, pickup, sea
       {!permitted && <p className="muted">Chỉ quản trị nhà xe được hủy đặt vé.</p>}
     </>}
     {r.refunds.map(refund=><p className="notice info" key={refund.id}>Hoàn tiền mô phỏng · {money(refund.amount)} · {dateTime(refund.refundedAt)}. Đây là giao dịch mô phỏng, không chuyển tiền về tài khoản ngân hàng.</p>)}
-    {r.tickets.filter(t=>t.status==="VOID").map(t=><p key={t.id}>Vé {t.ticketCode} · Đã vô hiệu (VOID), không dùng để lên xe.</p>)}
+    {r.tickets.filter(t=>t.status==="VOID").map(t=><p key={t.id}>Vé {t.ticketCode} · Đã vô hiệu, không dùng để lên xe.</p>)}
     {!!r.history.length && <details><summary>Lịch sử đặt vé</summary>{r.history.map((h,i)=><p key={i}>{dateTime(h.changedAt)} · {statusPresentation("booking", h.fromStatus).label} → {statusPresentation("booking", h.toStatus).label} · {reasons[h.reasonCode || ""] || h.reasonCode || "Thanh toán"} · {h.actorId ? `Người thực hiện #${h.actorId}` : "Hệ thống / liên kết thanh toán"}{h.note && ` · ${h.note}`}</p>)}</details>}
     {review && <div className="cancellation-overlay"><section ref={dialog} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="cancellation-title" className="card cancellation-dialog"><h2 id="cancellation-title">Xác nhận hủy đặt vé</h2>
       <p><strong>{bookingCode}</strong> · {route}</p><p>Điểm đón: {pickup}</p><p>Liên hệ: {contact}</p><p>Ghế: {seats.join(", ")}</p><p>{money(amount)} · {r.paid ? "Đã thanh toán" : "Chưa thanh toán"}</p>

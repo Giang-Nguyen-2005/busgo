@@ -48,6 +48,7 @@ public class SecurityConfig {
                                 "/api/v1/operator/trips/*/pickups", "/api/v1/operator/trips/*/history",
                                 "/api/v1/operator/bookings", "/api/v1/operator/bookings/*",
                                 "/api/v1/operator/bookings/*/recovery",
+                                "/api/v1/operator/bookings/*/modification-eligibility", "/api/v1/operator/bookings/*/modifications", "/api/v1/operator/bookings/*/modifications/*",
                                 "/api/v1/operator/trips/*/passengers", "/api/v1/operator/trips/*/occupancy",
                                 "/api/v1/operator/bus-types", "/api/v1/operator/bus-types/*")
                                 .hasAnyRole("OPERATOR_STAFF", "OPERATOR_ADMIN")

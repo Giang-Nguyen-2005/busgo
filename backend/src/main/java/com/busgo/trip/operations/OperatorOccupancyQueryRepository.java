@@ -36,7 +36,7 @@ public class OperatorOccupancyQueryRepository {
                 JOIN locations pickup_location ON pickup_location.id = pickup.location_id
                 JOIN trip_stops dropoff ON dropoff.id = b.dropoff_trip_stop_id
                 JOIN locations dropoff_location ON dropoff_location.id = dropoff.location_id
-                LEFT JOIN tickets tk ON tk.booking_item_id = bi.id
+                LEFT JOIN tickets tk ON tk.replaced=FALSE AND tk.booking_item_id = bi.id
                 LEFT JOIN payments p ON p.id = (
                     SELECT MAX(p2.id) FROM payments p2 WHERE p2.booking_id = b.id)
                 WHERE b.trip_id = :tripId AND opr.operator_id = :operatorId

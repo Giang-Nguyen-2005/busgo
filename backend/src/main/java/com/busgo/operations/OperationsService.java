@@ -162,7 +162,7 @@ public class OperationsService {
     }
     public Map<String,Object> reservationNoShow(CurrentUser actor,long tripId,long itemId,PickupContext input) {
         var t=trip(actor,tripId,true);
-        var rows=db.queryForList("SELECT b.id,b.source,b.payment_method,b.status,b.pickup_trip_stop_id,tk.id AS ticket_id FROM booking_items bi JOIN bookings b ON b.id=bi.booking_id JOIN trip_seats s ON s.id=bi.trip_seat_id AND s.trip_id=b.trip_id LEFT JOIN tickets tk ON tk.booking_item_id=bi.id WHERE bi.id=? AND b.trip_id=? FOR UPDATE",itemId,tripId);
+        var rows=db.queryForList("SELECT b.id,b.source,b.payment_method,b.status,b.pickup_trip_stop_id,tk.id AS ticket_id FROM booking_items bi JOIN bookings b ON b.id=bi.booking_id JOIN trip_seats s ON s.id=bi.trip_seat_id AND s.trip_id=b.trip_id LEFT JOIN tickets tk ON tk.replaced=FALSE AND tk.booking_item_id=bi.id WHERE bi.id=? AND b.trip_id=? FOR UPDATE",itemId,tripId);
         if(rows.isEmpty()) throw missing("BOOKING_ITEM_NOT_FOUND");
         var b=rows.get(0);
         if(((Number)b.get("pickup_trip_stop_id")).longValue()!=input.stopId()) throw conflict("WRONG_PICKUP_STOP","Use the reservation's booked pickup stop.");
@@ -193,7 +193,7 @@ public class OperationsService {
             FROM bookings b JOIN booking_items bi ON bi.booking_id=b.id
             JOIN trip_stops ps ON ps.id=b.pickup_trip_stop_id JOIN locations pl ON pl.id=ps.location_id
             JOIN trip_stops ds ON ds.id=b.dropoff_trip_stop_id JOIN locations dl ON dl.id=ds.location_id
-            LEFT JOIN tickets tk ON tk.booking_item_id=bi.id
+            LEFT JOIN tickets tk ON tk.replaced=FALSE AND tk.booking_item_id=bi.id
             LEFT JOIN payments p ON p.id=tk.payment_id
             LEFT JOIN ticket_boarding tb ON tb.booking_item_id=bi.id
             WHERE b.trip_id=? AND b.status IN ('PENDING','CONFIRMED','COMPLETED') ORDER BY ps.stop_order,bi.id

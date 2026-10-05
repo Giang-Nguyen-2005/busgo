@@ -13,6 +13,8 @@ import lombok.Setter;
 @Entity
 @Table(name = "tickets")
 public class Ticket extends CreatedEntity {
+    @Column(nullable=false)
+    private boolean replaced;
     @Column(nullable = false, length = 10)
     private String status = "VALID";
     @Column(name = "voided_at")
@@ -28,8 +30,8 @@ public class Ticket extends CreatedEntity {
     @JoinColumn(name = "booking_id", nullable = false)
     private Booking booking;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "booking_item_id", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "booking_item_id", nullable = false)
     private BookingItem bookingItem;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

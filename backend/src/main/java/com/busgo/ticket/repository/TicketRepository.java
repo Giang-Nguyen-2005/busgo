@@ -12,7 +12,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("""
             select ticket from Ticket ticket
             join fetch ticket.bookingItem item
-            where ticket.booking.id = :bookingId
+            where ticket.booking.id = :bookingId and ticket.replaced = false
             order by item.id
             """)
     List<Ticket> findDetailedByBookingId(@Param("bookingId") Long bookingId);
@@ -21,7 +21,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("""
             select ticket from Ticket ticket
             join fetch ticket.bookingItem item
-            where ticket.booking.id = :bookingId
+            where ticket.booking.id = :bookingId and ticket.replaced = false
             order by item.id
             """)
     List<Ticket> findDetailedLockedByBookingId(@Param("bookingId") Long bookingId);

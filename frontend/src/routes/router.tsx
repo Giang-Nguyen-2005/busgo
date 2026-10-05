@@ -57,6 +57,10 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
             lazy: async () => ({ Component: (await import("../pages/operator/OperatorBookingCreatePage")).OperatorBookingCreatePage }),
           },
           {
+            path: "bookings/:bookingId/modify",
+            lazy: async () => ({ Component: (await import("../features/booking/Modification")).ModificationPage }),
+          },
+          {
             path: "bookings/:bookingId",
             lazy: async () => ({ Component: (await import("../pages/operator/OperatorBookingsPages")).OperatorBookingDetailPage }),
           },
@@ -209,6 +213,10 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
               Component: (await import("../pages/MyBookingsPage"))
                 .MyBookingsPage,
             }),
+          },
+          {
+            path: "/my-bookings/:bookingId/modify",
+            lazy: async () => ({ Component: (await import("../features/booking/Modification")).ModificationPage }),
           },
           {
             path: "/my-bookings/:bookingId",

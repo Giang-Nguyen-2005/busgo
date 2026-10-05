@@ -43,7 +43,7 @@ public class CustomerRepository {
             SUM(CASE WHEN a.status='CHECKED_IN' THEN 1 ELSE 0 END) AS checked_in,
             SUM(CASE WHEN a.status IS NULL OR a.status='EXPECTED' THEN 1 ELSE 0 END) AS unrecorded
           FROM booking_items bi JOIN owned o ON o.id=bi.booking_id
-          LEFT JOIN tickets tk ON tk.booking_item_id=bi.id
+          LEFT JOIN tickets tk ON tk.replaced=FALSE AND tk.booking_item_id=bi.id
           LEFT JOIN ticket_boarding a ON a.booking_item_id=bi.id GROUP BY bi.booking_id
         ), activity AS (
           SELECT o.*, COALESCE(p.gross,0) AS gross, COALESCE(f.refunds,0) AS refunds,

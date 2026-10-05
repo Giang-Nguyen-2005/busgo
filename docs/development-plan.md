@@ -1642,3 +1642,7 @@ notes are milestone history; current scope is [V1.5 release notes](v1.5-release-
 See [audit](m19-audit.md), [verification](m19-verification.md),
 [demo script](v1.5-demo-script.md), [deployment](deployment.md) and
 [architecture](architecture.md). M19 changes must remain uncommitted/unpushed.
+
+## M20 — Booking modification (2026-10-05)
+
+Implemented partial same-trip seat changes and whole-booking trip changes, authoritative quotes/eligibility, target holds, simulated cash adjustment, atomic switch, affected ticket replacement, immutable history and shared customer/operator workspace. Booking identity and V1.5 ownership/source semantics remain. Verification and compatibility limitations: [M20 report](m20-booking-modification.md). M21/M22 remain separate; no real gateway or settlement is included. Changes remain uncommitted and unpushed.
