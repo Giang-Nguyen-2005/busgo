@@ -134,7 +134,7 @@ public class OperatorBookingQueryRepository {
                 JOIN bookings b ON b.id = bi.booking_id
                 JOIN trips t ON t.id = b.trip_id
                 JOIN operator_routes opr ON opr.id = t.operator_route_id
-                LEFT JOIN tickets tk ON tk.booking_item_id = bi.id
+                LEFT JOIN tickets tk ON tk.replaced=FALSE AND tk.booking_item_id = bi.id
                 WHERE b.id = :bookingId AND opr.operator_id = :operatorId
                 ORDER BY bi.id
                 """, params(operatorId, bookingId), (rs, rowNum) -> new ItemRow(

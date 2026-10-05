@@ -1131,3 +1131,7 @@ M3 operator APIs expose them read-only. Operator ownership begins at `buses` and
 `operator_routes`; fares are operator-scoped through `operator_routes`. Global
 master-data administration is deferred to SYSTEM_ADMIN/V2, with no M3 ownership
 columns or association tables added.
+
+## M20 additive migrations V17–V18
+
+V17 adds booking_modifications and immutable item snapshots, generated one-active-attempt uniqueness, payment purpose/modification linkage, partial refunds, and retained VOID ticket versions with one current row per item. V18 validates refund success timestamp, remaining balance and modification ownership. Principal payments remain discoverable by purpose=BOOKING; reporting sums all collection/refund events. Current operational ticket joins exclude replaced rows. V1–V16 are unchanged. See [M20 design](m20-booking-modification.md).

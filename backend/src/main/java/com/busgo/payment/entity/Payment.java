@@ -13,6 +13,10 @@ import lombok.Setter;
 @Entity
 @Table(name = "payments")
 public class Payment extends AuditedEntity {
+    @Column(nullable=false, length=30)
+    private String purpose = "BOOKING";
+    @Column(name="modification_id")
+    private Long modificationId;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "booking_id", nullable = false)
     private Booking booking;

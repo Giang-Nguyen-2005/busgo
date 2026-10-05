@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CancellationService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private ModificationService modifications;
     private final BookingRepository bookings;
     private final TripRepository trips;
     private final TransportOperatorRepository operators;
@@ -90,11 +92,13 @@ public class CancellationService {
     }
 
     private Recovery cancel(Booking initial,Long actor,String reason,String note,boolean operator,boolean expiry) {
-        Trip trip=trips.lockById(initial.getTrip().getId()).orElseThrow(CancellationService::missing);
+        long sourceTripId=initial.getTrip().getId();
+        Trip trip=trips.lockById(sourceTripId).orElseThrow(CancellationService::missing);
         var owner=operators.lockById(trip.getOperatorRoute().getOperator().getId()).orElseThrow(CancellationService::missing);
         Booking b=bookings.lockById(initial.getId()).orElseThrow(CancellationService::missing);
         em.refresh(trip,LockModeType.PESSIMISTIC_WRITE); em.refresh(owner,LockModeType.PESSIMISTIC_WRITE);
         em.refresh(b,LockModeType.PESSIMISTIC_WRITE);
+        if(b.getTrip().getId()!=sourceTripId) throw conflict("BOOKING_CHANGED","Booking trip changed; retry.");
         var paymentRows=db.queryForList("SELECT id,status,amount,paid_at FROM payments WHERE booking_id=? ORDER BY id FOR UPDATE",b.getId());
         LocalDateTime now=utc(clock.instant());
         if (expiry && (b.getStatus()!=BookingStatus.PENDING || b.getPaymentDueAt()==null
@@ -107,11 +111,13 @@ public class CancellationService {
             throw conflict(blocked,"Booking cancellation is unavailable: "+blocked);
         }
         boolean paid=b.getStatus()==BookingStatus.CONFIRMED;
+        java.math.BigDecimal collected=paymentRows.stream().filter(p->"PAID".equals(p.get("status"))).map(p->(java.math.BigDecimal)p.get("amount")).reduce(java.math.BigDecimal.ZERO,java.math.BigDecimal::add);
+        java.math.BigDecimal refunded=db.queryForObject("SELECT COALESCE(SUM(r.amount),0) FROM refunds r JOIN payments p ON p.id=r.payment_id WHERE p.booking_id=?",java.math.BigDecimal.class,b.getId());
         var issued=tickets.findDetailedLockedByBookingId(b.getId());
         var bookingItems=items.findDetailedByBookingId(b.getId());
-        if(bookingItems.isEmpty() || (paid && (paymentRows.size()!=1 || !"PAID".equals(paymentRows.get(0).get("status"))
+        if(bookingItems.isEmpty() || (paid && (paymentRows.isEmpty() || paymentRows.stream().anyMatch(p->!"PAID".equals(p.get("status")))
                 || paymentRows.get(0).get("paid_at")==null
-                || b.getTotalAmount().compareTo((java.math.BigDecimal)paymentRows.get(0).get("amount"))!=0
+                || b.getTotalAmount().compareTo(collected.subtract(refunded))!=0
                 || issued.size()!=bookingItems.size())) || (!paid && (!paymentRows.isEmpty() || !issued.isEmpty())))
             throw conflict("CANCELLATION_STATE_INCONSISTENT","Payment/ticket state is inconsistent.");
         if(paid && issued.stream().anyMatch(t->!"VALID".equals(t.getStatus())
@@ -131,12 +137,11 @@ public class CancellationService {
         // All allocations validated before the first write; a failure rolls back every domain change.
         for(var row:rows) if(db.update("UPDATE trip_seat_segment_inventory SET status='AVAILABLE',booking_item_id=NULL,version=version+1 WHERE id=? AND booking_item_id=? AND status='BOOKED'",row.id(),row.bookingItemId())!=1) throw inconsistent();
         if(paid) {
-            long paymentId=((Number)paymentRows.get(0).get("id")).longValue();
-            Payment payment=em.find(Payment.class,paymentId,LockModeType.PESSIMISTIC_WRITE);
-            em.refresh(payment,LockModeType.PESSIMISTIC_WRITE);
-            db.update("INSERT INTO refunds(payment_id,amount,payment_paid_at,refunded_at,refunded_by,reason_code,note,created_at) VALUES(?,?,?,?,?,?,?,?)",
-                    paymentId,payment.getAmount(),parameter(payment.getPaidAt()),parameter(now),actor,reason,note,parameter(now));
-            payment.setStatus(PaymentStatus.REFUNDED);
+            modifications.refund(b.getId(),b.getTotalAmount(),actor,reason,null);
+            for(var row:paymentRows) {
+                Payment payment=em.find(Payment.class,((Number)row.get("id")).longValue(),LockModeType.PESSIMISTIC_WRITE);
+                em.refresh(payment,LockModeType.PESSIMISTIC_WRITE); payment.setStatus(PaymentStatus.REFUNDED);
+            }
             for(var ticket:issued) {
                 ticket.setStatus("VOID"); ticket.setVoidedAt(now); ticket.setVoidedByUserId(actor); ticket.setVoidReason(reason);
             }

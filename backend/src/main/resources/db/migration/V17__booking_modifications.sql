@@ -1,0 +1,97 @@
+CREATE TABLE booking_modifications (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ code VARCHAR(50) NOT NULL UNIQUE,
+ booking_id BIGINT NOT NULL,
+ operator_id BIGINT NOT NULL,
+ type VARCHAR(20) NOT NULL,
+ status VARCHAR(30) NOT NULL,
+ source_trip_id BIGINT NOT NULL,
+ target_trip_id BIGINT NOT NULL,
+ target_pickup_id BIGINT NOT NULL,
+ target_dropoff_id BIGINT NOT NULL,
+ source_departure DATETIME(6) NOT NULL,
+ target_departure DATETIME(6) NOT NULL,
+ journey_name VARCHAR(500) NOT NULL,
+ old_total DECIMAL(12,2) NOT NULL,
+ new_total DECIMAL(12,2) NOT NULL,
+ net_collected DECIMAL(12,2) NOT NULL,
+ collection_required DECIMAL(12,2) NOT NULL,
+ refund_required DECIMAL(12,2) NOT NULL,
+ actor_type VARCHAR(30) NOT NULL,
+ actor_user_id BIGINT NOT NULL,
+ actor_name VARCHAR(150) NOT NULL,
+ hold_token VARCHAR(36) NOT NULL UNIQUE,
+ expires_at DATETIME(6) NOT NULL,
+ completed_at DATETIME(6),
+ created_at DATETIME(6) NOT NULL,
+ updated_at DATETIME(6) NOT NULL,
+ active_booking_id BIGINT GENERATED ALWAYS AS (CASE WHEN status IN ('HELD','AWAITING_PAYMENT') THEN booking_id ELSE NULL END) STORED,
+ UNIQUE KEY uk_modification_active (active_booking_id),
+ INDEX idx_modification_history (booking_id,id),
+ INDEX idx_modification_expiry (status,expires_at,id),
+ FOREIGN KEY (booking_id) REFERENCES bookings(id),
+ FOREIGN KEY (operator_id) REFERENCES transport_operators(id),
+ FOREIGN KEY (source_trip_id) REFERENCES trips(id),
+ FOREIGN KEY (target_trip_id) REFERENCES trips(id),
+ FOREIGN KEY (target_pickup_id) REFERENCES trip_stops(id),
+ FOREIGN KEY (target_dropoff_id) REFERENCES trip_stops(id),
+ FOREIGN KEY (actor_user_id) REFERENCES users(id),
+ CHECK (type IN ('SEAT_CHANGE','TRIP_CHANGE')),
+ CHECK (status IN ('HELD','AWAITING_PAYMENT','COMPLETED','CANCELLED','EXPIRED','FAILED')),
+ CHECK (actor_type IN ('CUSTOMER','OPERATOR_ADMIN')),
+ CHECK (old_total>0 AND new_total>0 AND net_collected>=0 AND collection_required>=0 AND refund_required>=0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE booking_modification_items (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ modification_id BIGINT NOT NULL,
+ booking_item_id BIGINT NOT NULL,
+ old_seat_id BIGINT NOT NULL,
+ new_seat_id BIGINT NOT NULL,
+ old_seat_label VARCHAR(20) NOT NULL,
+ new_seat_label VARCHAR(20) NOT NULL,
+ old_fare DECIMAL(12,2) NOT NULL,
+ new_fare DECIMAL(12,2) NOT NULL,
+ old_ticket_id BIGINT,
+ new_ticket_id BIGINT,
+ UNIQUE KEY uk_mod_item (modification_id,booking_item_id),
+ UNIQUE KEY uk_mod_seat (modification_id,new_seat_id),
+ FOREIGN KEY (modification_id) REFERENCES booking_modifications(id),
+ FOREIGN KEY (booking_item_id) REFERENCES booking_items(id),
+ FOREIGN KEY (old_seat_id) REFERENCES trip_seats(id),
+ FOREIGN KEY (new_seat_id) REFERENCES trip_seats(id),
+ FOREIGN KEY (old_ticket_id) REFERENCES tickets(id),
+ FOREIGN KEY (new_ticket_id) REFERENCES tickets(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE payments
+ ADD purpose VARCHAR(30) NOT NULL DEFAULT 'BOOKING',
+ ADD modification_id BIGINT NULL,
+ ADD FOREIGN KEY (modification_id) REFERENCES booking_modifications(id),
+ ADD UNIQUE KEY uk_modification_payment (modification_id),
+ DROP INDEX uk_payments_one_paid_booking,
+ DROP COLUMN paid_booking_id;
+ALTER TABLE payments
+ ADD paid_booking_id BIGINT GENERATED ALWAYS AS (CASE WHEN status='PAID' AND purpose='BOOKING' THEN booking_id ELSE NULL END) STORED,
+ ADD UNIQUE KEY uk_payments_one_paid_booking (paid_booking_id),
+ ADD CHECK ((purpose='BOOKING' AND modification_id IS NULL) OR (purpose='BOOKING_MODIFICATION' AND modification_id IS NOT NULL));
+
+ALTER TABLE refunds
+ DROP FOREIGN KEY fk_refund_payment,
+ DROP INDEX uk_refund_payment,
+ DROP CHECK ck_refund_reason,
+ ADD modification_id BIGINT NULL,
+ ADD FOREIGN KEY (payment_id) REFERENCES payments(id),
+ ADD FOREIGN KEY (modification_id) REFERENCES booking_modifications(id),
+ ADD cancellation_payment_id BIGINT GENERATED ALWAYS AS (CASE WHEN modification_id IS NULL THEN payment_id ELSE NULL END) STORED,
+ ADD UNIQUE KEY uk_refund_cancellation (cancellation_payment_id),
+ ADD UNIQUE KEY uk_refund_modification (payment_id,modification_id),
+ ADD CHECK ((reason_code IN ('CUSTOMER_CANCELLED','OPERATOR_CANCELLED') AND modification_id IS NULL) OR (reason_code='MODIFICATION_FARE_DIFFERENCE' AND modification_id IS NOT NULL));
+
+ALTER TABLE tickets
+ ADD replaced BOOLEAN NOT NULL DEFAULT FALSE,
+ ADD current_booking_item_id BIGINT GENERATED ALWAYS AS (CASE WHEN replaced=FALSE THEN booking_item_id ELSE NULL END) STORED,
+ ADD INDEX idx_ticket_item (booking_item_id),
+ DROP INDEX uk_tickets_booking_item,
+ ADD UNIQUE KEY uk_ticket_current_item (current_booking_item_id),
+ ADD CHECK (replaced=FALSE OR status='VOID');

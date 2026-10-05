@@ -2580,3 +2580,17 @@ button:not(:disabled):active, .button:active { transform: translateY(1px); }
 .ticket-layout .ticket-stub { padding:18px; }
 .ticket-actions { max-width:1000px; margin:20px auto; justify-content:flex-start; }
 @media(max-width:760px) { .ticket-layout { grid-template-columns:minmax(0,1fr); gap:16px; } }
+
+/* Booking modification shares the existing cards, controls and seat map. */
+.modification-workspace { max-width: 1000px; margin-inline: auto; min-width: 0; }
+.modification-workspace .card, .modification-section { margin-block: 1.25rem; }
+.modification-actions { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+.modification-actions > div { flex: 1 1 230px; }
+.modification-actions label { display: flex; align-items: center; gap: .5rem; }
+.modification-actions input { width: auto; }
+.modification-money { display: grid; gap: .7rem; }
+.modification-money > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1rem; }
+.modification-money dd { margin: 0; font-weight: 600; }
+.modification-money > div:last-child { border-top: 1px solid var(--border); padding-top: .8rem; }
+.modification-mapping { display: flex; flex-wrap: wrap; gap: .6rem 1.5rem; padding-left: 1.2rem; }
+.modification-workspace select { width: 100%; min-width: 0; }

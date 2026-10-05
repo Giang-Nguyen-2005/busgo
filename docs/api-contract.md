@@ -1940,3 +1940,7 @@ Intervals use origin departure/estimated arrival with strict half-open overlap;
 back-to-back allowed. Cancelled/completed records do not conflict. IN_PROGRESS blocks
 assignment irrespective of planned end. Existing immutable trip assignment is unchanged.
 V16 adds maintenance and status audit tables/indexes. See m18c-fleet-maintenance.md.
+
+## M20 booking modification
+
+Customer /api/v1/bookings/{id} and owned operator /api/v1/operator/bookings/{id} expose modification-eligibility, alternative-trips, modification-seat-availability, modification-quotes, modifications, and modifications/{mid}/confirm or /cancel. Quotes and creation accept {type,targetTripId,items:[{bookingItemId,targetSeatId}]}. POST creates target holds; confirmation simulates cash adjustments and atomically switches the existing booking. Staff may read eligibility/history; mutation requires customer ownership or Operator Admin. See [M20 contract, lifecycle and money semantics](m20-booking-modification.md).

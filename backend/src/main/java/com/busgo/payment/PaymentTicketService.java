@@ -250,7 +250,7 @@ public class PaymentTicketService {
                 ticket.getSeatCode(), "VALID".equals(ticket.getStatus()) ? ticket.getTicketCode() : null,
                 ticket.getStatus(), api(ticket.getVoidedAt()))).toList();
         return new TicketBundle(booking.getId(), booking.getBookingCode(), booking.getStatus(),
-                payment.getStatus(), payment.getMethod(), payment.getAmount(), trip.getId(),
+                payment.getStatus(), payment.getMethod(), booking.getTotalAmount(), trip.getId(),
                 new NamedSummary(operator.getId(), operator.getName()),
                 new NamedSummary(route.getId(), route.getName()),
                 new TicketStop(pickup.getId(), pickup.getLocation().getId(),

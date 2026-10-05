@@ -1,3 +1,4 @@
+import { ModificationSection } from "../../features/booking/Modification";
 import { QRCodeSVG } from "qrcode.react";
 import { CancellationSection } from "../../features/booking/CancellationSection";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -79,7 +80,7 @@ export function OperatorBookingDetailPage() {
   const created = useLocation().state?.reservationCreated;
   return <><OperatorPageHeader title="Chi tiết đặt vé"><Link to="/operator/bookings">Danh sách đặt vé</Link></OperatorPageHeader>
     <RefreshState query={query} />
-    <OperationsQueryState query={query}>{b => <>{created && b.status === "PENDING" && <div className="notice success" role="status">Đã tạo đặt vé {b.bookingCode} và giữ chỗ thành công. Chưa thanh toán không có nghĩa là giữ chỗ thất bại. Vé điện tử được cấp sau khi thu tiền mô phỏng.</div>}<BookingDetailContent booking={b} /><AssistedBookingActions booking={b} /><CancellationSection operator bookingId={b.bookingId} bookingCode={b.bookingCode} route={b.route.name + ' · Chuyến #' + b.trip.id} pickup={b.pickup.name + ' · ' + (b.pickup.time ? dateTime(b.pickup.time) : "Chưa có giờ đón")} seats={b.items.map(s=>s.seatCode)} contact={b.contact.name + ' · ' + b.contact.phone} amount={b.totalAmount} /></>}</OperationsQueryState></>;
+    <OperationsQueryState query={query}>{b => <>{created && b.status === "PENDING" && <div className="notice success" role="status">Đã tạo đặt vé {b.bookingCode} và giữ chỗ thành công. Chưa thanh toán không có nghĩa là giữ chỗ thất bại. Vé điện tử được cấp sau khi thu tiền mô phỏng.</div>}<BookingDetailContent booking={b} /><AssistedBookingActions booking={b} /><ModificationSection operator bookingId={b.bookingId} /><CancellationSection operator bookingId={b.bookingId} bookingCode={b.bookingCode} route={b.route.name + ' · Chuyến #' + b.trip.id} pickup={b.pickup.name + ' · ' + (b.pickup.time ? dateTime(b.pickup.time) : "Chưa có giờ đón")} seats={b.items.map(s=>s.seatCode)} contact={b.contact.name + ' · ' + b.contact.phone} amount={b.totalAmount} /></>}</OperationsQueryState></>;
 }
 
 export function AssistedBookingActions({ booking: b }: { booking: OperatorBookingDetail }) {

@@ -115,7 +115,7 @@ public class ReportRepository {
     public Attendance attendance(ReportFilter f,long operator) {
         return jdbc.queryForObject(TRAVEL+"SELECT "+ATTENDANCE_COLUMNS+"""
             FROM cohort b JOIN booking_items bi ON bi.booking_id=b.id
-            LEFT JOIN tickets tk ON tk.booking_item_id=bi.id AND tk.booking_id=b.id
+            LEFT JOIN tickets tk ON tk.replaced=FALSE AND tk.booking_item_id=bi.id AND tk.booking_id=b.id
             LEFT JOIN ticket_boarding a ON a.booking_item_id=bi.id AND (a.ticket_id=tk.id OR (a.ticket_id IS NULL AND tk.id IS NULL))
             WHERE
             """+ELIGIBLE,f.parameters(operator),(rs,i)->attendance(rs));
@@ -190,7 +190,7 @@ public class ReportRepository {
         attendance_totals AS (SELECT b.trip_id,
         """+ATTENDANCE_COLUMNS+"""
           FROM cohort b JOIN booking_items bi ON bi.booking_id=b.id
-          LEFT JOIN tickets tk ON tk.booking_item_id=bi.id AND tk.booking_id=b.id
+          LEFT JOIN tickets tk ON tk.replaced=FALSE AND tk.booking_item_id=bi.id AND tk.booking_id=b.id
           LEFT JOIN ticket_boarding a ON a.booking_item_id=bi.id AND (a.ticket_id=tk.id OR (a.ticket_id IS NULL AND tk.id IS NULL))
           WHERE
         """+ELIGIBLE+"""
