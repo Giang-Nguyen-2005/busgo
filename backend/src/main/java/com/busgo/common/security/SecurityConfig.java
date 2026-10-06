@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/api/v1/seat-holds/**").hasRole("CUSTOMER")
                         .requestMatchers("/api/v1/bookings/**").hasRole("CUSTOMER")
+                        .requestMatchers("/api/v1/notifications/**", "/api/v1/notification-preferences").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/users/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/me/change-password").authenticated()

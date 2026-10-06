@@ -1,0 +1,14 @@
+.notification-bell { position: relative; }
+.notification-bell > button { position: relative; }
+.notification-badge { position: absolute; top: -5px; right: -7px; background: #dc2626; color: white; border-radius: 16px; padding: 1px 5px; font-size: 11px; }
+.notification-panel { position: absolute; right: 0; top: 42px; width: min(420px, calc(100vw - 24px)); max-height: 75vh; overflow: auto; background: white; color: #172033; border: 1px solid #dbe3ed; border-radius: 12px; padding: 16px; box-shadow: 0 12px 35px #17203326; z-index: 100; }
+.notification-item { padding: 16px; border-bottom: 1px solid #dbe3ed; overflow-wrap: anywhere; }
+.notification-item.is-unread { background: #eff6ff; border-left: 3px solid #2563eb; }
+.notification-item p { white-space: pre-line; margin: 8px 0; font-size: 14px; }
+.notification-item small { color: #586579; }
+.notification-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 12px 0; }
+.notification-actions button, .notification-delivery button { padding: 5px 8px; }
+.notifications-page { max-width: 850px; margin: 24px auto; }
+.notification-preference { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+.notification-preference input { width: 20px; height: 20px; }
+@media (max-width: 600px) { .notification-panel { position: fixed; top: 110px; left: 12px; right: 12px; width: auto; max-height: calc(100dvh - 124px); } }

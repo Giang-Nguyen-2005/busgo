@@ -39,6 +39,7 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
           Component: (await import("../layouts/OperatorLayout")).OperatorLayout,
         }),
         children: [
+          { path: "notifications", lazy: async () => ({ Component: (await import("../features/notifications/Notifications")).NotificationsPage }) },
           { path: "maintenance", lazy: async () => ({ Component: (await import("../features/operator/FleetMaintenance")).OperatorMaintenancePage }) },
           { path: "customers", lazy: async () => ({ Component: (await import("../features/operator/Customers")).OperatorCustomersPage }) },
           { path: "customers/:customerKey", lazy: async () => ({ Component: (await import("../features/operator/Customers")).OperatorCustomerDetailPage }) },
@@ -183,6 +184,8 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
       {
         element: <CustomerGuard />,
         children: [
+          { path: "/notifications", lazy: async () => ({ Component: (await import("../features/notifications/Notifications")).NotificationsPage }) },
+          { path: "/notification-preferences", lazy: async () => ({ Component: (await import("../features/notifications/Notifications")).NotificationPreferencesPage }) },
           {
             path: "/booking",
             lazy: async () => ({

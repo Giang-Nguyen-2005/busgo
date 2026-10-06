@@ -50,6 +50,7 @@ class M16BConcurrencyIT extends M16ATestSupport {
             jdbc.update("DELETE payment FROM payments payment JOIN bookings booking ON booking.id=payment.booking_id WHERE booking.trip_id=?", tripId);
             jdbc.update("DELETE FROM trip_seat_segment_inventory WHERE trip_seat_id IN (SELECT id FROM trip_seats WHERE trip_id=?)", tripId);
             jdbc.update("DELETE item FROM booking_items item JOIN bookings booking ON booking.id=item.booking_id WHERE booking.trip_id=?", tripId);
+            NotificationTestCleanup.bookings(jdbc,"SELECT id FROM bookings WHERE trip_id="+tripId);
             jdbc.update("DELETE FROM bookings WHERE trip_id=?", tripId);
             jdbc.update("DELETE FROM trip_seats WHERE trip_id=?", tripId);
             jdbc.update("DELETE FROM trip_segments WHERE trip_id=?", tripId);

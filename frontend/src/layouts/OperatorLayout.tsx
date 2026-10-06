@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { NotificationBell } from "../features/notifications/Notifications";
 import { BusFront, LayoutDashboard, CalendarDays, Ticket, Armchair, Route, Users, Wrench, ChartNoAxesCombined, Contact } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthProvider";
@@ -47,6 +48,7 @@ export function OperatorLayout() {
       <div className="operator-workspace">
         <header className="operator-topbar">
           <Link to="/">Trang khách hàng</Link>
+          {canManageOperator(auth.user?.roles) && <NotificationBell operator />}
           <details>
             <summary>{auth.user?.fullName} · Hồ sơ</summary>
             <div className="operator-account-panel">

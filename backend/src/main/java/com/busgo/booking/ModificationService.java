@@ -32,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class ModificationService {
     @org.springframework.beans.factory.annotation.Autowired
+    private com.busgo.notification.NotificationService notifications;
+    @org.springframework.beans.factory.annotation.Autowired
     private com.busgo.payment.BookingPaymentInventoryRepository bookedInventory;
     @org.springframework.beans.factory.annotation.Autowired
     private TripSegmentResolver segmentResolver;
@@ -293,8 +295,10 @@ public class ModificationService {
         var held=inventory.lockRequired(changes.stream().map(Item::newSeatId).toList(),targetSegments);
         var ownedRows=db.queryForList("SELECT id FROM trip_seat_segment_inventory WHERE hold_token=? AND held_by_user_id=? AND status='HELD' AND hold_expires_at>? ORDER BY id FOR UPDATE",Long.class,m.get("hold_token"),m.get("actor_user_id"),now());
         if(held.size()!=changes.size()*targetSegments.size() || !new HashSet<>(ownedRows).equals(new HashSet<>(held.stream().map(SeatHoldInventoryRepository.LockedInventory::id).toList()))) throw conflict("SEAT_NOT_AVAILABLE","Ghế giữ đã hết hạn hoặc không còn khả dụng.");
+        Long adjustmentPaymentId=null;
         if(decimal(m,"collection_required").signum()>0) {
             Payment p=new Payment(); p.setBooking(b); p.setMethod(PaymentMethod.MOCK_ONLINE); p.setAmount(decimal(m,"collection_required")); p.setStatus(PaymentStatus.PAID); p.setPurpose("BOOKING_MODIFICATION"); p.setModificationId(mid); p.setPaidAt(now()); p.setTransactionReference("MOD-MOCK-"+UUID.randomUUID()); payments.saveAndFlush(p);
+            adjustmentPaymentId=p.getId();
         }
         refund(id,decimal(m,"refund_required"),actor.id(),"MODIFICATION_FARE_DIFFERENCE",mid);
         for(Item change:changes) {
@@ -317,7 +321,11 @@ public class ModificationService {
         b.setTrip(journey.trip()); b.setPickupTripStop(journey.pickup()); b.setDropoffTripStop(journey.dropoff()); b.setTotalAmount(decimal(m,"new_total")); b.setPaymentTokenHash(null);
         if(b.getPaymentDueAt()!=null && b.getPaymentDueAt().isAfter(journey.pickup().getPlannedDepartureTime())) b.setPaymentDueAt(journey.pickup().getPlannedDepartureTime());
         db.update("UPDATE booking_modifications SET status='COMPLETED',completed_at=?,updated_at=? WHERE id=?",parameter(now()),parameter(now()),mid);
-        em.flush(); return view(b,mid);
+        em.flush();
+        notifications.record(b, com.busgo.notification.NotificationType.BOOKING_MODIFIED, Long.toString(mid));
+        if(adjustmentPaymentId!=null)
+            notifications.record(b, com.busgo.notification.NotificationType.PAYMENT_SUCCEEDED, adjustmentPaymentId.toString());
+        return view(b,mid);
     }
     // Reused by cancellation; caller holds trip/operator/booking and payment locks.
     public void refund(long bookingId,BigDecimal requested,Long actor,String reason,Long mid) {

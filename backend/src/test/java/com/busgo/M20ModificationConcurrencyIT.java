@@ -92,6 +92,7 @@ class M20ModificationConcurrencyIT extends M20Support {
             jdbc.update("DELETE FROM booking_status_history WHERE booking_id IN ("+bookings+")");
             jdbc.update("UPDATE trip_seat_segment_inventory v JOIN booking_items i ON i.id=v.booking_item_id SET v.booking_item_id=NULL,v.status='AVAILABLE' WHERE i.booking_id IN ("+bookings+")");
             jdbc.update("DELETE FROM booking_items WHERE booking_id IN ("+bookings+")");
+            NotificationTestCleanup.bookings(jdbc,bookings);
             jdbc.update("DELETE FROM bookings WHERE id IN (SELECT id FROM ("+bookings+") x)");
             String tripIds="SELECT t.id FROM trips t JOIN operator_routes o ON o.id=t.operator_route_id WHERE o.operator_id="+op;
             jdbc.update("DELETE FROM trip_seat_segment_inventory WHERE trip_seat_id IN (SELECT id FROM trip_seats WHERE trip_id IN ("+tripIds+"))");
