@@ -20,7 +20,7 @@ public class TripSearchRepository {
         bt.id bus_type_id,bt.name bus_type_name,b.image_url,
         pickup.id pickup_stop_id,pickup.location_id pickup_location_id,pl.name pickup_name,pickup.planned_departure_time,
         dropoff.id dropoff_stop_id,dropoff.location_id dropoff_location_id,dl.name dropoff_name,dropoff.planned_arrival_time,
-        fare.price,t.status,ratings.average_rating,COALESCE(ratings.review_count,0) review_count,
+        fare.price,t.status,t.delay_minutes,ratings.average_rating,COALESCE(ratings.review_count,0) review_count,
         ROW_NUMBER() OVER(PARTITION BY t.id ORDER BY fare.price,pickup.stop_order,dropoff.stop_order) choice,
         %s available_seats
         FROM trips t JOIN operator_routes opr ON opr.id=t.operator_route_id
@@ -68,7 +68,9 @@ public class TripSearchRepository {
                 new RouteSummary(rs.getLong("route_id"),rs.getString("route_name")),new BusTypeSummary(rs.getLong("bus_type_id"),rs.getString("bus_type_name")),rs.getString("image_url"),
                 new PickupSummary(rs.getLong("pickup_stop_id"),rs.getLong("pickup_location_id"),rs.getString("pickup_name"),api(departure)),
                 new DropoffSummary(rs.getLong("dropoff_stop_id"),rs.getLong("dropoff_location_id"),rs.getString("dropoff_name"),api(arrival)),
-                ChronoUnit.MINUTES.between(departure,arrival),rs.getBigDecimal("price"),rs.getLong("available_seats"),TripStatus.valueOf(rs.getString("status")));
+                ChronoUnit.MINUTES.between(departure,arrival),rs.getBigDecimal("price"),rs.getLong("available_seats"),TripStatus.valueOf(rs.getString("status")),rs.getInt("delay_minutes"),
+                com.busgo.trip.operations.LiveTripState.label(TripStatus.valueOf(rs.getString("status")),rs.getInt("delay_minutes")),
+                api(departure.plusMinutes(rs.getInt("delay_minutes"))),api(arrival.plusMinutes(rs.getInt("delay_minutes"))));
         });
         return new PageImpl<>(rows,page,total);
     }

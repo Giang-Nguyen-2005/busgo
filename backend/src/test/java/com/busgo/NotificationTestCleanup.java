@@ -26,6 +26,13 @@ final class NotificationTestCleanup {
         db.update("DELETE FROM booking_items WHERE booking_id IN ("+ids+")");
         db.update("DELETE FROM bookings WHERE id IN (SELECT id FROM ("+ids+") x)");
         String tripIds="SELECT t.id FROM trips t JOIN operator_routes o ON o.id=t.operator_route_id WHERE o.operator_id="+op;
+        db.update("DELETE FROM trip_operational_updates WHERE trip_id IN ("+tripIds+")");
+        db.update("DELETE FROM operational_history WHERE trip_id IN ("+tripIds+")");
+        db.update("DELETE FROM trip_stop_operations WHERE trip_id IN ("+tripIds+")");
+        db.update("DELETE FROM trip_crew_assignments WHERE trip_id IN ("+tripIds+")");
+        db.update("DELETE p FROM driver_profiles p JOIN operator_employees e ON e.id=p.employee_id WHERE e.operator_id=?",op);
+        db.update("DELETE c FROM employee_capabilities c JOIN operator_employees e ON e.id=c.employee_id WHERE e.operator_id=?",op);
+        db.update("DELETE FROM operator_employees WHERE operator_id=?",op);
         db.update("DELETE FROM trip_seat_segment_inventory WHERE trip_seat_id IN (SELECT id FROM trip_seats WHERE trip_id IN ("+tripIds+"))");
         db.update("DELETE FROM trip_seats WHERE trip_id IN ("+tripIds+")");
         db.update("DELETE FROM trip_segments WHERE trip_id IN ("+tripIds+")");

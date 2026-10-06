@@ -12,6 +12,7 @@ import { OperationsQueryState } from "./OperationsShared";
 import { OperatorStatusBadge } from "./shared";
 import { TripStatusAction } from "./TripStatusAction";
 import { RefreshState } from "./RefreshState";
+import { LiveTripControls } from "./LiveTripControls";
 export const useTripWorkspace = () => useOutletContext<TripDetailResponse>();
 export function TripWorkspace() {
   const auth = useAuth();
@@ -31,6 +32,6 @@ export function TripWorkspace() {
       <RefreshState query={query} onRefresh={() => { void cache.invalidateQueries({ queryKey: ["operator", "trips", id] }); }} />
       <nav className="operator-tabs" aria-label="Không gian chuyến xe">{tripTabs.map(([path, label]) => <NavLink end key={path} to={`/operator/trips/${id}${path ? `/${path}` : ""}`}>{label}</NavLink>)}</nav>
     </section>
-    <Outlet context={trip} />
+    <LiveTripControls key={id} id={id} state={trip.operations} /><Outlet context={trip} />
   </>}</OperationsQueryState>;
 }

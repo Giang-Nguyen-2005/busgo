@@ -147,6 +147,7 @@ export interface TripDetailResponse extends Omit<
   TripSummaryResponse,
   "seatCount" | "segmentCount"
 > {
+  operations?: import("../features/trip/liveTripModel").LiveTripState;
   stops: TripStopResponse[];
   segments: TripSegmentResponse[];
   seats: TripSeatResponse[];

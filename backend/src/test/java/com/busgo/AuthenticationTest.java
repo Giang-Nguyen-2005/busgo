@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.assertj.core.api.Assertions.*;
 
 class AuthenticationTest extends JwtTestSupport {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean com.busgo.trip.operations.LiveTripOperationsService liveTrip;
     private final Instant now=Instant.parse("2026-09-19T00:00:00Z");
     private final CurrentUser user=new CurrentUser(7L,List.of(RoleCode.CUSTOMER));
     private JwtService service(Instant time) {

@@ -61,5 +61,5 @@ public final class TripDtos {
     public record TripDetailResponse(Long id, TripStatus status, TripRouteSummary route,
             TripBusSummary bus, OffsetDateTime departureTime, OffsetDateTime estimatedArrivalTime,
             List<TripStopResponse> stops, List<TripSegmentResponse> segments,
-            List<TripSeatResponse> seats) {}
+            List<TripSeatResponse> seats, com.busgo.trip.operations.LiveTripState operations) {}
 }

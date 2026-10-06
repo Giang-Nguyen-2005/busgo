@@ -33,6 +33,8 @@ import {
   Steps,
 } from "../components/ui";
 import { positiveId, safeReturn } from "../utils/format";
+import { LiveTripBlock } from "../features/trip/LiveTripBlock";
+import { livePollingInterval } from "../features/trip/liveTripModel";
 export function TripPage() {
   const { tripId } = useParams();
   const [params] = useSearchParams();
@@ -77,7 +79,7 @@ function TripSelection() {
     queryKey: ["trip", tripId, journey],
     queryFn: ({ signal }) =>
       get<TripDetail>(`/trips/${tripId}`, journey, signal),
-    enabled: valid,
+    enabled: valid, refetchInterval: q => q.state.error ? false : livePollingInterval(q.state.data?.operations?.lifecycle),
   });
   const seats = useQuery({
     queryKey: ["seats", tripId, journey],
@@ -149,7 +151,7 @@ function TripSelection() {
   return (
     <>
       <Link className="back-link" to={searchReturn(params.get("search"))}>← Kết quả tìm chuyến</Link>
-      <Steps current={0} />
+      <LiveTripBlock state={detail.data?.operations} /><Steps current={0} />
       {recovery.data && ["PENDING", "CONFIRMED"].includes(recovery.data.status) && <div className="notice info" role="status">
         <div>Ghế {recovery.data.seats.map(s => s.seatCode).join(", ")} đã thuộc đặt vé {recovery.data.bookingCode} của bạn. {recovery.data.status === "PENDING" ? "Đặt vé đang chờ thanh toán." : "Đặt vé đã được xác nhận."}
           <p><Link to={`/my-bookings/${recoveryId}`}>Xem chi tiết đặt vé</Link> · {recovery.data.status === "PENDING" && <><Link to={`/payment?bookingId=${recoveryId}`}>Tiếp tục thanh toán</Link> · </>}<Link to="/my-bookings">Vé của tôi</Link></p>

@@ -11,6 +11,7 @@ final class M16BFixtures {
         db.update("INSERT INTO trip_crew_assignments(trip_id,employee_id,duty,assigned_at,assigned_by) VALUES(?,?,'DRIVER',UTC_TIMESTAMP(6),?)",trip,employee,actor);
     }
     static void clear(JdbcTemplate db,long operator,long trip) {
+        db.update("DELETE FROM trip_operational_updates WHERE trip_id=?",trip);
         db.update("DELETE tb FROM ticket_boarding tb JOIN booking_items bi ON bi.id=tb.booking_item_id JOIN bookings b ON b.id=bi.booking_id WHERE b.trip_id=?",trip);
         db.update("DELETE FROM operational_history WHERE trip_id=?",trip);
         db.update("DELETE FROM trip_stop_operations WHERE trip_id=?",trip);

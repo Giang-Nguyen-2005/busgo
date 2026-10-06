@@ -1657,3 +1657,7 @@ Implemented durable transaction-coupled customer/operator admin notifications, o
 ## M24A — Marketplace / Discovery / Reviews (2026-10-06)
 
 Implemented public active-operator profiles, booking-owned completed-trip reviews, derived visible-review ratings, operator admin responses/profile metadata, database-paginated segment-aware search filters/sorts, and truthful Home discovery. Additive V21; V1–V20 remain immutable. M20/M21 current booking/items remain authoritative; M23 unchanged. Verification and limitations: [M24A report](m24a-marketplace.md). M22 gateway and vouchers/promotions, M25 and M29 remain deferred. No commit, push or tag.
+
+## M25 — Live Trip Operations (implemented)
+
+Operational delay/ETA/current-state/history, existing departure/completion actual timestamps, scoped M23 notifications, selected-stop estimates and bounded detail polling implemented. Existing M20 modification, M21 partial cancellation, M24 completed-trip review eligibility and scheduled search semantics preserved. No GPS/maps/WebSocket/M26/payment gateway or V2-wide polish. Verification evidence and remaining limitations: [m25-live-trip-operations.md](m25-live-trip-operations.md). M22 remains intentionally deferred.

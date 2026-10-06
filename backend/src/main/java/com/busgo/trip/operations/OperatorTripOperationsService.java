@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OperatorTripOperationsService {
+    private final LiveTripOperationsService live;
     private final TripRepository trips;
     private final OperatorContextService context;
     private final OperatorOccupancyQueryRepository queries;
@@ -25,7 +26,8 @@ public class OperatorTripOperationsService {
 
     public OperatorTripOperationsService(TripRepository trips, OperatorContextService context,
             OperatorOccupancyQueryRepository queries, TripSeatRepository tripSeats,
-            TripSegmentRepository tripSegments, com.busgo.operations.OperationsService operations) {
+            TripSegmentRepository tripSegments, com.busgo.operations.OperationsService operations, LiveTripOperationsService live) {
+        this.live = live;
         this.trips = trips;
         this.context = context;
         this.queries = queries;
@@ -110,6 +112,7 @@ public class OperatorTripOperationsService {
         if (requested == TripStatus.DEPARTED) operations.requireOriginClosed(tripId);
         if (requested == TripStatus.COMPLETED) operations.requireComplete(tripId);
         trip.setStatus(requested);
+        if (requested == TripStatus.DEPARTED || requested == TripStatus.COMPLETED) live.transitioned(trip, user);
         trips.flush(); // JDBC operations in the same transaction must see the new lifecycle state.
         operations.history(tripId, "TRIP", tripId, "TRIP_" + requested.name(), user.id(), current.name() + " -> " + requested.name());
         return new TripStatusResponse(tripId, requested);

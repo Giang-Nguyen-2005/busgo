@@ -13,6 +13,20 @@ import lombok.Setter;
 @Entity
 @Table(name = "trips")
 public class Trip extends AuditedEntity {
+    @Column(name = "delay_minutes", nullable = false)
+    private int delayMinutes;
+    @Column(name = "delay_reason", length = 500)
+    private String delayReason;
+    @Column(name = "expected_departure_at")
+    private LocalDateTime expectedDepartureAt;
+    @Column(name = "expected_arrival_at")
+    private LocalDateTime expectedArrivalAt;
+    @Column(name = "actual_departure_at")
+    private LocalDateTime actualDepartureAt;
+    @Column(name = "actual_arrival_at")
+    private LocalDateTime actualArrivalAt;
+    @Column(name = "operational_updated_at")
+    private LocalDateTime operationalUpdatedAt;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "operator_route_id", nullable = false)
     private OperatorRoute operatorRoute;
