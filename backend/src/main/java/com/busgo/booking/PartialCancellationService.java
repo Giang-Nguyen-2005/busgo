@@ -26,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class PartialCancellationService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.busgo.notification.NotificationService notifications;
     private final ModificationService commerce;
     private final BookingItemRepository items;
     private final TicketRepository tickets;
@@ -139,6 +141,7 @@ public class PartialCancellationService {
         for(var row:rows) if(db.update("UPDATE trip_seat_segment_inventory SET status='AVAILABLE',booking_item_id=NULL,version=version+1 WHERE id=? AND booking_item_id=? AND status='BOOKED'",row.id(),row.bookingItemId())!=1) throw inconsistent();
         b.setTotalAmount(q.newTotal()); b.setPaymentTokenHash(null);
         em.flush();
+        notifications.record(b, com.busgo.notification.NotificationType.PARTIAL_CANCELLATION_COMPLETED, Long.toString(cid));
         return view(b,cid);
     }
     @Transactional(readOnly=true)

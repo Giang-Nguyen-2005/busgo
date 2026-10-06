@@ -1948,3 +1948,12 @@ Customer /api/v1/bookings/{id} and owned operator /api/v1/operator/bookings/{id}
 ## M21 partial cancellation
 
 Shared customer /api/v1/bookings/{id} and operator /api/v1/operator/bookings/{id}: GET partial-cancellation-eligibility; POST partial-cancellation-quote; POST partial-cancellations; GET partial-cancellations; GET partial-cancellations/{cancellationId}. POST body is {bookingItemIds:[...]}. Quotes are transient; execution revalidates locked state and returns immutable completion snapshots. Staff may read only. Selection must leave an active item; 409 FULL_CANCELLATION_REQUIRED directs all-item selection to existing full cancellation. ITEM_CANCELLED, ATTENDANCE_CONFLICT, MODIFICATION_ACTIVE, SOURCE_TRIP_CLOSED, CUSTOMER_CUTOFF, PAYMENT_EXPIRED and PICKUP_CLOSED are authoritative domain reasons. Foreign booking/item/history IDs are 404. See [M21 contract and accounting](m21-partial-cancellation.md).
+# M23 notification API
+
+JWT CUSTOMER endpoints: GET `/api/v1/notifications?page=0&size=20` returns the existing `{data,pagination}` envelope (size 1–100). GET `/api/v1/notifications/unread-count` returns `{data:number}`. PATCH `/api/v1/notifications/{id}/read` and POST `/api/v1/notifications/read-all` return `{data:true}`. Records contain id (needed for read actions), type, title, message, bookingCode, navigationTarget, createdAt and readAt; they omit user/operator/internal event IDs.
+
+GET `/api/v1/notifications/{id}/deliveries` returns `{data:[{id,status,attemptCount,lastAttemptAt,nextAttemptAt,sentAt,errorSummary}]}`. POST `/api/v1/notifications/{id}/retry` makes eligible FAILED delivery due now, without resetting the five-attempt cap. SENT/SKIPPED rows are not resent. No destinations or raw SMTP errors are exposed.
+
+GET/PUT `/api/v1/notification-preferences` use `{bookingPaymentEmail:boolean,bookingChangeEmail:boolean,tripReminderEmail:boolean}` in the standard `{data:...}` response. PUT requires all three booleans; defaults are true. In-app transactional notifications cannot be disabled.
+
+OPERATOR_ADMIN equivalents use `/api/v1/operator/notifications` with identical inbox/read/history/retry paths. Active single-operator membership is required on every request. Staff and SYSTEM_ADMIN have no access. Foreign notification IDs return 404. Accountless public payment links do not authenticate to these APIs. See [M23 design](m23-notifications.md).

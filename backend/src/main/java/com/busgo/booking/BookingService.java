@@ -33,6 +33,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class BookingService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.busgo.notification.NotificationService notifications;
     @org.springframework.beans.factory.annotation.Value("${busgo.booking.web-payment-window:PT15M}")
     private Duration webPaymentWindow = Duration.ofMinutes(15);
     @org.springframework.beans.factory.annotation.Value("${busgo.booking.phone-payment-window:PT30M}")
@@ -142,6 +144,8 @@ public class BookingService {
             }
         }
         booking.setItems(createdItems);
+        if (source == BookingSource.PHONE && method == com.busgo.payment.entity.PaymentMethod.PAY_ON_BOARD)
+            notifications.record(booking, com.busgo.notification.NotificationType.BOOKING_CONFIRMED, "once");
         return response(booking);
     }
 

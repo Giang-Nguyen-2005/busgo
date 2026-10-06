@@ -16,6 +16,18 @@ spring:
   flyway:
     enabled: true
 busgo:
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    from: ${MAIL_FROM:}
+    starttls: ${MAIL_STARTTLS:true}
+  notifications:
+    delivery-interval: ${NOTIFICATION_DELIVERY_INTERVAL:PT1M}
+    reminder-interval: ${NOTIFICATION_REMINDER_INTERVAL:PT5M}
+    initial-delay: ${NOTIFICATION_INITIAL_DELAY:PT1M}
   jwt:
     secret: ${JWT_SECRET}
     issuer: busgo

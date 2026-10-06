@@ -1139,3 +1139,10 @@ V17 adds booking_modifications and immutable item snapshots, generated one-activ
 ## M21 additive migration V19
 
 V19__partial_cancellations.sql adds booking_items.cancelled and active-only seat uniqueness, partial_cancellations headers and immutable item snapshots, and refunds.partial_cancellation_id. The existing refund balance trigger and refund reason/uniqueness constraints now distinguish full cancellation, M20 adjustments and M21 refunds. Historical items/tickets/payments remain; active operational queries filter cancelled items. V1–V18 are unchanged. See [M21 schema and lock order](m21-partial-cancellation.md).
+# M23 additions (V20)
+
+`notifications` stores a durable event/content snapshot per recipient occurrence. `recipient_user_id` is nullable only for ACCOUNTLESS phone email events. OPERATOR records also carry operator_id. Unique `(recipient_key,event_key)` prevents repeated logical events. History/unread indexes include recipient/audience/operator; booking/event index supports reminder deduplication.
+
+`notification_deliveries` stores EMAIL destination, PENDING/SENT/FAILED/SKIPPED status, attempt count (0–5), last/next attempt, sent time and safe error summary. Unique `(notification_id,channel)` ensures retries reuse the existing delivery. Due status/time index supports bounded worker scans with row locking.
+
+`notification_preferences` is keyed by user_id and stores three default-enabled email category booleans. No SMTP secrets are stored in these tables. All rows are written in the business transaction; only committed deliveries can be sent by another worker transaction. Existing V1–V19 are unchanged. See [M23 design](m23-notifications.md).

@@ -29,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CancellationService {
     @org.springframework.beans.factory.annotation.Autowired
+    private com.busgo.notification.NotificationService notifications;
+    @org.springframework.beans.factory.annotation.Autowired
     private ModificationService modifications;
     private final BookingRepository bookings;
     private final TripRepository trips;
@@ -155,6 +157,7 @@ public class CancellationService {
         history.setToStatus(BookingStatus.CANCELLED); history.setChangedBy(actor==null?null:em.getReference(User.class,actor));
         history.setReasonCode(reason); history.setNote(note); history.setChangedAt(now); histories.save(history);
         em.flush();
+        notifications.record(b, com.busgo.notification.NotificationType.BOOKING_CANCELLED, "once");
         return view(b,operator);
     }
 

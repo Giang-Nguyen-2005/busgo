@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { NotificationBell } from "../features/notifications/Notifications";
 import { BusFront, LogOut, UserRound } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthProvider";
@@ -34,6 +35,7 @@ export function CustomerLayout() {
           <div className="account-nav">
             {auth.authenticated ? (
               <>
+                {customer && <NotificationBell />}
                 <Link className="profile-link" to={customer ? "/profile" : workspace}>
                   <UserRound size={18} />
                   <span>{customer ? "Hồ sơ" : "Khu vực quản lý"}</span>
