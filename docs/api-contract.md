@@ -1957,3 +1957,21 @@ GET `/api/v1/notifications/{id}/deliveries` returns `{data:[{id,status,attemptCo
 GET/PUT `/api/v1/notification-preferences` use `{bookingPaymentEmail:boolean,bookingChangeEmail:boolean,tripReminderEmail:boolean}` in the standard `{data:...}` response. PUT requires all three booleans; defaults are true. In-app transactional notifications cannot be disabled.
 
 OPERATOR_ADMIN equivalents use `/api/v1/operator/notifications` with identical inbox/read/history/retry paths. Active single-operator membership is required on every request. Staff and SYSTEM_ADMIN have no access. Foreign notification IDs return 404. Accountless public payment links do not authenticate to these APIs. See [M23 design](m23-notifications.md).
+
+## M24A marketplace / reviews
+
+Public GETs (anonymous, read-only):
+- /api/v1/public/operators and /public/discovery/operators: paged public operator summaries (page=0,size=12,max100).
+- /api/v1/public/operators/{id}: public summary; inactive/missing => 404.
+- /api/v1/public/operators/{id}/profile: {operator,routes,busTypes,trips}, bounded samples.
+- /api/v1/public/operators/{id}/reviews: paged visible reviews (size=10,max100).
+- /api/v1/public/reviews/recent: paged visible reviews from active operators (size=6,max100).
+- /api/v1/public/discovery/routes, /public/discovery/bus-types, /public/discovery/trips: bounded current data; routes are not a popularity claim.
+
+Public review DTO: id,rating,text,customerName,operatorId,operatorName,routeName,createdAt,updatedAt,response,responseUpdatedAt. No customer/booking/staff/private IDs. Operator DTO: id,name,description,logoUrl,averageRating (null if none),reviewCount.
+
+CUSTOMER only: GET /bookings/{id}/review-eligibility => {eligible,reason,review}. POST/PUT /bookings/{id}/review => body {rating:1..5,text:nonblank<=2000}; POST 201, PUT 200. DELETE soft-hides own review => 200. Foreign ownership 404, anonymous 401, ineligible/duplicate 409 (TRIP_NOT_COMPLETED,BOOKING_NOT_RETAINED,ALREADY_REVIEWED). Normal ApiResponse/PagedResponse/ApiError envelopes.
+
+OPERATOR_ADMIN/STaff reads: GET /operator/marketplace-profile, GET /operator/reviews (page=0,size=10,max100). OPERATOR_ADMIN writes: PUT /operator/marketplace-profile {description?:<=2000,logoUrl?:HTTPS or local URL<=500}; PUT /operator/reviews/{id}/response {text:nonblank<=2000}. Staff writes 403; foreign review 404; SYSTEM_ADMIN has no operator-context bypass.
+
+Existing GET /trips/search adds minRating (optional 1..5), minSeats (default1,1..100), RECOMMENDED default and RATING_DESC sort. Existing operatorId,busTypeId,price,time,journey,date/page parameters stay. Operator summary gains averageRating/reviewCount. Invalid query bounds return 400 VALIDATION_ERROR.

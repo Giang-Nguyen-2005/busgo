@@ -23,22 +23,24 @@ public class TripSearchService {
     private final CustomerJourneyResolver journeys;
     private final SeatAvailabilityQueryRepository availability;
     private final Clock clock;
+    private final com.busgo.marketplace.MarketplaceRepository marketplace;
 
     public TripSearchService(TripSearchRepository search, TripStopSnapshotRepository stops,
             CustomerJourneyResolver journeys, SeatAvailabilityQueryRepository availability,
-            Clock clock) {
+            Clock clock, com.busgo.marketplace.MarketplaceRepository marketplace) {
         this.search = search;
         this.stops = stops;
         this.journeys = journeys;
         this.availability = availability;
         this.clock = clock;
+        this.marketplace = marketplace;
     }
 
     @Transactional(readOnly = true)
     public PagedResponse<SearchResult> search(Long pickupLocationId, Long dropoffLocationId,
             LocalDate departureDate, Long operatorId, Long busTypeId, BigDecimal minPrice,
             BigDecimal maxPrice, LocalTime departureFrom, LocalTime departureTo,
-            SearchSort sort, int page, int size) {
+            SearchSort sort, Double minRating, int minSeats, int page, int size) {
         validateJourneyIds(pickupLocationId, dropoffLocationId);
         validateFilters(minPrice, maxPrice, departureFrom, departureTo);
         var window = businessDate(departureDate);
@@ -46,7 +48,7 @@ public class TripSearchService {
                 window.startInclusive(), window.endExclusive(), utc(clock.instant()), operatorId,
                 busTypeId, minPrice, maxPrice,
                 departureFrom == null ? null : businessTime(departureDate, departureFrom),
-                departureTo == null ? null : businessTime(departureDate, departureTo), sort);
+                departureTo == null ? null : businessTime(departureDate, departureTo), sort, minRating, minSeats);
         return PagedResponse.from(search.search(criteria, PageRequest.of(page, size)));
     }
 
@@ -61,6 +63,7 @@ public class TripSearchService {
         if (available == 0) throw notBookable("No seat is available for the selected journey.");
 
         var operator = trip.getOperatorRoute().getOperator();
+        var rating = marketplace.operator(operator.getId(), true).orElseThrow();
         var route = trip.getOperatorRoute().getRoute();
         var busType = trip.getBus().getBusType();
         List<CustomerTripStop> stopResponses = stops.findByTripIdOrderByStopOrderAsc(tripId).stream()
@@ -68,7 +71,7 @@ public class TripSearchService {
         long duration = ChronoUnit.MINUTES.between(pickup.getPlannedDepartureTime(),
                 dropoff.getPlannedArrivalTime());
         return new CustomerTripDetail(tripId,
-                new OperatorSummary(operator.getId(), operator.getName()),
+                new OperatorSummary(operator.getId(), operator.getName(), rating.averageRating(), rating.reviewCount()),
                 new RouteSummary(route.getId(), route.getName()),
                 new BusTypeSummary(busType.getId(), busType.getName()),
                 trip.getBus().getImageUrl(),

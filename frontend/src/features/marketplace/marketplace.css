@@ -1,0 +1,13 @@
+.marketplace { display: grid; gap: 1.5rem; margin-block: 1.5rem; min-width: 0; }
+.marketplace section { min-width: 0; }
+.market-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,280px),1fr)); gap: 1rem; }
+.market-operator { text-decoration: none; color: inherit; }
+.market-rating { display: inline-block; color: var(--text-muted, #536471); font-size: .9rem; }
+.marketplace-review { margin-block: 1rem; }
+.marketplace-review blockquote { margin: 1rem 0 0; padding: 1rem; border-left: 3px solid var(--green, #26734d); background: #f4f8f5; }
+.review-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.marketplace textarea { width: 100%; min-height: 110px; border: 1px solid #cbd5d1; border-radius: 8px; padding: .75rem; font: inherit; resize: vertical; }
+.market-profile-heading { display: flex; align-items: center; gap: 1rem; }
+.market-profile-heading img { width: 72px; height: 72px; object-fit: contain; }
+.market-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+@media(max-width: 760px) { .marketplace-review .split { flex-wrap: wrap; gap: .5rem; } }

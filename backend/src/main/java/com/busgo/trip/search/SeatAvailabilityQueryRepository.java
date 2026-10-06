@@ -7,32 +7,23 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class SeatAvailabilityQueryRepository {
+    // Same fail-closed segment predicate as availableCounts and seatMap.
+    static String availableSeatCount(String trip, String pickup, String dropoff) {
+        return "(SELECT COUNT(*) FROM trip_seats seat WHERE seat.trip_id=" + trip
+            + " AND (SELECT COUNT(*) FROM trip_segments required_segment WHERE required_segment.trip_id=" + trip
+            + " AND required_segment.segment_order >= " + pickup + " AND required_segment.segment_order < " + dropoff
+            + ") = " + dropoff + " - " + pickup
+            + " AND NOT EXISTS (SELECT 1 FROM trip_segments segment LEFT JOIN trip_seat_segment_inventory inventory"
+            + " ON inventory.trip_segment_id=segment.id AND inventory.trip_seat_id=seat.id WHERE segment.trip_id=" + trip
+            + " AND segment.segment_order >= " + pickup + " AND segment.segment_order < " + dropoff
+            + " AND (inventory.id IS NULL OR inventory.status <> 'AVAILABLE')))";
+    }
     private static final String AVAILABLE_COUNTS = """
-            SELECT seat.trip_id, COUNT(*) AS available_seats
-            FROM trip_seats seat
-            JOIN trip_stops pickup
-              ON pickup.trip_id = seat.trip_id AND pickup.location_id = :pickupLocationId
-            JOIN trip_stops dropoff
-              ON dropoff.trip_id = seat.trip_id AND dropoff.location_id = :dropoffLocationId
-            WHERE seat.trip_id IN (:tripIds)
-              AND (SELECT COUNT(*) FROM trip_segments required_segment
-                   WHERE required_segment.trip_id = seat.trip_id
-                     AND required_segment.segment_order >= pickup.stop_order
-                     AND required_segment.segment_order < dropoff.stop_order)
-                    = dropoff.stop_order - pickup.stop_order
-              AND NOT EXISTS (
-                  SELECT 1
-                  FROM trip_segments segment
-                  LEFT JOIN trip_seat_segment_inventory inventory
-                    ON inventory.trip_segment_id = segment.id
-                   AND inventory.trip_seat_id = seat.id
-                  WHERE segment.trip_id = seat.trip_id
-                    AND segment.segment_order >= pickup.stop_order
-                    AND segment.segment_order < dropoff.stop_order
-                    AND (inventory.id IS NULL OR inventory.status <> 'AVAILABLE')
-              )
-            GROUP BY seat.trip_id
-            """;
+            SELECT t.id trip_id, %s available_seats
+            FROM trips t JOIN trip_stops pickup ON pickup.trip_id=t.id AND pickup.location_id=:pickupLocationId
+            JOIN trip_stops dropoff ON dropoff.trip_id=t.id AND dropoff.location_id=:dropoffLocationId
+            WHERE t.id IN (:tripIds) AND pickup.stop_order < dropoff.stop_order
+            """.formatted(availableSeatCount("t.id", "pickup.stop_order", "dropoff.stop_order"));
 
     private static final String SEAT_MAP = """
             SELECT seat.id, seat.seat_code, seat.row_no, seat.column_no, seat.floor_no,

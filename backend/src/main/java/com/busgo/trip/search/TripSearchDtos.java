@@ -9,10 +9,12 @@ public final class TripSearchDtos {
     private TripSearchDtos() {}
 
     public enum SearchSort {
-        PRICE_ASC, PRICE_DESC, DEPARTURE_ASC, DEPARTURE_DESC
+        RECOMMENDED, PRICE_ASC, PRICE_DESC, DEPARTURE_ASC, DEPARTURE_DESC, RATING_DESC
     }
 
-    public record OperatorSummary(Long id, String name) {}
+    public record OperatorSummary(Long id, String name, Double averageRating, long reviewCount) {
+        public OperatorSummary(Long id, String name) { this(id, name, null, 0); }
+    }
     public record RouteSummary(Long id, String name) {}
     public record BusTypeSummary(Long id, String name) {}
     public record PickupSummary(Long tripStopId, Long locationId, String name,

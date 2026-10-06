@@ -46,6 +46,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(ex.getStatus()).body(ApiError.of(ex.getCode(), ex.getMessage(), ex.getDetails()));
     }
 
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    ResponseEntity<ApiError> constraints(jakarta.validation.ConstraintViolationException ex) {
+        Map<String, String> details = new LinkedHashMap<>();
+        ex.getConstraintViolations().forEach(v -> details.putIfAbsent(v.getPropertyPath().toString(), v.getMessage()));
+        return ResponseEntity.badRequest().body(ApiError.of("VALIDATION_ERROR", "Request validation failed.", details));
+    }
+
     @ExceptionHandler(AuthenticationException.class)
     ResponseEntity<ApiError> unauthorized(AuthenticationException ex) {
         if (ex instanceof com.busgo.common.security.AuthenticationFailure failure)

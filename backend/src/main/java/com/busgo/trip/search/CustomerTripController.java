@@ -29,11 +29,13 @@ public class CustomerTripController {
             @RequestParam(required = false) @DecimalMin("0.00") BigDecimal maxPrice,
             @RequestParam(required = false) LocalTime departureFrom,
             @RequestParam(required = false) LocalTime departureTo,
-            @RequestParam(defaultValue = "DEPARTURE_ASC") SearchSort sort,
+            @RequestParam(defaultValue = "RECOMMENDED") SearchSort sort,
+            @RequestParam(required = false) @DecimalMin("1") @DecimalMax("5") Double minRating,
+            @RequestParam(defaultValue = "1") @Min(1) @Max(100) int minSeats,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return service.search(pickupLocationId, dropoffLocationId, departureDate, operatorId,
-                busTypeId, minPrice, maxPrice, departureFrom, departureTo, sort, page, size);
+                busTypeId, minPrice, maxPrice, departureFrom, departureTo, sort, minRating, minSeats, page, size);
     }
 
     @GetMapping("/{tripId}")

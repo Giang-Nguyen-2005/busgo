@@ -31,6 +31,7 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/payments/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/public/payments/*/mock-confirm").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/public/operators/**", "/api/v1/public/discovery/**", "/api/v1/public/reviews/recent").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/locations").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/trips/search", "/api/v1/trips/*").permitAll()
@@ -43,7 +44,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/users/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/me/change-password").authenticated()
                         .requestMatchers("/api/v1/admin/**").hasRole("SYSTEM_ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/operator/trips", "/api/v1/operator/trips/*",
+                        .requestMatchers(HttpMethod.GET, "/api/v1/operator/marketplace-profile", "/api/v1/operator/reviews",
+                                "/api/v1/operator/trips", "/api/v1/operator/trips/*",
                                 "/api/v1/operator/employees", "/api/v1/operator/employees/*",
                                 "/api/v1/operator/trips/*/crew", "/api/v1/operator/trips/*/attendance",
                                 "/api/v1/operator/trips/*/pickups", "/api/v1/operator/trips/*/history",
