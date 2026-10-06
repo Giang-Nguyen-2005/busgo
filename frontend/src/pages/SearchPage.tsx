@@ -10,6 +10,9 @@ import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFee
 import { FilterPanel } from "../features/search/FilterPanel";
 import { apiClient } from "../api/client";
 import type { PagedResponse } from "../types/api";
+import type { PublicOperator } from "../features/marketplace/Marketplace";
+import { get } from "../api/client";
+import type { Named } from "../types/customer";
 import type { Trip } from "../types/customer";
 import {
   Empty,
@@ -22,6 +25,7 @@ import {
 import { date, positiveId } from "../utils/format";
 const filterSchema = z
   .object({
+    operatorId: z.string(), busTypeId: z.string(), minRating: z.string(), minSeats: z.string(),
     minPrice: z.string(),
     maxPrice: z.string(),
     departureFrom: z.string(),
@@ -47,7 +51,7 @@ export function SearchPage() {
     "minPrice",
     "maxPrice",
     "departureFrom",
-    "departureTo", "operatorId", "busTypeId",
+    "departureTo", "operatorId", "busTypeId", "minRating", "minSeats",
   ].filter((key) => params.get(key)).length;
   const valid =
     positiveId(params.get("pickupLocationId")) &&
@@ -64,6 +68,7 @@ export function SearchPage() {
     "maxPrice",
     "departureFrom",
     "departureTo",
+    "minRating", "minSeats",
     "sort",
     "page",
   ];
@@ -81,9 +86,12 @@ export function SearchPage() {
       ).data,
     enabled: valid,
   });
+  const operators = useQuery({ queryKey: ["marketplace", "search-operators"], queryFn: async ({signal}) => (await apiClient.get<PagedResponse<PublicOperator>>("/public/operators", {params:{size:100},signal})).data });
+  const types = useQuery({ queryKey: ["marketplace", "search-types"], queryFn: ({signal}) => get<Named[]>("/public/discovery/bus-types",undefined,signal) });
   const form = useForm<z.infer<typeof filterSchema>>({
     resolver: zodResolver(filterSchema),
     values: {
+      operatorId: params.get("operatorId") || "", busTypeId: params.get("busTypeId") || "", minRating: params.get("minRating") || "", minSeats: params.get("minSeats") || "",
       minPrice: params.get("minPrice") || "",
       maxPrice: params.get("maxPrice") || "",
       departureFrom: params.get("departureFrom") || "",
@@ -131,8 +139,13 @@ export function SearchPage() {
           }}
         >
           <form className="form-stack" onSubmit={form.handleSubmit(update)}>
-            <fieldset className="filter-group">
-              <legend>Khoảng giá (đ)</legend>
+            <label className="field">Nhà xe<select {...form.register("operatorId")} value={form.watch("operatorId")}><option value="">Tất cả nhà xe</option>{operators.data?.data.map(op=><option value={op.id} key={op.id}>{op.name}</option>)}</select></label>
+            {operators.isError && <ErrorState error={operators.error} retry={()=>operators.refetch()} />}
+            <label className="field">Loại xe<select {...form.register("busTypeId")} value={form.watch("busTypeId")}><option value="">Tất cả loại xe</option>{types.data?.map(t=><option value={t.id} key={t.id}>{t.name}</option>)}</select></label>
+            {types.isError && <ErrorState error={types.error} retry={()=>types.refetch()} />}
+            <label className="field">Đánh giá tối thiểu<select {...form.register("minRating")} value={form.watch("minRating")}><option value="">Không giới hạn</option>{[4,3,2,1].map(v=><option key={v} value={v}>{v} sao trở lên</option>)}</select></label>
+            <Field label="Số chỗ trống tối thiểu" type="number" min="1" max="100" step="1" {...form.register("minSeats")} />
+            <fieldset className="filter-group"><legend>Khoảng giá (đ)</legend>
               <Field
                 label="Giá tối thiểu"
                 type="number"
@@ -174,7 +187,7 @@ export function SearchPage() {
                   departureFrom: "",
                   departureTo: "",
                   operatorId: "",
-                  busTypeId: "",
+                  busTypeId: "", minRating: "", minSeats: "",
                 })
               }
             >
@@ -192,9 +205,11 @@ export function SearchPage() {
             <label>
               Sắp xếp{" "}
               <select
-                value={params.get("sort") || "DEPARTURE_ASC"}
+                value={params.get("sort") || "RECOMMENDED"}
                 onChange={(event) => update({ sort: event.target.value })}
               >
+                <option value="RECOMMENDED">Gợi ý phù hợp</option>
+                <option value="RATING_DESC">Đánh giá cao nhất</option>
                 <option value="DEPARTURE_ASC">Giờ đi sớm nhất</option>
                 <option value="DEPARTURE_DESC">Giờ đi muộn nhất</option>
                 <option value="PRICE_ASC">Giá thấp nhất</option>
@@ -202,7 +217,7 @@ export function SearchPage() {
               </select>
             </label>
           </div>
-          {activeFilters > 0 && <div className="filter-chips"><span>{activeFilters} điều kiện lọc</span><button className="text-button" onClick={() => update({ minPrice: "", maxPrice: "", departureFrom: "", departureTo: "", operatorId: "", busTypeId: "" })}>Xóa bộ lọc</button></div>}
+          {activeFilters > 0 && <div className="filter-chips"><span>{activeFilters} điều kiện lọc</span><button className="text-button" onClick={() => update({ minPrice: "", maxPrice: "", departureFrom: "", departureTo: "", operatorId: "", busTypeId: "", minRating: "", minSeats: "" })}>Xóa bộ lọc</button></div>}
           <RefreshNotice query={result} />
           {result.isPending ? (
             <Loading />

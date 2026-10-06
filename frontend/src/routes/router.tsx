@@ -39,6 +39,7 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
           Component: (await import("../layouts/OperatorLayout")).OperatorLayout,
         }),
         children: [
+          { path: "reviews", lazy: async () => ({ Component: (await import("../features/marketplace/Marketplace")).OperatorReviewsPage }) },
           { path: "notifications", lazy: async () => ({ Component: (await import("../features/notifications/Notifications")).NotificationsPage }) },
           { path: "maintenance", lazy: async () => ({ Component: (await import("../features/operator/FleetMaintenance")).OperatorMaintenancePage }) },
           { path: "customers", lazy: async () => ({ Component: (await import("../features/operator/Customers")).OperatorCustomersPage }) },
@@ -167,6 +168,7 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
     ),
     children: [
       { path: "/", lazy: async () => ({ Component: (await import("../pages/HomePage")).HomePage }) },
+      { path: "/operators/:operatorId", lazy: async () => ({ Component: (await import("../features/marketplace/Marketplace")).OperatorProfilePage }) },
       { path: "/login", lazy: async () => ({ Component: (await import("../pages/AuthPage")).AuthPage }) },
       { path: "/register", lazy: async () => ({ Component: (await import("../pages/AuthPage")).RegisterPage }) },
       {

@@ -11,6 +11,12 @@ import lombok.Setter;
 @Entity
 @Table(name = "transport_operators")
 public class TransportOperator extends AuditedEntity {
+    @Column(name = "public_description", length = 2000)
+    private String publicDescription;
+
+    @Column(name = "logo_url", length = 500)
+    private String logoUrl;
+
     @Column(name = "name", length = 150, nullable = false)
     private String name;
 

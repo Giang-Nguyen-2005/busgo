@@ -1,3 +1,4 @@
+import { Rating } from "../features/marketplace/Rating";
 import { DomainStatusBadge } from "./DomainStatusBadge";
 import { statusLabels } from "../utils/status";
 import { useId, useState } from "react";
@@ -161,8 +162,8 @@ export function TripCard({ trip, searchContext }: { trip: Trip; searchContext?: 
  const href = tripLink(trip.tripId, trip.pickup.locationId, trip.dropoff.locationId) + (searchContext ? "&search=" + encodeURIComponent(searchContext) : "");
  return <article className="card trip-card">
  <div className="trip-card-content"><div className="trip-thumbnail-wrap"><img className="trip-thumbnail" src={illustrative ? "/images/busgo/bus-standard.jpg" : trip.busImageUrl!} alt={illustrative ? fallbackBusAlt : 'Xe ' + trip.busType.name + ' của ' + trip.operator.name} loading="lazy" onError={() => setFailed(true)} /></div>
- <div className="trip-card-details"><div className="trip-times"><div><small className="time-label">Đón khách</small><strong>{time(trip.pickup.departureTime)}</strong><span>{trip.pickup.name}</span></div><div className="trip-line"><small>{duration(trip.durationMinutes)}</small><span>○<i /><ArrowRight size={15} /></span></div><div><small className="time-label">Trả khách</small><strong>{time(trip.dropoff.arrivalTime)}</strong><span>{trip.dropoff.name}</span>{date(trip.pickup.departureTime) !== date(trip.dropoff.arrivalTime) && <small className="arrival-date">{date(trip.dropoff.arrivalTime)}</small>}</div></div>
- <div className="trip-meta"><strong>{trip.operator.name}</strong><span>{trip.busType.name}</span></div><p className="trip-route">Tuyến xe: {trip.route.name}</p></div></div>
+ <div className="trip-card-details"><div className="trip-meta"><Link to={`/operators/${trip.operator.id}`}><strong>{trip.operator.name}</strong></Link><Rating {...trip.operator} /></div><div className="trip-times"><div><small className="time-label">Đón khách</small><strong>{time(trip.pickup.departureTime)}</strong><span>{trip.pickup.name}</span></div><div className="trip-line"><small>{duration(trip.durationMinutes)}</small><span>○<i /><ArrowRight size={15} /></span></div><div><small className="time-label">Trả khách</small><strong>{time(trip.dropoff.arrivalTime)}</strong><span>{trip.dropoff.name}</span>{date(trip.pickup.departureTime) !== date(trip.dropoff.arrivalTime) && <small className="arrival-date">{date(trip.dropoff.arrivalTime)}</small>}</div></div>
+ <div className="trip-meta"><span>{trip.busType.name}</span></div><p className="trip-route">Tuyến xe: {trip.route.name}</p></div></div>
  <div className="trip-bottom"><span className="muted">Còn <b className="green">{trip.availableSeats} chỗ</b></span><div className="trip-price"><strong>{money(trip.price)}</strong><small>/ chỗ</small></div><Link className="button" to={href}>Chọn chỗ <ArrowRight size={16} /></Link></div>
  </article>;
 }

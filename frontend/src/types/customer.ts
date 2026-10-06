@@ -35,7 +35,7 @@ export interface Dropoff {
 }
 export interface Trip {
   tripId: number;
-  operator: Named;
+  operator: Named & { averageRating?: number | null; reviewCount?: number };
   route: Named;
   busType: Named;
   busImageUrl: string | null;

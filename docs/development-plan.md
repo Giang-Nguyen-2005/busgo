@@ -1653,3 +1653,7 @@ Implemented same-booking subset cancellation, authoritative quotes, simulated pa
 ## M23 — Notification system (2026-10-06)
 
 Implemented durable transaction-coupled customer/operator admin notifications, optional email outbox/retry, current-journey 24h/2h pickup reminders, preferences and functional header/history UI. V20 is additive; V1–V19 immutable. M20/M21 completion hooks preserve business semantics. M22 payment gateway remains deferred; PAYMENT_FAILED awaits an authoritative event source. No M25 or M29 work. Design and verification: [M23 report](m23-notifications.md). No commit, push or tag.
+
+## M24A — Marketplace / Discovery / Reviews (2026-10-06)
+
+Implemented public active-operator profiles, booking-owned completed-trip reviews, derived visible-review ratings, operator admin responses/profile metadata, database-paginated segment-aware search filters/sorts, and truthful Home discovery. Additive V21; V1–V20 remain immutable. M20/M21 current booking/items remain authoritative; M23 unchanged. Verification and limitations: [M24A report](m24a-marketplace.md). M22 gateway and vouchers/promotions, M25 and M29 remain deferred. No commit, push or tag.

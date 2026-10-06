@@ -35,7 +35,7 @@ export function OperatorLayout() {
         >
           {[
             ["Điều hành", ["", "/trips", "/bookings"]],
-            ["Kinh doanh", ["/customers", "/reports"]],
+            ["Kinh doanh", ["/customers", "/reports", "/reviews"]],
             ["Nguồn lực", ["/buses", "/maintenance", "/employees"]],
             ["Cấu hình", ["/routes", "/bus-types", "/staff"]],
           ].map(([group, paths]) => {

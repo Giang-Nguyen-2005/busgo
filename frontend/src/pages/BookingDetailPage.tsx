@@ -1,3 +1,4 @@
+import { BookingReviewSection } from "../features/marketplace/Marketplace";
 import { PartialCancellationSection } from "../features/booking/PartialCancellation";
 import { ModificationSection } from "../features/booking/Modification";
 import { useQuery } from "@tanstack/react-query";
@@ -23,5 +24,5 @@ export function BookingDetailPage() {
  <section className="detail-section"><h2>Liên hệ đặt vé</h2><div className="contact-details"><strong>{b.contact.name}</strong><span>{b.contact.phone}</span><span>{b.contact.email}</span></div><p className="fine-print">Thông tin liên hệ không thay thế tên khách trên từng chỗ. Tên trên vé được hiển thị trong vé điện tử do hệ thống phát hành.</p></section>
  <PriceSummary seats={b.seats.filter(s=>!s.cancelled).map(s => s.seatCode)} unit={b.pricePerSeat} total={b.totalAmount} />
  {b.status === "PENDING" && <p className="notice info">Đặt vé đang chờ thanh toán mô phỏng. Khả năng thanh toán được hệ thống kiểm tra khi xác nhận.</p>}
- <p className="fine-print">Đặt lúc {dateTime(b.createdAt)}</p></div><PartialCancellationSection bookingId={b.bookingId} /><ModificationSection bookingId={b.bookingId} /><CancellationSection bookingId={b.bookingId} bookingCode={b.bookingCode} route={b.route.name + ' · Chuyến #' + b.tripId} pickup={b.pickup.name + ' · ' + dateTime(b.pickup.time)} seats={b.seats.filter(s=>!s.cancelled).map(s=>s.seatCode)} contact={b.contact.name} amount={b.totalAmount} /></>;
+ <p className="fine-print">Đặt lúc {dateTime(b.createdAt)}</p></div><BookingReviewSection bookingId={b.bookingId} /><PartialCancellationSection bookingId={b.bookingId} /><ModificationSection bookingId={b.bookingId} /><CancellationSection bookingId={b.bookingId} bookingCode={b.bookingCode} route={b.route.name + ' · Chuyến #' + b.tripId} pickup={b.pickup.name + ' · ' + dateTime(b.pickup.time)} seats={b.seats.filter(s=>!s.cancelled).map(s=>s.seatCode)} contact={b.contact.name} amount={b.totalAmount} /></>;
 }
