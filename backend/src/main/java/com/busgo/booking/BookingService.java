@@ -265,7 +265,7 @@ public class BookingService {
                 new Contact(booking.getContactName(), booking.getContactPhone(),
                         booking.getContactEmail()), bookingSeats,
                 bookingSeats.stream().filter(i->!i.cancelled()).findFirst().orElse(bookingSeats.get(0)).unitPrice(), booking.getTotalAmount(),
-                api(booking.getCreatedAt()), recovery);
+                api(booking.getCreatedAt()), recovery, com.busgo.trip.operations.LiveTripState.of(trip,pickup.getPlannedDepartureTime()));
     }
 
     private BookingListItem listItem(Booking booking) {

@@ -1975,3 +1975,20 @@ CUSTOMER only: GET /bookings/{id}/review-eligibility => {eligible,reason,review}
 OPERATOR_ADMIN/STaff reads: GET /operator/marketplace-profile, GET /operator/reviews (page=0,size=10,max100). OPERATOR_ADMIN writes: PUT /operator/marketplace-profile {description?:<=2000,logoUrl?:HTTPS or local URL<=500}; PUT /operator/reviews/{id}/response {text:nonblank<=2000}. Staff writes 403; foreign review 404; SYSTEM_ADMIN has no operator-context bypass.
 
 Existing GET /trips/search adds minRating (optional 1..5), minSeats (default1,1..100), RECOMMENDED default and RATING_DESC sort. Existing operatorId,busTypeId,price,time,journey,date/page parameters stay. Operator summary gains averageRating/reviewCount. Invalid query bounds return 400 VALIDATION_ERROR.
+
+## M25 — live trip operations
+
+`PATCH /api/v1/operator/trips/{tripId}/status` remains the sole forward lifecycle action (SCHEDULED → BOARDING → DEPARTED → COMPLETED), with existing crew/pickup guards. Departure/completion record backend actual timestamps once, append an operational snapshot and create M23 events. Delay is never a lifecycle enum.
+
+| Method / path under `/api/v1/operator/trips/{tripId}` | Contract |
+| --- | --- |
+| GET `/operations` | Current `LiveTripState`; owned admin/staff read |
+| GET `/operational-history` | Newest 50 immutable snapshots; no actor IDs or mutation endpoints |
+| POST `/delay` | `{requestKey, delayMinutes, reason?}`; zero clears announced delay |
+| POST `/eta` | `{requestKey, delayMinutes, reason?, expectedArrivalAt}`; DEPARTED only; arrival carries UTC offset |
+
+Writes are owned operator-admin only; staff and SYSTEM_ADMIN cannot mutate. Foreign trip is 404. `requestKey` is 1–100 ASCII alphanumeric/hyphen/underscore characters and case sensitive. Retry the same normalized body/key for transport failures; different content with an existing key is 409 `OPERATION_REQUEST_CONFLICT`. A replay returns current trip state without another event/history. Invalid delay/reason/time/lifecycle is 400 `INVALID_OPERATIONAL_UPDATE` (Bean Validation may return standard validation errors).
+
+Current state adds scheduledDepartureAt/ArrivalAt, expectedDepartureAt/ArrivalAt, selectedPickupScheduledAt/EstimatedAt, delayMinutes/reason, actualDepartureAt/ArrivalAt, operationalUpdatedAt, lifecycle and Vietnamese label. Operator trip detail, customer booking detail and bookable trip detail include `operations`. Search/discovery results add delayMinutes, operationalLabel, expectedPickupAt/DropoffAt while preserving scheduled fields/date/sort/bookability.
+
+Trip delay, clear, ETA, departed and completed events use M23 transaction/outbox and existing booking-change email preferences. Confirmed or PHONE/PAY_ON_BOARD pending bookings with at least one active item qualify. Each history occurrence provides a stable notification event key. No reads emit events; reminders retain their independent one-time keys and scheduled thresholds. See [M25](m25-live-trip-operations.md).

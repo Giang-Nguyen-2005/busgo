@@ -73,12 +73,15 @@ public class NotificationService {
         return email!=null && email.length()<=150 && email.matches("^[^\\s@\\r\\n]+@[^\\s@\\r\\n]+\\.[^\\s@\\r\\n]+$");
     }
     static String content(Booking b) {
-        String time=b.getPickupTripStop().getPlannedDepartureTime().atOffset(ZoneOffset.UTC)
+        String time=b.getPickupTripStop().getPlannedDepartureTime().plusMinutes(b.getTrip().getDelayMinutes()).atOffset(ZoneOffset.UTC)
                 .atZoneSameInstant(BUSINESS_ZONE).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
         String seats=b.getItems().stream().filter(i->!i.isCancelled()).map(i->i.getSeatCode()).reduce((a,c)->a+", "+c).orElse("Không còn ghế đang hoạt động");
         return "Mã đặt vé: "+b.getBookingCode()+"\n"+b.getTrip().getOperatorRoute().getRoute().getName()
                 +"\nĐiểm đón: "+b.getPickupTripStop().getLocation().getName()+" → "+b.getDropoffTripStop().getLocation().getName()
-                +"\nGiờ đón: "+time+" (giờ Việt Nam)\nGhế hiện tại: "+seats+"\nTổng tiền hiện tại: "+b.getTotalAmount()+" VND\nTrạng thái: "
+                +"\n"+com.busgo.trip.operations.LiveTripState.label(b.getTrip().getStatus(),b.getTrip().getDelayMinutes())
+                +(b.getTrip().getDelayReason()==null?"":"\nLý do: "+b.getTrip().getDelayReason())
+                +(b.getTrip().getExpectedArrivalAt()==null?"":"\nDự kiến đến: "+b.getTrip().getExpectedArrivalAt().atOffset(ZoneOffset.UTC).atZoneSameInstant(BUSINESS_ZONE).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
+                +"\nGiờ đón dự kiến: "+time+" (giờ Việt Nam)\nGhế hiện tại: "+seats+"\nTổng tiền hiện tại: "+b.getTotalAmount()+" VND\nTrạng thái: "
                 +switch(b.getStatus()) { case CONFIRMED -> "Đã xác nhận"; case CANCELLED -> "Đã hủy"; default -> "Chờ thanh toán"; };
     }
 

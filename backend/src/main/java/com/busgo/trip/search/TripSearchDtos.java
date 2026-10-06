@@ -24,7 +24,8 @@ public final class TripSearchDtos {
 
     public record SearchResult(Long tripId, OperatorSummary operator, RouteSummary route,
             BusTypeSummary busType, String busImageUrl, PickupSummary pickup, DropoffSummary dropoff,
-            long durationMinutes, BigDecimal price, long availableSeats, TripStatus status) {}
+            long durationMinutes, BigDecimal price, long availableSeats, TripStatus status,
+            int delayMinutes, String operationalLabel, OffsetDateTime expectedPickupAt, OffsetDateTime expectedDropoffAt) {}
 
     public record CustomerTripStop(Long tripStopId, Long locationId, String name, Integer stopOrder,
             boolean allowPickup, boolean allowDropoff, OffsetDateTime arrivalTime,
@@ -33,5 +34,5 @@ public final class TripSearchDtos {
     public record CustomerTripDetail(Long tripId, OperatorSummary operator, RouteSummary route,
             BusTypeSummary busType, String busImageUrl, PickupSummary pickup, DropoffSummary dropoff,
             long durationMinutes, BigDecimal price, long availableSeats, TripStatus status,
-            List<CustomerTripStop> stops) {}
+            List<CustomerTripStop> stops, com.busgo.trip.operations.LiveTripState operations) {}
 }

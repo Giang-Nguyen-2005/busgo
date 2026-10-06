@@ -24,7 +24,7 @@ class OperationsLifecycleTest {
     private final CurrentUser actor=new CurrentUser(5L,List.of(RoleCode.OPERATOR_ADMIN));
     private final Trip trip=new Trip();
     private final OperatorTripOperationsService service=new OperatorTripOperationsService(trips,context,
-            mock(OperatorOccupancyQueryRepository.class),mock(TripSeatRepository.class),mock(TripSegmentRepository.class),operations);
+            mock(OperatorOccupancyQueryRepository.class),mock(TripSeatRepository.class),mock(TripSegmentRepository.class),operations,mock(LiveTripOperationsService.class));
     @BeforeEach void setup() {
         var operator=mock(TransportOperator.class); when(operator.getId()).thenReturn(7L);
         when(context.requireAdminOperator(actor)).thenReturn(operator);

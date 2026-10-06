@@ -89,7 +89,7 @@ public class TripService {
                 .toList();
         return new TripDetailResponse(trip.getId(), trip.getStatus(), route(trip), bus(trip),
                 api(trip.getDepartureTime()), api(trip.getEstimatedArrivalTime()),
-                stopResponses, segmentResponses, seatResponses);
+                stopResponses, segmentResponses, seatResponses, com.busgo.trip.operations.LiveTripState.of(trip,null));
     }
 
     private TripSummaryResponse summary(Trip trip, long seatCount, long segmentCount) {

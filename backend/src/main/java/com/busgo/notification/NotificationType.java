@@ -1,6 +1,11 @@
 package com.busgo.notification;
 
 public enum NotificationType {
+    TRIP_DELAYED("Chuyến xe bị trễ", Category.BOOKING_CHANGE, false),
+    TRIP_DELAY_CLEARED("Đã xóa thông báo trễ", Category.BOOKING_CHANGE, false),
+    TRIP_ETA_UPDATED("Giờ đến dự kiến đã được cập nhật", Category.BOOKING_CHANGE, false),
+    TRIP_DEPARTED("Chuyến xe đã khởi hành", Category.BOOKING_CHANGE, false),
+    TRIP_COMPLETED("Chuyến xe đã đến", Category.BOOKING_CHANGE, false),
     BOOKING_CONFIRMED("Đặt vé thành công", Category.BOOKING_PAYMENT, true),
     PAYMENT_SUCCEEDED("Thanh toán thành công", Category.BOOKING_PAYMENT, false),
     PAYMENT_FAILED("Thanh toán không thành công", Category.BOOKING_PAYMENT, false),

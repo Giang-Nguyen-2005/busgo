@@ -79,7 +79,7 @@ public class TripSearchService {
                         pickup.getLocation().getName(), api(pickup.getPlannedDepartureTime())),
                 new DropoffSummary(dropoff.getId(), dropoff.getLocation().getId(),
                         dropoff.getLocation().getName(), api(dropoff.getPlannedArrivalTime())),
-                duration, journey.fare().getPrice(), available, trip.getStatus(), stopResponses);
+                duration, journey.fare().getPrice(), available, trip.getStatus(), stopResponses, com.busgo.trip.operations.LiveTripState.of(trip,pickup.getPlannedDepartureTime()));
     }
 
     private CustomerTripStop stop(TripStop stop) {

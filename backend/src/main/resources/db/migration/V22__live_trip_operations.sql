@@ -1,0 +1,37 @@
+ALTER TABLE trips
+ ADD COLUMN delay_minutes INT NOT NULL DEFAULT 0,
+ ADD COLUMN delay_reason VARCHAR(500) NULL,
+ ADD COLUMN expected_departure_at DATETIME(6) NULL,
+ ADD COLUMN expected_arrival_at DATETIME(6) NULL,
+ ADD COLUMN actual_departure_at DATETIME(6) NULL,
+ ADD COLUMN actual_arrival_at DATETIME(6) NULL,
+ ADD COLUMN operational_updated_at DATETIME(6) NULL,
+ ADD CONSTRAINT ck_trip_delay CHECK (delay_minutes >= 0),
+ ADD CONSTRAINT ck_trip_expected CHECK (expected_departure_at IS NULL OR expected_arrival_at IS NULL OR expected_arrival_at > expected_departure_at),
+ ADD CONSTRAINT ck_trip_actual CHECK (actual_departure_at IS NULL OR actual_arrival_at IS NULL OR actual_arrival_at >= actual_departure_at);
+
+CREATE TABLE trip_operational_updates (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ trip_id BIGINT NOT NULL,
+ operator_id BIGINT NOT NULL,
+ actor_id BIGINT NOT NULL,
+ request_key VARCHAR(100) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ request_payload TEXT NOT NULL,
+ lifecycle VARCHAR(30) NOT NULL,
+ update_type VARCHAR(30) NOT NULL,
+ delay_minutes INT NOT NULL,
+ reason VARCHAR(500) NULL,
+ expected_departure_at DATETIME(6) NULL,
+ expected_arrival_at DATETIME(6) NULL,
+ actual_departure_at DATETIME(6) NULL,
+ actual_arrival_at DATETIME(6) NULL,
+ created_at DATETIME(6) NOT NULL,
+ UNIQUE KEY uk_trip_operation_request (trip_id,request_key),
+ INDEX idx_trip_operation_history (trip_id,created_at,id),
+ INDEX idx_operator_operation_history (operator_id,created_at,id),
+ FOREIGN KEY (trip_id) REFERENCES trips(id),
+ FOREIGN KEY (operator_id) REFERENCES transport_operators(id),
+ FOREIGN KEY (actor_id) REFERENCES users(id),
+ CHECK (delay_minutes >= 0),
+ CHECK (update_type IN ('DELAY_UPDATED','DELAY_CLEARED','ETA_UPDATED','DEPARTED','COMPLETED'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

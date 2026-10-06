@@ -268,7 +268,7 @@ export function OperatorTripDetailPage() {
   const t = useTripWorkspace();
   return <>
     <CrewSection tripId={t.id} status={t.status} />
-    <section className="card"><h2>Tổng quan chuyến</h2><p>{t.seats.length} ghế · {t.segments.length} chặng</p><p>Dự kiến đến: {dateTime(t.estimatedArrivalTime)}</p><Link to={"/operator/bookings?tripId=" + t.id}>Tra cứu đặt vé của chuyến</Link></section>
+    <section className="card"><h2>Tổng quan chuyến</h2><p>{t.seats.length} ghế · {t.segments.length} chặng</p><p>Đến theo lịch: {dateTime(t.estimatedArrivalTime)}</p><Link to={"/operator/bookings?tripId=" + t.id}>Tra cứu đặt vé của chuyến</Link></section>
     <section className="card"><h2>Điểm dừng theo lịch</h2><TripTimeline stops={t.stops} /></section>
     <section className="card"><h2>Các chặng</h2><OperatorTable headers={["Thứ tự", "Điểm đầu", "Điểm cuối"]} empty={!t.segments.length}>{[...t.segments].sort((a,b)=>a.segmentOrder-b.segmentOrder).map(s => <tr key={s.id}><td>{s.segmentOrder}</td><td>{t.stops.find(x=>x.id===s.fromTripStopId)?.locationName}</td><td>{t.stops.find(x=>x.id===s.toTripStopId)?.locationName}</td></tr>)}</OperatorTable></section>
   </>;

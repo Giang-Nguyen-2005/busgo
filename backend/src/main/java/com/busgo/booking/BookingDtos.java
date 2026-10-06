@@ -37,7 +37,7 @@ public final class BookingDtos {
     public record BookingResponse(Long bookingId, String bookingCode, BookingStatus status,
             Long tripId, OperatorSummary operator, RouteSummary route, StopSummary pickup,
             StopSummary dropoff, Contact contact, List<BookingSeat> seats,
-            BigDecimal pricePerSeat, BigDecimal totalAmount, OffsetDateTime createdAt, CancellationDtos.Recovery recovery) {}
+            BigDecimal pricePerSeat, BigDecimal totalAmount, OffsetDateTime createdAt, CancellationDtos.Recovery recovery, com.busgo.trip.operations.LiveTripState operations) {}
 
     public record BookingListItem(Long bookingId, String bookingCode, BookingStatus status,
             Long tripId, String routeName, String operatorName, StopSummary pickup,

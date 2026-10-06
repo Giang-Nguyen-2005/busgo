@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/operator/marketplace-profile", "/api/v1/operator/reviews",
                                 "/api/v1/operator/trips", "/api/v1/operator/trips/*",
                                 "/api/v1/operator/employees", "/api/v1/operator/employees/*",
+                                "/api/v1/operator/trips/*/operations", "/api/v1/operator/trips/*/operational-history",
                                 "/api/v1/operator/trips/*/crew", "/api/v1/operator/trips/*/attendance",
                                 "/api/v1/operator/trips/*/pickups", "/api/v1/operator/trips/*/history",
                                 "/api/v1/operator/bookings", "/api/v1/operator/bookings/*",

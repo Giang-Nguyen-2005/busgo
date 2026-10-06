@@ -34,6 +34,7 @@ export interface Dropoff {
   arrivalTime: string;
 }
 export interface Trip {
+  delayMinutes?: number; operationalLabel?: string; expectedPickupAt?: string; expectedDropoffAt?: string;
   tripId: number;
   operator: Named & { averageRating?: number | null; reviewCount?: number };
   route: Named;
@@ -47,6 +48,7 @@ export interface Trip {
   status: string;
 }
 export interface TripDetail extends Trip {
+  operations?: import("../features/trip/liveTripModel").LiveTripState;
   stops: {
     tripStopId: number;
     locationId: number;
@@ -95,6 +97,7 @@ export interface Stop {
   time: string;
 }
 export interface Booking {
+  operations?: import("../features/trip/liveTripModel").LiveTripState;
   recovery?: import("./recovery").Recovery | null;
   bookingId: number;
   bookingCode: string;
