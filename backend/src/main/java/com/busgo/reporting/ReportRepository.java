@@ -114,7 +114,7 @@ public class ReportRepository {
         """;
     public Attendance attendance(ReportFilter f,long operator) {
         return jdbc.queryForObject(TRAVEL+"SELECT "+ATTENDANCE_COLUMNS+"""
-            FROM cohort b JOIN booking_items bi ON bi.booking_id=b.id
+            FROM cohort b JOIN booking_items bi ON bi.cancelled=FALSE AND bi.booking_id=b.id
             LEFT JOIN tickets tk ON tk.replaced=FALSE AND tk.booking_item_id=bi.id AND tk.booking_id=b.id
             LEFT JOIN ticket_boarding a ON a.booking_item_id=bi.id AND (a.ticket_id=tk.id OR (a.ticket_id IS NULL AND tk.id IS NULL))
             WHERE
@@ -137,7 +137,7 @@ public class ReportRepository {
             CASE WHEN b.status IN ('CONFIRMED','COMPLETED') AND EXISTS(SELECT 1 FROM payments p WHERE p.booking_id=b.id AND p.status='PAID') THEN 1 ELSE 0 END paid
           FROM selected t JOIN trip_seats s ON s.trip_id=t.id JOIN trip_segments g ON g.trip_id=t.id
           LEFT JOIN trip_seat_segment_inventory v ON v.trip_seat_id=s.id AND v.trip_segment_id=g.id
-          LEFT JOIN booking_items bi ON bi.id=v.booking_item_id AND bi.trip_seat_id=s.id
+          LEFT JOIN booking_items bi ON bi.cancelled=FALSE AND bi.id=v.booking_item_id AND bi.trip_seat_id=s.id
           LEFT JOIN cohort b ON b.id=bi.booking_id AND b.trip_id=t.id
         ), seat_load AS (SELECT trip_id,seat_id,COUNT(*) cells,COUNT(inventory_id) actual,
               SUM(status='AVAILABLE') available FROM cells GROUP BY trip_id,seat_id),
@@ -189,7 +189,7 @@ public class ReportRepository {
           JOIN cohort b ON b.id=p.booking_id WHERE (:method IS NULL OR p.method=:method) GROUP BY b.trip_id),
         attendance_totals AS (SELECT b.trip_id,
         """+ATTENDANCE_COLUMNS+"""
-          FROM cohort b JOIN booking_items bi ON bi.booking_id=b.id
+          FROM cohort b JOIN booking_items bi ON bi.cancelled=FALSE AND bi.booking_id=b.id
           LEFT JOIN tickets tk ON tk.replaced=FALSE AND tk.booking_item_id=bi.id AND tk.booking_id=b.id
           LEFT JOIN ticket_boarding a ON a.booking_item_id=bi.id AND (a.ticket_id=tk.id OR (a.ticket_id IS NULL AND tk.id IS NULL))
           WHERE

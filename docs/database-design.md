@@ -1135,3 +1135,7 @@ columns or association tables added.
 ## M20 additive migrations V17–V18
 
 V17 adds booking_modifications and immutable item snapshots, generated one-active-attempt uniqueness, payment purpose/modification linkage, partial refunds, and retained VOID ticket versions with one current row per item. V18 validates refund success timestamp, remaining balance and modification ownership. Principal payments remain discoverable by purpose=BOOKING; reporting sums all collection/refund events. Current operational ticket joins exclude replaced rows. V1–V16 are unchanged. See [M20 design](m20-booking-modification.md).
+
+## M21 additive migration V19
+
+V19__partial_cancellations.sql adds booking_items.cancelled and active-only seat uniqueness, partial_cancellations headers and immutable item snapshots, and refunds.partial_cancellation_id. The existing refund balance trigger and refund reason/uniqueness constraints now distinguish full cancellation, M20 adjustments and M21 refunds. Historical items/tickets/payments remain; active operational queries filter cancelled items. V1–V18 are unchanged. See [M21 schema and lock order](m21-partial-cancellation.md).

@@ -157,12 +157,12 @@ public class OperationsService {
     }
     /** Called under the payment service's trip lock; a locking read avoids stale RR snapshots. */
     public void requirePaymentAttendanceOpen(long bookingId) {
-        if(!db.queryForList("SELECT a.id FROM ticket_boarding a JOIN booking_items bi ON bi.id=a.booking_item_id WHERE bi.booking_id=? AND a.status='NO_SHOW' FOR UPDATE",Long.class,bookingId).isEmpty())
+        if(!db.queryForList("SELECT a.id FROM ticket_boarding a JOIN booking_items bi ON bi.cancelled=FALSE AND bi.id=a.booking_item_id WHERE bi.booking_id=? AND a.status='NO_SHOW' FOR UPDATE",Long.class,bookingId).isEmpty())
             throw conflict("BOOKING_ATTENDANCE_TERMINAL","A no-show reservation cannot receive payment in this milestone.");
     }
     public Map<String,Object> reservationNoShow(CurrentUser actor,long tripId,long itemId,PickupContext input) {
         var t=trip(actor,tripId,true);
-        var rows=db.queryForList("SELECT b.id,b.source,b.payment_method,b.status,b.pickup_trip_stop_id,tk.id AS ticket_id FROM booking_items bi JOIN bookings b ON b.id=bi.booking_id JOIN trip_seats s ON s.id=bi.trip_seat_id AND s.trip_id=b.trip_id LEFT JOIN tickets tk ON tk.replaced=FALSE AND tk.booking_item_id=bi.id WHERE bi.id=? AND b.trip_id=? FOR UPDATE",itemId,tripId);
+        var rows=db.queryForList("SELECT b.id,b.source,b.payment_method,b.status,b.pickup_trip_stop_id,tk.id AS ticket_id FROM booking_items bi JOIN bookings b ON b.id=bi.booking_id JOIN trip_seats s ON s.id=bi.trip_seat_id AND s.trip_id=b.trip_id LEFT JOIN tickets tk ON tk.replaced=FALSE AND tk.booking_item_id=bi.id WHERE bi.cancelled=FALSE AND bi.id=? AND b.trip_id=? FOR UPDATE",itemId,tripId);
         if(rows.isEmpty()) throw missing("BOOKING_ITEM_NOT_FOUND");
         var b=rows.get(0);
         if(((Number)b.get("pickup_trip_stop_id")).longValue()!=input.stopId()) throw conflict("WRONG_PICKUP_STOP","Use the reservation's booked pickup stop.");
@@ -186,11 +186,11 @@ public class OperationsService {
               b.total_amount AS bookingAmount,ps.planned_departure_time AS pickupTime,
               bi.seat_code AS seatCode,COALESCE(bi.passenger_name,b.contact_name) AS passengerName,
               b.contact_phone AS phone,b.source AS source,b.payment_method AS paymentMethod,
-              EXISTS(SELECT 1 FROM ticket_boarding a JOIN booking_items i ON i.id=a.booking_item_id WHERE i.booking_id=b.id AND a.status='NO_SHOW') AS paymentBlocked,
+              EXISTS(SELECT 1 FROM ticket_boarding a JOIN booking_items i ON i.id=a.booking_item_id WHERE i.cancelled=FALSE AND i.booking_id=b.id AND a.status='NO_SHOW') AS paymentBlocked,
               COALESCE(p.status,'PENDING') AS paymentStatus,tk.id AS ticketId,tk.ticket_code AS ticketCode,
               tb.status AS boardingStatus,b.pickup_trip_stop_id AS pickupStopId,
               pl.name AS pickupName,dl.name AS dropoffName
-            FROM bookings b JOIN booking_items bi ON bi.booking_id=b.id
+            FROM bookings b JOIN booking_items bi ON bi.cancelled=FALSE AND bi.booking_id=b.id
             JOIN trip_stops ps ON ps.id=b.pickup_trip_stop_id JOIN locations pl ON pl.id=ps.location_id
             JOIN trip_stops ds ON ds.id=b.dropoff_trip_stop_id JOIN locations dl ON dl.id=ds.location_id
             LEFT JOIN tickets tk ON tk.replaced=FALSE AND tk.booking_item_id=bi.id
@@ -214,7 +214,7 @@ public class OperationsService {
     }
     public Map<String,Object> transition(CurrentUser actor,long tripId,long ticketId,String command,PickupContext input) {
         var t=trip(actor,tripId,true);
-        var tickets=db.queryForList("SELECT tk.id,tk.status AS ticket_status,b.pickup_trip_stop_id,b.status AS booking_status,p.status AS payment_status FROM tickets tk JOIN bookings b ON b.id=tk.booking_id JOIN booking_items bi ON bi.id=tk.booking_item_id AND bi.booking_id=b.id JOIN trip_seats seat ON seat.id=bi.trip_seat_id AND seat.trip_id=b.trip_id JOIN payments p ON p.id=tk.payment_id AND p.booking_id=b.id WHERE tk.id=? AND b.trip_id=? FOR UPDATE",ticketId,tripId);
+        var tickets=db.queryForList("SELECT tk.id,tk.status AS ticket_status,b.pickup_trip_stop_id,b.status AS booking_status,p.status AS payment_status FROM tickets tk JOIN bookings b ON b.id=tk.booking_id JOIN booking_items bi ON bi.cancelled=FALSE AND bi.id=tk.booking_item_id AND bi.booking_id=b.id JOIN trip_seats seat ON seat.id=bi.trip_seat_id AND seat.trip_id=b.trip_id JOIN payments p ON p.id=tk.payment_id AND p.booking_id=b.id WHERE tk.id=? AND b.trip_id=? FOR UPDATE",ticketId,tripId);
         if(tickets.isEmpty()) throw missing("TICKET_NOT_FOUND");
         var ticket=tickets.get(0);
         if(!"VALID".equals(ticket.get("ticket_status")) || !Set.of("CONFIRMED","COMPLETED").contains(ticket.get("booking_status")) || !"PAID".equals(ticket.get("payment_status"))) throw conflict("TICKET_NOT_ELIGIBLE","Successful payment and a valid booking are required.");
@@ -246,7 +246,7 @@ public class OperationsService {
         return db.queryForList("SELECT s.id AS stopId,l.name,s.stop_order AS stopOrder,o.pickup_closed_at AS closedAt FROM trip_stops s JOIN locations l ON l.id=s.location_id LEFT JOIN trip_stop_operations o ON o.trip_id=s.trip_id AND o.stop_id=s.id WHERE s.trip_id=? AND s.allow_pickup=TRUE AND s.status='ACTIVE' ORDER BY s.stop_order",tripId);
     }
     private long unresolved(long tripId,Long stopId) {
-        return db.queryForObject("SELECT COUNT(*) FROM bookings b JOIN booking_items bi ON bi.booking_id=b.id LEFT JOIN ticket_boarding tb ON tb.booking_item_id=bi.id WHERE b.trip_id=? AND (? IS NULL OR b.pickup_trip_stop_id=?) AND b.status IN ('PENDING','CONFIRMED','COMPLETED') AND (tb.status IS NULL OR tb.status IN ('EXPECTED','CHECKED_IN'))",Long.class,tripId,stopId,stopId);
+        return db.queryForObject("SELECT COUNT(*) FROM bookings b JOIN booking_items bi ON bi.cancelled=FALSE AND bi.booking_id=b.id LEFT JOIN ticket_boarding tb ON tb.booking_item_id=bi.id WHERE b.trip_id=? AND (? IS NULL OR b.pickup_trip_stop_id=?) AND b.status IN ('PENDING','CONFIRMED','COMPLETED') AND (tb.status IS NULL OR tb.status IN ('EXPECTED','CHECKED_IN'))",Long.class,tripId,stopId,stopId);
     }
     public List<Map<String,Object>> closePickup(CurrentUser actor,long tripId,long stopId,String reason) {
         var t=trip(actor,tripId,true);

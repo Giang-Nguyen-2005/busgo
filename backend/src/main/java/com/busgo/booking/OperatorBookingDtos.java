@@ -24,7 +24,7 @@ public final class OperatorBookingDtos {
     public record TicketSummary(Long id, String ticketCode, String passengerName,
             String seatCode, Long paymentId, OffsetDateTime createdAt, String status) {}
     public record BookingItemSummary(Long bookingItemId, Long tripSeatId, String seatCode,
-            String passengerName, BigDecimal unitPrice, TicketSummary ticket) {}
+            String passengerName, BigDecimal unitPrice, TicketSummary ticket, boolean cancelled) {}
     public record PaymentSummary(Long id, PaymentMethod method, BigDecimal amount,
             PaymentStatus status, String transactionReference, OffsetDateTime paidAt,
             OffsetDateTime createdAt, Long collectedByUserId, String referenceNote) {}

@@ -105,7 +105,7 @@ public class AssistedBookingService {
                 b.getTrip().getOperatorRoute().getRoute().getName(),
                 new PublicStop(pickup.getLocation().getName(), api(pickup.getPlannedDepartureTime())),
                 new PublicStop(dropoff.getLocation().getName(), api(dropoff.getPlannedArrivalTime())),
-                b.getItems().stream().map(BookingItem::getSeatCode).toList(), b.getTotalAmount(),
+                b.getItems().stream().filter(i->!i.isCancelled()).map(BookingItem::getSeatCode).toList(), b.getTotalAmount(),
                 b.getPaymentMethod(), b.getStatus(), true);
     }
 

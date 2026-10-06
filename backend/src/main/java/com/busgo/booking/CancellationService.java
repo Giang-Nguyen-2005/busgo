@@ -112,9 +112,11 @@ public class CancellationService {
         }
         boolean paid=b.getStatus()==BookingStatus.CONFIRMED;
         java.math.BigDecimal collected=paymentRows.stream().filter(p->"PAID".equals(p.get("status"))).map(p->(java.math.BigDecimal)p.get("amount")).reduce(java.math.BigDecimal.ZERO,java.math.BigDecimal::add);
-        java.math.BigDecimal refunded=db.queryForObject("SELECT COALESCE(SUM(r.amount),0) FROM refunds r JOIN payments p ON p.id=r.payment_id WHERE p.booking_id=?",java.math.BigDecimal.class,b.getId());
-        var issued=tickets.findDetailedLockedByBookingId(b.getId());
-        var bookingItems=items.findDetailedByBookingId(b.getId());
+        java.math.BigDecimal refunded=collected.subtract(modifications.net(b.getId()));
+        var issued=tickets.findDetailedLockedByBookingId(b.getId()).stream().filter(t->!t.getBookingItem().isCancelled()).toList();
+        var allItems=items.lockByBookingId(b.getId());
+        for(var i:allItems) em.refresh(i,LockModeType.PESSIMISTIC_WRITE);
+        var bookingItems=allItems.stream().filter(i->!i.isCancelled()).toList();
         if(bookingItems.isEmpty() || (paid && (paymentRows.isEmpty() || paymentRows.stream().anyMatch(p->!"PAID".equals(p.get("status")))
                 || paymentRows.get(0).get("paid_at")==null
                 || b.getTotalAmount().compareTo(collected.subtract(refunded))!=0
@@ -159,7 +161,7 @@ public class CancellationService {
     private String blocked(Booking b,boolean operator,boolean expiry,LocalDateTime now,boolean lock) {
         if(b.getStatus()!=BookingStatus.PENDING && b.getStatus()!=BookingStatus.CONFIRMED) return "BOOKING_NOT_CANCELLABLE";
         if(b.getTrip().getStatus()!=TripStatus.SCHEDULED && b.getTrip().getStatus()!=TripStatus.BOARDING) return "CANCELLATION_WINDOW_CLOSED";
-        var attendance=db.queryForList("SELECT a.status FROM ticket_boarding a JOIN booking_items i ON i.id=a.booking_item_id WHERE i.booking_id=? ORDER BY a.id"+(lock?" FOR UPDATE":""),String.class,b.getId());
+        var attendance=db.queryForList("SELECT a.status FROM ticket_boarding a JOIN booking_items i ON i.id=a.booking_item_id WHERE i.cancelled=FALSE AND i.booking_id=? ORDER BY a.id"+(lock?" FOR UPDATE":""),String.class,b.getId());
         if(attendance.stream().anyMatch(s->Set.of("CHECKED_IN","BOARDED","NO_SHOW").contains(s))) return "CANCELLATION_ATTENDANCE_CONFLICT";
         if(!db.queryForList("SELECT stop_id FROM trip_stop_operations WHERE trip_id=? AND stop_id=?"+(lock?" FOR UPDATE":""),Long.class,b.getTrip().getId(),b.getPickupTripStop().getId()).isEmpty()) return "PICKUP_CLOSED";
         if(!expiry && b.getTrip().getOperatorRoute().getOperator().getStatus()!=OperatorStatus.ACTIVE

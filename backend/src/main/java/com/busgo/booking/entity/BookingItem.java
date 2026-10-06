@@ -12,6 +12,9 @@ import lombok.Setter;
 @Entity
 @Table(name = "booking_items")
 public class BookingItem extends CreatedEntity {
+    @Column(nullable = false)
+    private boolean cancelled;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "booking_id", nullable = false)
     private Booking booking;

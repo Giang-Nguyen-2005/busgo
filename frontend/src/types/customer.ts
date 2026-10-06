@@ -109,7 +109,9 @@ export interface Booking {
     tripSeatId: number;
     seatCode: string;
     passengerName: string | null;
+    bookingItemId?: number;
     unitPrice: number;
+    cancelled?: boolean;
   }[];
   pricePerSeat: number;
   totalAmount: number;

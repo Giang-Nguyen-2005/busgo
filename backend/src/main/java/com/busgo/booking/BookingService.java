@@ -246,8 +246,8 @@ public class BookingService {
     private BookingResponse response(Booking booking) { return response(booking,null); }
     private BookingResponse response(Booking booking, CancellationDtos.Recovery recovery) {
         List<BookingSeat> bookingSeats = booking.getItems().stream()
-                .map(item -> new BookingSeat(item.getTripSeat().getId(), item.getSeatCode(),
-                        item.getPassengerName(), item.getUnitPrice())).toList();
+                .map(item -> new BookingSeat(item.getId(), item.getTripSeat().getId(), item.getSeatCode(),
+                        item.getPassengerName(), item.getUnitPrice(), item.isCancelled())).toList();
         Trip trip = booking.getTrip();
         TripStop pickup = booking.getPickupTripStop();
         TripStop dropoff = booking.getDropoffTripStop();
@@ -260,7 +260,7 @@ public class BookingService {
                 stop(dropoff, dropoff.getPlannedArrivalTime()),
                 new Contact(booking.getContactName(), booking.getContactPhone(),
                         booking.getContactEmail()), bookingSeats,
-                bookingSeats.get(0).unitPrice(), booking.getTotalAmount(),
+                bookingSeats.stream().filter(i->!i.cancelled()).findFirst().orElse(bookingSeats.get(0)).unitPrice(), booking.getTotalAmount(),
                 api(booking.getCreatedAt()), recovery);
     }
 
@@ -274,7 +274,7 @@ public class BookingService {
                 stop(pickup, pickup.getPlannedDepartureTime()),
                 stop(dropoff, dropoff.getPlannedArrivalTime()),
                 api(pickup.getPlannedDepartureTime()),
-                booking.getItems().stream().map(BookingItem::getSeatCode).toList(),
+                booking.getItems().stream().filter(i->!i.isCancelled()).map(BookingItem::getSeatCode).toList(),
                 booking.getTotalAmount(), api(booking.getCreatedAt()));
     }
 

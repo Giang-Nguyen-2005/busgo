@@ -29,7 +29,7 @@ public class OperatorOccupancyQueryRepository {
                        tk.passenger_name AS ticket_passenger_name, tk.ticket_code,
                        COALESCE(p.status, 'PENDING') AS payment_status
                 FROM bookings b
-                JOIN booking_items bi ON bi.booking_id = b.id
+                JOIN booking_items bi ON bi.cancelled=FALSE AND bi.booking_id = b.id
                 JOIN trips t ON t.id = b.trip_id
                 JOIN operator_routes opr ON opr.id = t.operator_route_id
                 JOIN trip_stops pickup ON pickup.id = b.pickup_trip_stop_id
@@ -76,7 +76,7 @@ public class OperatorOccupancyQueryRepository {
                 LEFT JOIN trip_seat_segment_inventory inventory
                   ON inventory.trip_seat_id = seat.id
                  AND inventory.trip_segment_id = segment.id
-                LEFT JOIN booking_items bi ON bi.id = inventory.booking_item_id
+                LEFT JOIN booking_items bi ON bi.cancelled=FALSE AND bi.id = inventory.booking_item_id
                 LEFT JOIN bookings b ON b.id = bi.booking_id
                 WHERE seat.trip_id = :tripId AND segment.trip_id = :tripId
                   AND opr.operator_id = :operatorId

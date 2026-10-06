@@ -61,7 +61,7 @@ public class ModificationService {
         this.payments=payments; this.context=context; this.db=db; this.em=em; this.clock=clock;
     }
     private LocalDateTime now() { return utc(clock.instant()); }
-    private Booking owned(CurrentUser actor,long id,boolean operator,boolean mutation) {
+    Booking owned(CurrentUser actor,long id,boolean operator,boolean mutation) {
         if(actor==null || actor.roles().contains(RoleCode.SYSTEM_ADMIN)) throw denied();
         if(operator) {
             long owner=(mutation?context.requireAdminOperator(actor):context.requireOperatorMember(actor)).getId();
@@ -71,7 +71,7 @@ public class ModificationService {
         return bookings.findOwnedById(id,actor.id()).filter(b->b.getSource()==BookingSource.WEB).orElseThrow(ModificationService::missing);
     }
     // All trip locks precede operator/booking locks, regardless of direction. Never lock a newly discovered trip here.
-    private Booking lock(Booking initial,long target) {
+    Booking lock(Booking initial,long target) {
         long source=initial.getTrip().getId();
         for(long id:new TreeSet<>(List.of(source,target))) {
             Trip t=trips.lockById(id).orElseThrow(ModificationService::missing);
@@ -97,7 +97,7 @@ public class ModificationService {
             return no("CUSTOMER_CUTOFF","Không thể thay đổi trong vòng 6 giờ trước giờ đón.");
         if(b.getStatus()==BookingStatus.PENDING && b.getPaymentDueAt()!=null && !b.getPaymentDueAt().isAfter(now()))
             return no("PAYMENT_EXPIRED","Đã hết hạn thanh toán đặt vé.");
-        if(db.queryForObject("SELECT COUNT(*) FROM ticket_boarding a JOIN booking_items i ON i.id=a.booking_item_id WHERE i.booking_id=? AND a.status IN ('CHECKED_IN','BOARDED','NO_SHOW')",Long.class,b.getId())>0)
+        if(db.queryForObject("SELECT COUNT(*) FROM ticket_boarding a JOIN booking_items i ON i.id=a.booking_item_id WHERE i.cancelled=FALSE AND i.booking_id=? AND a.status IN ('CHECKED_IN','BOARDED','NO_SHOW')",Long.class,b.getId())>0)
             return no("ATTENDANCE_CONFLICT","Có khách đã điểm danh, lên xe hoặc được ghi nhận vắng mặt.");
         if(db.queryForObject("SELECT COUNT(*) FROM trip_stop_operations WHERE trip_id=? AND stop_id=?",Long.class,b.getTrip().getId(),b.getPickupTripStop().getId())>0)
             return no("PICKUP_CLOSED","Điểm đón đã đóng.");
@@ -112,7 +112,7 @@ public class ModificationService {
             throw conflict("MODIFICATION_ACTIVE","Có thay đổi đang chờ xác nhận. Hãy tiếp tục hoặc hủy thay đổi đó.");
         db.queryForList("SELECT id FROM payments WHERE booking_id=? ORDER BY id FOR UPDATE",Long.class,b.getId());
         tickets.findDetailedLockedByBookingId(b.getId());
-        if(!db.queryForList("SELECT a.id FROM ticket_boarding a JOIN booking_items i ON i.id=a.booking_item_id WHERE i.booking_id=? AND a.status IN ('CHECKED_IN','BOARDED','NO_SHOW') FOR UPDATE",Long.class,b.getId()).isEmpty())
+        if(!db.queryForList("SELECT a.id FROM ticket_boarding a JOIN booking_items i ON i.id=a.booking_item_id WHERE i.cancelled=FALSE AND i.booking_id=? AND a.status IN ('CHECKED_IN','BOARDED','NO_SHOW') FOR UPDATE",Long.class,b.getId()).isEmpty())
             throw conflict("ATTENDANCE_CONFLICT","Có khách đã điểm danh, lên xe hoặc được ghi nhận vắng mặt.");
         if(!db.queryForList("SELECT stop_id FROM trip_stop_operations WHERE trip_id=? AND stop_id=? FOR UPDATE",Long.class,b.getTrip().getId(),b.getPickupTripStop().getId()).isEmpty())
             throw conflict("PICKUP_CLOSED","Điểm đón đã đóng.");
@@ -124,7 +124,7 @@ public class ModificationService {
         Booking b=owned(actor,id,operator,false); Rule r=rule(b,operator,true);
         if(operator && !actor.roles().contains(RoleCode.OPERATOR_ADMIN)) r=no("ADMIN_REQUIRED","Chỉ quản trị nhà xe có quyền hỗ trợ thay đổi.");
         return new Eligibility(r,r,b.getBookingCode(),b.getSource().name(),b.getContactName(),b.getTrip().getId(),
-                items.findDetailedByBookingId(id).stream().map(i->new CurrentItem(i.getId(),i.getTripSeat().getId(),i.getSeatCode())).toList());
+                items.findActiveByBookingId(id).stream().map(i->new CurrentItem(i.getId(),i.getTripSeat().getId(),i.getSeatCode())).toList());
     }
     private CustomerJourneyResolver.ResolvedJourney target(Booking b,long tripId) {
         Trip t=trips.findById(tripId).orElseThrow(ModificationService::missing);
@@ -166,7 +166,7 @@ public class ModificationService {
     private Plan plan(Booking b,Request input) {
         boolean same=b.getTrip().getId().equals(input.targetTripId());
         if((input.type()==Type.SEAT_CHANGE)!=same) throw conflict("INVALID_MODIFICATION","Loại thay đổi không phù hợp với chuyến đã chọn.");
-        var journey=target(b,input.targetTripId()); var all=items.findDetailedByBookingId(b.getId());
+        var journey=target(b,input.targetTripId()); var all=currentItems(b.getId());
         if(input.items()==null || input.items().isEmpty() || input.items().size()>20) throw conflict("INVALID_SELECTION","Hãy chọn ghế cần đổi.");
         if(new HashSet<>(input.items().stream().map(Selection::bookingItemId).toList()).size()!=input.items().size()
             || new HashSet<>(input.items().stream().map(Selection::targetSeatId).toList()).size()!=input.items().size()) throw conflict("DUPLICATE_SEAT","Không được chọn trùng ghế hoặc khách.");
@@ -187,8 +187,21 @@ public class ModificationService {
         var q=new Quote(input.type(),b.getTrip().getId(),input.targetTripId(),b.getBookingCode(),b.getPickupTripStop().getLocation().getName()+" → "+b.getDropoffTripStop().getLocation().getName(),api(b.getPickupTripStop().getPlannedDepartureTime()),api(journey.pickup().getPlannedDepartureTime()),money,List.copyOf(changes));
         return new Plan(q,journey,all);
     }
-    private BigDecimal net(long id) {
-        return db.queryForObject("SELECT COALESCE((SELECT SUM(amount) FROM payments WHERE booking_id=? AND status IN ('PAID','REFUNDED')),0)-COALESCE((SELECT SUM(r.amount) FROM refunds r JOIN payments p ON p.id=r.payment_id WHERE p.booking_id=?),0)",BigDecimal.class,id,id);
+    private List<BookingItem> currentItems(long id) {
+        var all=items.lockByBookingId(id);
+        for(var i:all) em.refresh(i,LockModeType.PESSIMISTIC_WRITE);
+        return all.stream().filter(i->!i.isCancelled()).toList();
+    }
+    BigDecimal net(long id) {
+        return refundablePayments(id).stream().map(p->decimal(p,"remaining")).reduce(BigDecimal.ZERO,BigDecimal::add);
+    }
+    private List<Map<String,Object>> refundablePayments(long id) {
+        var rows=db.queryForList("SELECT * FROM payments WHERE booking_id=? AND status IN ('PAID','REFUNDED') ORDER BY id FOR UPDATE",id);
+        for(var p:rows) {
+            BigDecimal refunded=db.queryForList("SELECT amount FROM refunds WHERE payment_id=? ORDER BY id FOR UPDATE",BigDecimal.class,p.get("id")).stream().reduce(BigDecimal.ZERO,BigDecimal::add);
+            p.put("remaining",decimal(p,"amount").subtract(refunded));
+        }
+        return rows;
     }
     public History create(CurrentUser actor,long id,boolean operator,Request input) {
         Booking b=lock(owned(actor,id,operator,true),input.targetTripId()); eligible(b,operator,true);
@@ -262,10 +275,10 @@ public class ModificationService {
         eligible(b,operator,false);
         if(b.getTrip().getId()!=number(m,"source_trip_id") || b.getTotalAmount().compareTo(decimal(m,"old_total"))!=0 || net(id).compareTo(decimal(m,"net_collected"))!=0)
             throw conflict("BOOKING_CHANGED","Đặt vé hoặc thanh toán đã thay đổi. Hãy hủy yêu cầu và thử lại.");
-        var journey=target(b,number(m,"target_trip_id")); var changes=changes(mid); var all=items.findDetailedByBookingId(id);
+        var journey=target(b,number(m,"target_trip_id")); var changes=changes(mid); var all=currentItems(id);
         var paymentRows=db.queryForList("SELECT id FROM payments WHERE booking_id=? ORDER BY id FOR UPDATE",Long.class,id);
         var currentTickets=tickets.findDetailedLockedByBookingId(id);
-        db.queryForList("SELECT a.id FROM ticket_boarding a JOIN booking_items i ON i.id=a.booking_item_id WHERE i.booking_id=? ORDER BY a.id FOR UPDATE",id);
+        db.queryForList("SELECT a.id FROM ticket_boarding a JOIN booking_items i ON i.id=a.booking_item_id WHERE i.cancelled=FALSE AND i.booking_id=? ORDER BY a.id FOR UPDATE",id);
         // Source allocation is checked as well as target ownership before any money or ticket write.
         var sourceSegments=segmentResolver.resolve(b.getTrip().getId(),b.getPickupTripStop(),b.getDropoffTripStop()).stream().map(TripSegment::getId).toList();
         var sourceRows=bookedInventory.lockByBookingItems(all.stream().map(BookingItem::getId).toList());
@@ -308,11 +321,14 @@ public class ModificationService {
     }
     // Reused by cancellation; caller holds trip/operator/booking and payment locks.
     public void refund(long bookingId,BigDecimal requested,Long actor,String reason,Long mid) {
+        refund(bookingId,requested,actor,reason,mid,null);
+    }
+    public void refund(long bookingId,BigDecimal requested,Long actor,String reason,Long mid,Long partialId) {
         BigDecimal remaining=requested;
-        var rows=db.queryForList("SELECT p.*,p.amount-COALESCE((SELECT SUM(r.amount) FROM refunds r WHERE r.payment_id=p.id),0) AS remaining FROM payments p WHERE p.booking_id=? AND p.status IN ('PAID','REFUNDED') ORDER BY p.id FOR UPDATE",bookingId);
+        var rows=refundablePayments(bookingId);
         for(var p:rows) {
             BigDecimal amount=remaining.min(decimal(p,"remaining")); if(amount.signum()<=0) continue;
-            db.update("INSERT INTO refunds(payment_id,amount,payment_paid_at,refunded_at,refunded_by,reason_code,modification_id,created_at) VALUES(?,?,?,?,?,?,?,?)",p.get("id"),amount,p.get("paid_at"),parameter(now()),actor,reason,mid,parameter(now()));
+            db.update("INSERT INTO refunds(payment_id,amount,payment_paid_at,refunded_at,refunded_by,reason_code,modification_id,partial_cancellation_id,created_at) VALUES(?,?,?,?,?,?,?,?,?)",p.get("id"),amount,p.get("paid_at"),parameter(now()),actor,reason,mid,partialId,parameter(now()));
             remaining=remaining.subtract(amount);
         }
         if(remaining.signum()!=0) throw conflict("PAYMENT_INCONSISTENT","Không đủ số tiền đã thu để hoàn.");

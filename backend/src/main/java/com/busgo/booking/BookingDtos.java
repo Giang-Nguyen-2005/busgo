@@ -31,8 +31,8 @@ public final class BookingDtos {
     public record StopSummary(Long tripStopId, Long locationId, String name,
             OffsetDateTime time) {}
     public record Contact(String name, String phone, String email) {}
-    public record BookingSeat(Long tripSeatId, String seatCode, String passengerName,
-            BigDecimal unitPrice) {}
+    public record BookingSeat(Long bookingItemId, Long tripSeatId, String seatCode, String passengerName,
+            BigDecimal unitPrice, boolean cancelled) {}
 
     public record BookingResponse(Long bookingId, String bookingCode, BookingStatus status,
             Long tripId, OperatorSummary operator, RouteSummary route, StopSummary pickup,
