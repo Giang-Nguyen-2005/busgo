@@ -42,7 +42,7 @@ public class CustomerRepository {
             SUM(CASE WHEN a.status='NO_SHOW' THEN 1 ELSE 0 END) AS no_show,
             SUM(CASE WHEN a.status='CHECKED_IN' THEN 1 ELSE 0 END) AS checked_in,
             SUM(CASE WHEN a.status IS NULL OR a.status='EXPECTED' THEN 1 ELSE 0 END) AS unrecorded
-          FROM booking_items bi JOIN owned o ON o.id=bi.booking_id
+          FROM booking_items bi JOIN owned o ON o.id=bi.booking_id AND bi.cancelled=FALSE
           LEFT JOIN tickets tk ON tk.replaced=FALSE AND tk.booking_item_id=bi.id
           LEFT JOIN ticket_boarding a ON a.booking_item_id=bi.id GROUP BY bi.booking_id
         ), activity AS (

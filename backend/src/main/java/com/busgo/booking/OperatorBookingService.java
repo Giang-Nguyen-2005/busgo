@@ -60,7 +60,7 @@ public class OperatorBookingService {
                         item.passengerName(), item.unitPrice(), item.ticketId() == null ? null
                         : new TicketSummary(item.ticketId(), item.ticketCode(),
                                 item.ticketPassengerName(), item.ticketSeatCode(), item.paymentId(),
-                                api(item.ticketCreatedAt()), item.ticketStatus()))).toList();
+                                api(item.ticketCreatedAt()), item.ticketStatus()), item.cancelled())).toList();
         var payments = queries.findPayments(operatorId, bookingId).stream().map(payment ->
                 new PaymentSummary(payment.id(), payment.method(), payment.amount(), payment.status(),
                         payment.transactionReference(), api(payment.paidAt()),

@@ -1944,3 +1944,7 @@ V16 adds maintenance and status audit tables/indexes. See m18c-fleet-maintenance
 ## M20 booking modification
 
 Customer /api/v1/bookings/{id} and owned operator /api/v1/operator/bookings/{id} expose modification-eligibility, alternative-trips, modification-seat-availability, modification-quotes, modifications, and modifications/{mid}/confirm or /cancel. Quotes and creation accept {type,targetTripId,items:[{bookingItemId,targetSeatId}]}. POST creates target holds; confirmation simulates cash adjustments and atomically switches the existing booking. Staff may read eligibility/history; mutation requires customer ownership or Operator Admin. See [M20 contract, lifecycle and money semantics](m20-booking-modification.md).
+
+## M21 partial cancellation
+
+Shared customer /api/v1/bookings/{id} and operator /api/v1/operator/bookings/{id}: GET partial-cancellation-eligibility; POST partial-cancellation-quote; POST partial-cancellations; GET partial-cancellations; GET partial-cancellations/{cancellationId}. POST body is {bookingItemIds:[...]}. Quotes are transient; execution revalidates locked state and returns immutable completion snapshots. Staff may read only. Selection must leave an active item; 409 FULL_CANCELLATION_REQUIRED directs all-item selection to existing full cancellation. ITEM_CANCELLED, ATTENDANCE_CONFLICT, MODIFICATION_ACTIVE, SOURCE_TRIP_CLOSED, CUSTOMER_CUTOFF, PAYMENT_EXPIRED and PICKUP_CLOSED are authoritative domain reasons. Foreign booking/item/history IDs are 404. See [M21 contract and accounting](m21-partial-cancellation.md).

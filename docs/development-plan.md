@@ -1646,3 +1646,7 @@ See [audit](m19-audit.md), [verification](m19-verification.md),
 ## M20 — Booking modification (2026-10-05)
 
 Implemented partial same-trip seat changes and whole-booking trip changes, authoritative quotes/eligibility, target holds, simulated cash adjustment, atomic switch, affected ticket replacement, immutable history and shared customer/operator workspace. Booking identity and V1.5 ownership/source semantics remain. Verification and compatibility limitations: [M20 report](m20-booking-modification.md). M21/M22 remain separate; no real gateway or settlement is included. Changes remain uncommitted and unpushed.
+
+## M21 — Partial cancellation / partial refund (2026-10-05)
+
+Implemented same-booking subset cancellation, authoritative quotes, simulated partial refunds using M20 accounting, immutable history and shared customer/operator detail workflow. M20 seat/trip changes and full cancellation now operate on remaining active items. V19 is additive; V1–V18 stay immutable. M22+ and M29 visual polish remain deferred. Verification: [M21 report](m21-partial-cancellation.md). No commit, push or tag.

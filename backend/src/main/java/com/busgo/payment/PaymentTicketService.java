@@ -100,14 +100,16 @@ public class PaymentTicketService {
         if (booking.getStatus() == BookingStatus.CANCELLED) throw notPayable();
         if (booking.getStatus() == BookingStatus.PENDING && booking.getPaymentDueAt() != null
                 && !booking.getPaymentDueAt().isAfter(utc(clock.instant()))) throw paymentWindowClosed();
-        List<BookingItem> items = bookingItems.findDetailedByBookingId(booking.getId());
+        List<BookingItem> lockedItems = bookingItems.lockByBookingId(booking.getId());
+        for(var i:lockedItems) entityManager.refresh(i,jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        List<BookingItem> items = lockedItems.stream().filter(i->!i.isCancelled()).toList();
         validateInventory(booking, items);
 
         Optional<Payment> paid = payments.findLockedByBookingIdAndStatus(
                 booking.getId(), PaymentStatus.PAID);
         if (booking.getStatus() == BookingStatus.CONFIRMED) {
             Payment existing = paid.orElseThrow(PaymentTicketService::invalidPayment);
-            List<Ticket> existingTickets = tickets.findDetailedLockedByBookingId(booking.getId());
+            List<Ticket> existingTickets = tickets.findDetailedLockedByBookingId(booking.getId()).stream().filter(t->!t.getBookingItem().isCancelled()).toList();
             if (!completeTicketSet(booking, items, existing, existingTickets)) {
                 throw invalidPayment();
             }
@@ -175,8 +177,8 @@ public class PaymentTicketService {
         Payment payment = payments.findByBookingIdAndStatus(bookingId,
                 booking.getStatus() == BookingStatus.CANCELLED ? PaymentStatus.REFUNDED : PaymentStatus.PAID)
                 .orElseThrow(PaymentTicketService::ticketNotAvailable);
-        List<BookingItem> items = bookingItems.findDetailedByBookingId(bookingId);
-        List<Ticket> ticketRows = tickets.findDetailedByBookingId(bookingId);
+        List<BookingItem> items = bookingItems.findActiveByBookingId(bookingId);
+        List<Ticket> ticketRows = tickets.findDetailedByBookingId(bookingId).stream().filter(t->!t.getBookingItem().isCancelled()).toList();
         if (!completeTicketSet(booking, items, payment, ticketRows)) {
             throw ticketNotAvailable();
         }

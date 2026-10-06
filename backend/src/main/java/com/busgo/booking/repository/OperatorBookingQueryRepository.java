@@ -62,7 +62,7 @@ public class OperatorBookingQueryRepository {
                        dropoff.id AS dropoff_id, dropoff.location_id AS dropoff_location_id,
                        dropoff_location.name AS dropoff_name,
                        dropoff.planned_arrival_time AS dropoff_time,
-                       (SELECT COUNT(*) FROM booking_items bi WHERE bi.booking_id = b.id) AS seat_count,
+                       (SELECT COUNT(*) FROM booking_items bi WHERE bi.booking_id = b.id AND bi.cancelled=FALSE) AS seat_count,
                        b.total_amount, b.created_at
                 """ + FROM + " ORDER BY b.created_at DESC, b.id DESC LIMIT :limit OFFSET :offset",
                 params, (rs, rowNum) -> new ListRow(
@@ -127,7 +127,7 @@ public class OperatorBookingQueryRepository {
 
     public List<ItemRow> findItems(Long operatorId, Long bookingId) {
         return jdbc.query("""
-                SELECT bi.id, bi.trip_seat_id, bi.seat_code, bi.passenger_name, bi.unit_price,
+                SELECT bi.id, bi.trip_seat_id, bi.seat_code, bi.passenger_name, bi.unit_price, bi.cancelled,
                        tk.id AS ticket_id, tk.ticket_code, tk.passenger_name AS ticket_passenger_name,
                        tk.seat_code AS ticket_seat_code, tk.payment_id, tk.created_at AS ticket_created_at, tk.status AS ticket_status
                 FROM booking_items bi
@@ -143,7 +143,7 @@ public class OperatorBookingQueryRepository {
                         rs.getObject("ticket_id", Long.class), rs.getString("ticket_code"),
                         rs.getString("ticket_passenger_name"), rs.getString("ticket_seat_code"),
                         rs.getObject("payment_id", Long.class),
-                        JpaJdbcTime.read(rs, "ticket_created_at"), rs.getString("ticket_status")));
+                        JpaJdbcTime.read(rs, "ticket_created_at"), rs.getString("ticket_status"), rs.getBoolean("cancelled")));
     }
 
     public List<PaymentRow> findPayments(Long operatorId, Long bookingId) {
@@ -186,7 +186,7 @@ public class OperatorBookingQueryRepository {
             Long dropoffId, Long dropoffLocationId, String dropoffName, LocalDateTime dropoffTime) {}
     public record ItemRow(Long id, Long tripSeatId, String seatCode, String passengerName,
             BigDecimal unitPrice, Long ticketId, String ticketCode, String ticketPassengerName,
-            String ticketSeatCode, Long paymentId, LocalDateTime ticketCreatedAt, String ticketStatus) {}
+            String ticketSeatCode, Long paymentId, LocalDateTime ticketCreatedAt, String ticketStatus, boolean cancelled) {}
     public record PaymentRow(Long id, PaymentMethod method, BigDecimal amount,
             PaymentStatus status, String transactionReference, LocalDateTime paidAt,
             LocalDateTime createdAt, Long collectedByUserId, String referenceNote) {}

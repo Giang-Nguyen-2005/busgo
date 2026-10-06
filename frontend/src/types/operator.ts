@@ -173,7 +173,7 @@ export interface OperatorTicket {
 }
 export interface OperatorBookingItem {
   bookingItemId: number; tripSeatId: number; seatCode: string; passengerName: string | null;
-  unitPrice: number; ticket: OperatorTicket | null;
+  unitPrice: number; cancelled?: boolean; ticket: OperatorTicket | null;
 }
 export interface OperatorPayment {
   collectedByUserId: number | null; referenceNote: string | null;

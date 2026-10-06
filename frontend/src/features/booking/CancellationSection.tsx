@@ -27,7 +27,7 @@ export function CancellationSection({ bookingId, bookingCode, route, pickup, sea
   const query=useQuery({ queryKey:["recovery",auth.user?.id,operator,bookingId],queryFn:({signal})=>get<Recovery>(path+"/recovery",undefined,signal),staleTime:0 });
   const cancel=useMutation({mutationFn:()=>post<Recovery>(path+"/cancel",{note:note.trim() || undefined}),onSuccess:async result=>{
     setReview(false); cache.setQueryData(["recovery",auth.user?.id,operator,bookingId],result);
-    await Promise.all([cache.invalidateQueries({queryKey:["booking"]}),cache.invalidateQueries({queryKey:["bookings"]}),cache.invalidateQueries({queryKey:["tickets"]}),cache.invalidateQueries({queryKey:["operator"]}),cache.invalidateQueries({queryKey:["recovery"]})]);
+    await Promise.all([cache.invalidateQueries({queryKey:["booking"]}),cache.invalidateQueries({queryKey:["bookings"]}),cache.invalidateQueries({queryKey:["tickets"]}),cache.invalidateQueries({queryKey:["operator"]}),cache.invalidateQueries({queryKey:["recovery"]}),cache.invalidateQueries({queryKey:["partial-eligibility"]}),cache.invalidateQueries({queryKey:["partial-history"]})]);
   },onError:()=>{ void query.refetch(); }});
   pending.current = cancel.isPending;
   useEffect(() => {
