@@ -7,13 +7,13 @@ export const statusLabels = {
   attendance: { EXPECTED: "Chưa ghi nhận", CHECKED_IN: "Đã check-in", BOARDED: "Đã lên xe", NO_SHOW: "Vắng mặt" },
   bus: { AVAILABLE: "Sẵn sàng", MAINTENANCE: "Bảo trì", INACTIVE: "Ngừng hoạt động" },
   maintenance: { SCHEDULED: "Đã lên lịch", IN_PROGRESS: "Đang bảo trì", COMPLETED: "Hoàn tất", CANCELLED: "Đã hủy" },
-  operator: { ACTIVE: "Hoạt động", INACTIVE: "Ngừng hoạt động" },
+  operator: { ACTIVE: "Hoạt động", INACTIVE: "Chưa hoạt động", SUSPENDED: "Tạm đình chỉ" },
   user: { ACTIVE: "Hoạt động", INACTIVE: "Ngừng hoạt động", LOCKED: "Đã khóa" },
 } as const;
 export type StatusDomain = keyof typeof statusLabels;
 export function statusPresentation(domain: StatusDomain, status: string) {
   const label = (statusLabels[domain] as Record<string, string>)[status];
-  const tone = !label ? "neutral" : ["CANCELLED", "VOID", "FAILED", "LOCKED"].includes(status) ? "danger"
+  const tone = !label ? "neutral" : ["CANCELLED", "VOID", "FAILED", "LOCKED", "SUSPENDED"].includes(status) ? "danger"
     : ["PENDING", "MAINTENANCE", "IN_PROGRESS", "NO_SHOW"].includes(status) ? "warning"
     : ["INACTIVE", "EXPECTED"].includes(status) ? "neutral"
     : ["SCHEDULED", "BOARDING", "DEPARTED", "REFUNDED"].includes(status) ? "info" : "success";

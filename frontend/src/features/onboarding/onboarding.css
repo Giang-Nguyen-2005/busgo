@@ -1,0 +1,8 @@
+.onboarding-public { max-width: 680px; margin: 24px auto; }
+.onboarding-public fieldset { border: 0; padding: 0; min-width: 0; }
+.onboarding-public input,.onboarding-public textarea { max-width: 100%; box-sizing: border-box; }
+.onboarding-facts { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 16px; }
+.onboarding-facts dd { margin: 4px 0; overflow-wrap: anywhere; }
+.onboarding-facts dt { color: var(--text-muted,#586477); }
+.onboarding-list { display: grid; gap: 12px; margin: 16px 0; }
+.onboarding-public p { overflow-wrap: anywhere; }

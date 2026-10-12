@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OperatorRouteService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.busgo.operator.OperatorCommerceGuard commerce;
     private final OperatorRouteRepository operatorRoutes;
     private final OperatorContextService context;
     private final RouteDefinitionService definitions;
@@ -39,6 +41,7 @@ public class OperatorRouteService {
     @Transactional
     public OperatorRouteResponse attach(CurrentUser user, AttachRouteRequest request) {
         var operator = context.requireAdminOperator(user);
+        commerce.requireActive(operator.getId());
         var route = definitions.requireUsable(request.routeId());
         var existing = operatorRoutes.findByOperatorIdAndRouteId(operator.getId(), route.getId());
         if (existing.isPresent()) {
@@ -66,6 +69,7 @@ public class OperatorRouteService {
     @Transactional
     public OperatorRouteResponse update(CurrentUser user, Long id, UpdateOperatorRouteRequest request) {
         Long operatorId = context.requireAdminOperator(user).getId();
+        if(request.status()==ActiveStatus.ACTIVE) commerce.requireActive(operatorId);
         OperatorRoute association = owned(id, operatorId);
         association.setStatus(request.status());
         return response(operatorRoutes.saveAndFlush(association));

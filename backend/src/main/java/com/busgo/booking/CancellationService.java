@@ -168,6 +168,7 @@ public class CancellationService {
         if(attendance.stream().anyMatch(s->Set.of("CHECKED_IN","BOARDED","NO_SHOW").contains(s))) return "CANCELLATION_ATTENDANCE_CONFLICT";
         if(!db.queryForList("SELECT stop_id FROM trip_stop_operations WHERE trip_id=? AND stop_id=?"+(lock?" FOR UPDATE":""),Long.class,b.getTrip().getId(),b.getPickupTripStop().getId()).isEmpty()) return "PICKUP_CLOSED";
         if(!expiry && b.getTrip().getOperatorRoute().getOperator().getStatus()!=OperatorStatus.ACTIVE
+                && b.getTrip().getOperatorRoute().getOperator().getStatus()!=OperatorStatus.SUSPENDED
                 && (operator || b.getStatus()==BookingStatus.CONFIRMED)) return "CANCELLATION_OPERATOR_SUSPENDED";
         if(!operator && (b.getPickupTripStop().getPlannedDepartureTime()==null
                 || now.isAfter(b.getPickupTripStop().getPlannedDepartureTime().minusHours(6)))) return "CUSTOMER_CANCELLATION_CUTOFF";

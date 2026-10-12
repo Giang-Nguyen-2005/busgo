@@ -27,6 +27,22 @@ public class NotificationService {
         this.db=db; this.clock=clock; this.operators=operators; this.mail=mail;
     }
 
+    /** Accountless receipt/rejection only. This method never accepts invitation data. */
+    @Transactional(propagation=Propagation.MANDATORY)
+    public void onboarding(long applicationId,String email,boolean rejected,String reason) {
+        String type=rejected?"APPLICATION_REJECTED":"APPLICATION_RECEIVED";
+        String key="application:"+applicationId+":"+type;
+        String title=rejected?"Đơn đăng ký nhà xe chưa được chấp thuận":"Đã nhận đơn đăng ký nhà xe";
+        String message="Mã đơn: "+applicationId+(rejected?"\nLý do: "+reason:"\nBusGo sẽ xem xét thông tin đăng ký của bạn.");
+        var time=parameter(utc(clock.instant()));
+        db.update("INSERT INTO notifications(audience,recipient_key,event_key,event_type,title,message,created_at) VALUES('ACCOUNTLESS',?,?,?,?,?,?)",
+            "application:"+applicationId,key,type,title,message,time);
+        if(mail.configured() && validEmail(email)) {
+            long id=db.queryForObject("SELECT id FROM notifications WHERE event_key=? AND recipient_key=?",Long.class,key,"application:"+applicationId);
+            db.update("INSERT INTO notification_deliveries(notification_id,destination,next_attempt_at) VALUES(?,?,?)",id,email,time);
+        }
+    }
+
     /** Must join the business transaction: no visible event or delivery after rollback. */
     @Transactional(propagation=Propagation.MANDATORY)
     public void record(Booking booking, NotificationType type, String occurrence) {
