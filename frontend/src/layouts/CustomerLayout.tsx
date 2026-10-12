@@ -30,6 +30,7 @@ export function CustomerLayout() {
             <NavLink className="home-nav" to="/" end>
               Trang chủ
             </NavLink>
+            <NavLink to="/operator-application">Đăng ký nhà xe</NavLink>
             {customer && <NavLink to="/my-bookings">Vé của tôi</NavLink>}
           </nav>
           <div className="account-nav">

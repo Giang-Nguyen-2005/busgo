@@ -1992,3 +1992,25 @@ Writes are owned operator-admin only; staff and SYSTEM_ADMIN cannot mutate. Fore
 Current state adds scheduledDepartureAt/ArrivalAt, expectedDepartureAt/ArrivalAt, selectedPickupScheduledAt/EstimatedAt, delayMinutes/reason, actualDepartureAt/ArrivalAt, operationalUpdatedAt, lifecycle and Vietnamese label. Operator trip detail, customer booking detail and bookable trip detail include `operations`. Search/discovery results add delayMinutes, operationalLabel, expectedPickupAt/DropoffAt while preserving scheduled fields/date/sort/bookability.
 
 Trip delay, clear, ETA, departed and completed events use M23 transaction/outbox and existing booking-change email preferences. Confirmed or PHONE/PAY_ON_BOARD pending bookings with at least one active item qualify. Each history occurrence provides a stable notification event key. No reads emit events; reminders retain their independent one-time keys and scheduled thresholds. See [M25](m25-live-trip-operations.md).
+# M26 — Operator onboarding and governance
+
+Public routes (no account required):
+- `POST /api/v1/public/operator-applications`: name, optional legalName (defaults to name), legalCode (3–50 uppercase alphanumeric/hyphen; whitespace removed), email, phone, address, contactName, adminEmail, optional http(s) website and publicDescription. Returns `201 {data:{id,status:"SUBMITTED"}}`. Never creates a customer/account/operator. Open or approved legal code conflicts return `LEGAL_IDENTITY_ALREADY_EXISTS`; rejected applications may resubmit as new rows.
+- `GET /api/v1/public/operator-invitations/{token}/context`: operatorName, intended email, expiresAt only. No application/internal notes.
+- `POST /api/v1/public/operator-invitations/{token}/accept`: fullName, password, confirmPassword. Shared BCrypt password policy; returns operatorId and ACTIVE. Invalid, expired, revoked or consumed tokens return `INVALID_INVITATION`. Existing user email returns `DEDICATED_ADMIN_EMAIL_REQUIRED` without granting roles.
+
+SYSTEM_ADMIN only:
+- `GET /api/v1/admin/dashboard`: SUBMITTED, UNDER_REVIEW, ONBOARDING, ACTIVE, SUSPENDED, ACTIVE_ROUTES and UPCOMING_TRIPS aggregate counts. Upcoming trips include existing scheduled trips across operator statuses; active routes count active operator associations.
+- `GET /api/v1/admin/operator-applications?status=&q=&page=0&size=20`: existing paginated envelope; maximum size 100, q maximum 100 characters.
+- `GET /api/v1/admin/operator-applications/{id}`: legal/contact snapshot, latest 50 invitation metadata rows and latest 100 immutable history events. Never returns hashes or tokens.
+- `POST .../{id}/review` with `{note}`: SUBMITTED → UNDER_REVIEW.
+- `POST .../{id}/approve` with `{note}`: UNDER_REVIEW → APPROVED; atomically creates INACTIVE operator and invitation. Returns `{applicationId,operatorId,invitationPath,expiresAt}` in the normal data envelope. The path uses `/operator-invitation#<secret>` and must be copied immediately; never retrievable afterward.
+- `POST .../{id}/reject` with `{reason}`: only SUBMITTED/UNDER_REVIEW; safe applicant-visible reason required. Receipt/rejection use the accountless non-secret M23 outbox.
+- `POST .../{id}/invitation/reissue`: approved, uncompleted INACTIVE operator only; revokes old unused invitation and returns a new one-time path.
+- Existing `GET /api/v1/admin/operators` retains q/status/pagination, adds legalName, legalCode, onboarding, onboardedAt, activeRouteCount, upcomingTripCount. Status accepts ACTIVE, INACTIVE, SUSPENDED. INACTIVE includes onboarding and legacy inactive operators.
+- Existing operator detail plus `GET /api/v1/admin/operators/{id}/governance` provides legal/public fields, originating application, valid admin readiness, invite metadata, supply counts and latest 100 status/onboarding events.
+- `POST /api/v1/admin/operators/{id}/suspend` and `/reactivate` require `{reason}`. ACTIVE → SUSPENDED; SUSPENDED → ACTIVE requires onboarding completion and at least one active, dedicated, single-operator admin.
+
+New responses use `Cache-Control: no-store`. Invitation secrets are 256-bit random, SHA-256 hashes only in MySQL, 72-hour expiry, one-time use. No invitation secret enters notifications/deliveries/history/log statements. Frontend uses a fragment and no-referrer policy; deployments must also redact token-bearing API paths from proxy/access logs. No invite email is sent.
+
+Legacy M13 direct creation remains for compatibility, provisioned as an already-onboarded operator; the new navigation directs to application review. Legacy status patch cannot modify onboarded application operators or transition to/from SUSPENDED. No generic history mutation API, no impersonation, booking, ticket, refund or trip-operation admin bypass.

@@ -24,18 +24,27 @@ public class AdminOperatorQueryRepository {
         String where="""
                 FROM transport_operators o WHERE (:status IS NULL OR o.status=:status)
                   AND (:q IS NULL OR LOWER(o.code) LIKE :q OR LOWER(o.name) LIKE :q
-                       OR LOWER(COALESCE(o.email,'')) LIKE :q OR LOWER(COALESCE(o.phone,'')) LIKE :q)
+                       OR LOWER(COALESCE(o.email,'')) LIKE :q OR LOWER(COALESCE(o.phone,'')) LIKE :q
+                       OR LOWER(COALESCE(o.legal_name,'')) LIKE :q OR LOWER(COALESCE(o.legal_code,'')) LIKE :q)
                 """;
         var p=new MapSqlParameterSource("status",status==null?null:status.name())
                 .addValue("q",q==null||q.isBlank()?null:"%"+q.strip().toLowerCase(Locale.ROOT)+"%")
+                .addValue("now",JpaJdbcTime.parameter(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC)))
                 .addValue("limit",size).addValue("offset",Math.multiplyExact(page,size));
         long total=jdbc.queryForObject("SELECT COUNT(*) "+where,p,Long.class);
-        var rows=jdbc.query("SELECT o.id,o.code,o.name,o.phone,o.email,o.status,o.created_at,o.updated_at,"+COUNTS
+        var rows=jdbc.query("""
+                SELECT o.id,o.code,o.name,o.phone,o.email,o.status,o.created_at,o.updated_at,o.legal_name,o.legal_code,o.onboarded_at,
+                  EXISTS(SELECT 1 FROM operator_applications a WHERE a.operator_id=o.id AND o.onboarded_at IS NULL) AS onboarding,
+                  (SELECT COUNT(*) FROM operator_routes r WHERE r.operator_id=o.id AND r.status='ACTIVE') AS active_routes,
+                  (SELECT COUNT(*) FROM trips t JOIN operator_routes r ON r.id=t.operator_route_id WHERE r.operator_id=o.id AND t.status='SCHEDULED' AND t.departure_time>:now) AS upcoming_trips,
+                """+COUNTS
                 +where+" ORDER BY o.name ASC,o.id ASC LIMIT :limit OFFSET :offset",p,(rs,n)->
                 new AdminOperatorListItem(rs.getLong("id"),rs.getString("code"),rs.getString("name"),
                         rs.getString("phone"),rs.getString("email"),OperatorStatus.valueOf(rs.getString("status")),
                         rs.getLong("active_staff_count"),rs.getLong("active_admin_count"),
-                        api(JpaJdbcTime.read(rs, "created_at")),api(JpaJdbcTime.read(rs, "updated_at"))));
+                        api(JpaJdbcTime.read(rs, "created_at")),api(JpaJdbcTime.read(rs, "updated_at")),
+                        rs.getString("legal_name"),rs.getString("legal_code"),api(rs.getObject("onboarded_at",java.time.LocalDateTime.class)),
+                        rs.getBoolean("onboarding"),rs.getLong("active_routes"),rs.getLong("upcoming_trips")));
         return new PageRows(rows,total);
     }
 

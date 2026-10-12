@@ -1661,3 +1661,12 @@ Implemented public active-operator profiles, booking-owned completed-trip review
 ## M25 — Live Trip Operations (implemented)
 
 Operational delay/ETA/current-state/history, existing departure/completion actual timestamps, scoped M23 notifications, selected-stop estimates and bounded detail polling implemented. Existing M20 modification, M21 partial cancellation, M24 completed-trip review eligibility and scheduled search semantics preserved. No GPS/maps/WebSocket/M26/payment gateway or V2-wide polish. Verification evidence and remaining limitations: [m25-live-trip-operations.md](m25-live-trip-operations.md). M22 remains intentionally deferred.
+# M26 — System Admin V2 / Operator Onboarding
+
+Implementation adds public applications, review/rejection, one-time first-admin invitations, acceptance/activation, governance dashboard, legal directory/detail, reasoned suspension/reactivation and workflow history. V23 is additive; V1–V22 are immutable. See [M26 audit and verification](m26-operator-onboarding.md).
+
+M20 modification remains commerce-gated; M17/M21 permitted cancellation/refund remains available for suspended operators. M23 carries only non-secret receipt/rejection messages. M24A ACTIVE visibility remains authoritative. M25 existing trip operations remain available under suspension; no System Admin operational bypass is introduced.
+
+M22 remains deferred until M26 completion and public HTTPS deployment, and will use one platform-level payment gateway. M27 commission/receivable/settlement, M28 generic audit/support and M29 UI polish remain deferred. No payment secrets, payout/bank model, vouchers, impersonation or invented supply are part of M26.
+
+Final acceptance closure (12 October 2026): **M26 COMPLETE**. The 20 API/database acceptance checks, fresh V1–V23/MySQL 9.2.0 packaged startup evidence, desktop governance and mobile public application/error views remain verified. The valid invitation form passed at 390×844 with correct context, accessible controls, no overflow, required/mismatch validation and zero console errors; invitation remained unconsumed. The known HydrateFallback warning remains nonblocking. Full suites were not rerun. See [final M26 handoff](m26-final-handoff.md) before continuing; do not restart M26 or repeat already-passed suites.

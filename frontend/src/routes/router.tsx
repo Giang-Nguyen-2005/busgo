@@ -7,6 +7,7 @@ import { CustomerGuard } from "../features/auth/AuthProvider";
 import { Empty } from "../components/ui";
 
 export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet /></>, children: [
+  { path: "/operator-invitation", lazy: async () => ({ Component: (await import("../features/onboarding/Onboarding")).OperatorInvitationPage }) },
   { path: "/pay/:token", lazy: async () => ({ Component: (await import("../pages/PublicPaymentPage")).PublicPaymentPage }) },
   {
     path: "/admin",
@@ -15,7 +16,9 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
     children: [{
       lazy: async () => ({ Component: (await import("../layouts/AdminLayout")).AdminLayout }),
       children: [
-        { index: true, lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminHomePage }) },
+        { index: true, lazy: async () => ({ Component: (await import("../features/onboarding/Onboarding")).PlatformDashboard }) },
+        { path: "operator-applications", lazy: async () => ({ Component: (await import("../features/onboarding/Onboarding")).ApplicationsPage }) },
+        { path: "operator-applications/:applicationId", lazy: async () => ({ Component: (await import("../features/onboarding/Onboarding")).ApplicationDetailPage }) },
         { path: "operators", lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminOperatorsPage }) },
         { path: "operators/new", lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminOperatorCreatePage }) },
         { path: "operators/:operatorId", lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminOperatorDetailPage }) },
@@ -167,6 +170,7 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
       </Empty>
     ),
     children: [
+      { path: "/operator-application", lazy: async () => ({ Component: (await import("../features/onboarding/Onboarding")).OperatorApplicationPage }) },
       { path: "/", lazy: async () => ({ Component: (await import("../pages/HomePage")).HomePage }) },
       { path: "/operators/:operatorId", lazy: async () => ({ Component: (await import("../features/marketplace/Marketplace")).OperatorProfilePage }) },
       { path: "/login", lazy: async () => ({ Component: (await import("../pages/AuthPage")).AuthPage }) },

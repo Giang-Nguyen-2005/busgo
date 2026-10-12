@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AdminOperatorService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.jdbc.core.JdbcTemplate onboardingDb;
     private final TransportOperatorRepository operators;
     private final OperatorStaffRepository staff;
     private final OperatorStaffQueryRepository staffQueries;
@@ -41,6 +43,7 @@ public class AdminOperatorService {
     }
     @Transactional
     public AdminOperatorDetail create(CreateOperatorRequest request) {
+        if(request.status()==OperatorStatus.SUSPENDED) throw validation("Use the suspension workflow with a reason.");
         PasswordPolicy.validate(request.initialAdmin().password());
         String code=normalizeCode(request.code()); String email=OperatorStaffService.email(request.initialAdmin().email());
         String staffCode=OperatorStaffService.staffCode(request.initialAdmin().staffCode());
@@ -60,6 +63,7 @@ public class AdminOperatorService {
         userRoles.saveAndFlush(new UserRole(user,admin));
         OperatorStaff membership=new OperatorStaff(); membership.setOperator(operator); membership.setUser(user);
         membership.setStaffCode(staffCode); membership.setStatus(ActiveStatus.ACTIVE); staff.saveAndFlush(membership);
+        onboardingDb.update("UPDATE transport_operators SET onboarded_at=created_at WHERE id=?",operator.getId());
         return detail(operator.getId());
     }
     @Transactional(readOnly=true)
@@ -77,6 +81,9 @@ public class AdminOperatorService {
     public AdminOperatorDetail status(Long id,UpdateOperatorStatusRequest request) {
         TransportOperator o=operators.lockById(id).orElseThrow(AdminOperatorService::notFound);
         if(o.getStatus()==request.status()) return detail(id);
+        if(o.getStatus()==OperatorStatus.SUSPENDED || request.status()==OperatorStatus.SUSPENDED
+                || onboardingDb.queryForObject("SELECT COUNT(*) FROM operator_applications WHERE operator_id=?",Long.class,id)>0)
+            throw new BusinessException("ONBOARDING_WORKFLOW_REQUIRED","Use the onboarding suspension/reactivation workflow.");
         if(request.status()==OperatorStatus.ACTIVE&&staff.countActiveLoginCapableAdmins(id)<1)
             throw new BusinessException("OPERATOR_ACTIVATION_NOT_ALLOWED","An active operator administrator is required.");
         o.setStatus(request.status()); operators.saveAndFlush(o); return detail(id);

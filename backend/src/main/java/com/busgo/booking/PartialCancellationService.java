@@ -49,7 +49,8 @@ public class PartialCancellationService {
             return no("BOOKING_NOT_CANCELLABLE","Đặt vé không còn có thể hủy một phần.");
         if(b.getTrip().getStatus()!=TripStatus.SCHEDULED)
             return no("SOURCE_TRIP_CLOSED","Chuyến đã bắt đầu đón khách hoặc kết thúc.");
-        if(b.getTrip().getOperatorRoute().getOperator().getStatus()!=OperatorStatus.ACTIVE
+        if((b.getTrip().getOperatorRoute().getOperator().getStatus()!=OperatorStatus.ACTIVE
+                && b.getTrip().getOperatorRoute().getOperator().getStatus()!=OperatorStatus.SUSPENDED)
                 || b.getTrip().getOperatorRoute().getStatus()!=com.busgo.common.entity.ActiveStatus.ACTIVE)
             return no("OPERATOR_INACTIVE","Nhà xe hoặc tuyến đang tạm ngưng.");
         if(b.getPickupTripStop().getPlannedDepartureTime()==null || !b.getPickupTripStop().getPlannedDepartureTime().isAfter(now()))

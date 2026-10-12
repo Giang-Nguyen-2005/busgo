@@ -42,8 +42,7 @@ public class NotificationDeliveryWorker {
         if(rows.isEmpty()) return false;
         var d=rows.get(0); long id=((Number)d.get("id")).longValue();
         var n=db.queryForMap("SELECT * FROM notifications WHERE id=?",d.get("notification_id"));
-        var type=NotificationType.valueOf((String)n.get("event_type"));
-        if(n.get("recipient_user_id")!=null && !notifications.preferences(((Number)n.get("recipient_user_id")).longValue()).allows(type)) {
+        if(n.get("recipient_user_id")!=null && !notifications.preferences(((Number)n.get("recipient_user_id")).longValue()).allows(NotificationType.valueOf((String)n.get("event_type")))) {
             db.update("UPDATE notification_deliveries SET status='SKIPPED',error_summary='Email preference disabled' WHERE id=?",id);
             return true;
         }

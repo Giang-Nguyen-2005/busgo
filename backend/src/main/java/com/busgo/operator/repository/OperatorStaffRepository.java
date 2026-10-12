@@ -14,7 +14,7 @@ public interface OperatorStaffRepository extends JpaRepository<OperatorStaff, Lo
             select s from OperatorStaff s
             join fetch s.operator o
             where s.user.id = :userId and s.status = com.busgo.common.entity.ActiveStatus.ACTIVE
-              and o.status = com.busgo.operator.entity.OperatorStatus.ACTIVE
+              and o.status in (com.busgo.operator.entity.OperatorStatus.ACTIVE, com.busgo.operator.entity.OperatorStatus.SUSPENDED)
             """)
     java.util.List<OperatorStaff> findActiveByUserId(
             @org.springframework.data.repository.query.Param("userId") Long userId);

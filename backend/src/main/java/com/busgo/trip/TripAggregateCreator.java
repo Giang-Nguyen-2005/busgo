@@ -39,6 +39,8 @@ import org.springframework.transaction.annotation.Transactional;
 /** Creates the complete, immutable trip snapshot and inventory aggregate. */
 @Service
 public class TripAggregateCreator {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.busgo.operator.OperatorCommerceGuard commerce;
     private final TripRepository trips;
     private final TripStopSnapshotRepository tripStops;
     private final TripSegmentRepository segments;
@@ -113,6 +115,8 @@ public class TripAggregateCreator {
                     "The selected bus is already assigned to another trip during this period.");
         }
         maintenance.requireAssignable(bus.getId(), departure, arrival);
+
+        commerce.requireActive(operatorId);
 
         Trip trip = new Trip();
         trip.setOperatorRoute(association);

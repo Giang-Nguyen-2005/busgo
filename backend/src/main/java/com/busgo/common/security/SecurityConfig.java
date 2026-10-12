@@ -29,6 +29,8 @@ public class SecurityConfig {
                 .addFilterBefore(new JwtAuthenticationFilter(jwt, identities, mapper), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/public/operator-applications", "/api/v1/public/operator-invitations/*/accept").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/public/operator-invitations/*/context").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/payments/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/public/payments/*/mock-confirm").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/operators/**", "/api/v1/public/discovery/**", "/api/v1/public/reviews/recent").permitAll()

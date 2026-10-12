@@ -284,7 +284,7 @@ public class DemoDataSeeder implements ApplicationRunner {
             value.setPhone(spec.phone());
             value.setEmail(spec.email());
             value.setAddress(spec.address());
-            value.setStatus(OperatorStatus.ACTIVE);
+            if(value.getStatus()!=OperatorStatus.SUSPENDED) value.setStatus(OperatorStatus.ACTIVE);
             result.put(spec.code(), operators.save(value));
         }
         operators.flush();

@@ -8,10 +8,10 @@ export function adminOperatorFilters(params: URLSearchParams): AdminOperatorFilt
   const size = [10, 20, 50, 100].includes(Number(params.get("size"))) ? Number(params.get("size")) : 20;
   const page = Number(params.get("page"));
   return { q: params.get("q")?.trim().slice(0, 100) || undefined,
-    status: activeStatuses.find(s => s === params.get("status")), size,
+    status: ([...activeStatuses, "SUSPENDED"] as const).find(s => s === params.get("status")), size,
     page: Number.isInteger(page) && page >= 0 && page <= Math.floor(2147483647 / size) ? page : 0 };
 }
-export const staffFilters = (params: URLSearchParams): StaffFilters => ({ ...adminOperatorFilters(params), role: staffRoles.find(r => r === params.get("role")) });
+export const staffFilters = (params: URLSearchParams): StaffFilters => ({ ...adminOperatorFilters(params), status: activeStatuses.find(s => s === params.get("status")), role: staffRoles.find(r => r === params.get("role")) });
 const text = (data: FormData, key: string) => String(data.get(key) || "").trim();
 export function accountRequest(data: FormData, prefix = "") {
   return { fullName: text(data, prefix + "fullName"), email: text(data, prefix + "email"), phone: text(data, prefix + "phone"),

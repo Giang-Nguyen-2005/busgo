@@ -12,7 +12,8 @@ public final class AdminOperatorDtos {
     public record OperationalCounts(long buses, long routes, long trips, long bookings) {}
     public record AdminOperatorListItem(Long id, String code, String name, String phone,
             String email, OperatorStatus status, long activeStaffCount, long activeAdminCount,
-            OffsetDateTime createdAt, OffsetDateTime updatedAt) {}
+            OffsetDateTime createdAt, OffsetDateTime updatedAt, String legalName, String legalCode,
+            OffsetDateTime onboardedAt, boolean onboarding, long activeRouteCount, long upcomingTripCount) {}
     public record AdminOperatorDetail(Long id, String code, String name, String phone,
             String email, String address, OperatorStatus status, StaffCounts staffCounts,
             OperationalCounts operationalCounts, OffsetDateTime createdAt, OffsetDateTime updatedAt) {}

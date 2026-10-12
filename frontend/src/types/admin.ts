@@ -1,7 +1,7 @@
 import type { ActiveStatus, CreateOperatorStaffRequest } from "./operator";
 export interface AdminOperatorListItem {
   id: number; code: string; name: string; phone: string | null; email: string | null;
-  status: ActiveStatus; activeStaffCount: number; activeAdminCount: number; createdAt: string; updatedAt: string;
+  status: ActiveStatus | "SUSPENDED"; legalName?: string | null; legalCode?: string | null; onboardedAt?: string | null; onboarding?: boolean; activeRouteCount?: number; upcomingTripCount?: number; activeStaffCount: number; activeAdminCount: number; createdAt: string; updatedAt: string;
 }
 export interface AdminOperatorDetail extends Omit<AdminOperatorListItem, "activeStaffCount" | "activeAdminCount"> {
   address: string | null;
@@ -12,4 +12,4 @@ export interface OperatorContactRequest { name: string; phone: string; email: st
 export interface CreateOperatorRequest extends OperatorContactRequest {
   code: string; status: ActiveStatus; initialAdmin: Omit<CreateOperatorStaffRequest, "role">;
 }
-export interface AdminOperatorFilters { q?: string; status?: ActiveStatus; page: number; size: number }
+export interface AdminOperatorFilters { q?: string; status?: ActiveStatus | "SUSPENDED"; page: number; size: number }
