@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class ModificationService {
+    @org.springframework.beans.factory.annotation.Autowired private com.busgo.promotion.VoucherService vouchers;
     @org.springframework.beans.factory.annotation.Autowired
     private com.busgo.notification.NotificationService notifications;
     @org.springframework.beans.factory.annotation.Autowired
@@ -180,9 +181,11 @@ public class ModificationService {
             var item=all.stream().filter(i->i.getId().equals(selection.bookingItemId())).findFirst().orElseThrow(ModificationService::missing);
             if(all.stream().anyMatch(i->i.getTripSeat().getId().equals(selection.targetSeatId()))) throw conflict("SEAT_NOT_AVAILABLE","Hãy chọn ghế mới chưa thuộc đặt vé này.");
             var seat=targetSeats.stream().filter(s->s.getId().equals(selection.targetSeatId())).findFirst().orElseThrow();
-            changes.add(new Item(item.getId(),item.getTripSeat().getId(),item.getSeatCode(),seat.getId(),seat.getSeatCode(),item.getUnitPrice(),same?item.getUnitPrice():journey.fare().getPrice()));
+            BigDecimal targetGross=same?item.getGrossAmount():journey.fare().getPrice();
+            BigDecimal targetDiscount=same?item.getDiscountAmount():item.getOriginalDiscountAmount().min(targetGross.subtract(com.busgo.promotion.PromotionMoney.CENT).max(BigDecimal.ZERO));
+            changes.add(new Item(item.getId(),item.getTripSeat().getId(),item.getSeatCode(),seat.getId(),seat.getSeatCode(),item.getUnitPrice(),same?item.getUnitPrice():targetGross.subtract(targetDiscount),item.getGrossAmount(),targetGross,item.getDiscountAmount(),targetDiscount));
         }
-        BigDecimal newTotal=same?b.getTotalAmount():journey.fare().getPrice().multiply(BigDecimal.valueOf(all.size()));
+        BigDecimal newTotal=same?b.getTotalAmount():changes.stream().map(Item::newFare).reduce(BigDecimal.ZERO,BigDecimal::add);
         BigDecimal collected=net(b.getId());
         if((b.getStatus()==BookingStatus.CONFIRMED && collected.compareTo(b.getTotalAmount())!=0) || (b.getStatus()==BookingStatus.PENDING && collected.signum()!=0)) throw conflict("PAYMENT_INCONSISTENT","Số tiền thanh toán không khớp đặt vé.");
         var money=ModificationMoney.quote(b.getTotalAmount(),newTotal,collected,b.getStatus()==BookingStatus.CONFIRMED);
@@ -222,7 +225,7 @@ public class ModificationService {
             """,code,id,b.getTrip().getOperatorRoute().getOperator().getId(),q.type().name(),q.money().collectionRequired().signum()>0?"AWAITING_PAYMENT":"HELD",q.sourceTripId(),q.targetTripId(),plan.journey().pickup().getId(),plan.journey().dropoff().getId(),parameter(b.getPickupTripStop().getPlannedDepartureTime()),parameter(plan.journey().pickup().getPlannedDepartureTime()),q.journeyName(),q.money().currentTotal(),q.money().newTotal(),q.money().alreadyCollected(),q.money().collectionRequired(),q.money().refundRequired(),operator?"OPERATOR_ADMIN":"CUSTOMER",actor.id(),name,token,parameter(expires),parameter(time),parameter(time));
         long mid=db.queryForObject("SELECT id FROM booking_modifications WHERE code=?",Long.class,code);
         var currentTickets=tickets.findDetailedByBookingId(id);
-        for(Item i:q.items()) db.update("INSERT INTO booking_modification_items(modification_id,booking_item_id,old_seat_id,new_seat_id,old_seat_label,new_seat_label,old_fare,new_fare,old_ticket_id) VALUES(?,?,?,?,?,?,?,?,?)",mid,i.bookingItemId(),i.oldSeatId(),i.newSeatId(),i.oldSeatLabel(),i.newSeatLabel(),i.oldFare(),i.newFare(),currentTickets.stream().filter(t->t.getBookingItem().getId()==i.bookingItemId()).map(Ticket::getId).findFirst().orElse(null));
+        for(Item i:q.items()) db.update("INSERT INTO booking_modification_items(modification_id,booking_item_id,old_seat_id,new_seat_id,old_seat_label,new_seat_label,old_fare,new_fare,old_gross,new_gross,old_discount,new_discount,old_ticket_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",mid,i.bookingItemId(),i.oldSeatId(),i.newSeatId(),i.oldSeatLabel(),i.newSeatLabel(),i.oldFare(),i.newFare(),i.oldGross(),i.newGross(),i.oldDiscount(),i.newDiscount(),currentTickets.stream().filter(t->t.getBookingItem().getId()==i.bookingItemId()).map(Ticket::getId).findFirst().orElse(null));
         return read(actor,id,operator,mid);
     }
     @Transactional(readOnly=true)
@@ -241,7 +244,7 @@ public class ModificationService {
         if(rows.isEmpty()) throw missing(); return rows.get(0);
     }
     private List<Item> changes(long mid) {
-        return db.query("SELECT * FROM booking_modification_items WHERE modification_id=? ORDER BY booking_item_id",(r,n)->new Item(r.getLong("booking_item_id"),r.getLong("old_seat_id"),r.getString("old_seat_label"),r.getLong("new_seat_id"),r.getString("new_seat_label"),r.getBigDecimal("old_fare"),r.getBigDecimal("new_fare")),mid);
+        return db.query("SELECT * FROM booking_modification_items WHERE modification_id=? ORDER BY booking_item_id",(r,n)->new Item(r.getLong("booking_item_id"),r.getLong("old_seat_id"),r.getString("old_seat_label"),r.getLong("new_seat_id"),r.getString("new_seat_label"),r.getBigDecimal("old_fare"),r.getBigDecimal("new_fare"),r.getBigDecimal("old_gross"),r.getBigDecimal("new_gross"),r.getBigDecimal("old_discount"),r.getBigDecimal("new_discount")),mid);
     }
     private History view(Booking b,long mid) {
         var m=modification(b.getId(),mid,false);
@@ -308,7 +311,7 @@ public class ModificationService {
             if(released!=sourceSegments.size()) throw conflict("BOOKING_INVENTORY_INCONSISTENT","Chỗ đã đặt không còn nhất quán.");
             int assigned=db.update("UPDATE trip_seat_segment_inventory SET status='BOOKED',booking_item_id=?,hold_token=NULL,held_by_user_id=NULL,hold_expires_at=NULL,version=version+1 WHERE trip_seat_id=? AND hold_token=? AND status='HELD'",item.getId(),change.newSeatId(),m.get("hold_token"));
             if(assigned!=targetSegments.size()) throw conflict("SEAT_NOT_AVAILABLE","Không thể chuyển chỗ đã giữ.");
-            item.setTripSeat(em.getReference(TripSeat.class,change.newSeatId())); item.setSeatCode(change.newSeatLabel()); item.setUnitPrice(change.newFare());
+            item.setTripSeat(em.getReference(TripSeat.class,change.newSeatId())); item.setSeatCode(change.newSeatLabel()); item.setUnitPrice(change.newFare()); item.setGrossAmount(change.newGross()); item.setDiscountAmount(change.newDiscount());
             var old=currentTickets.stream().filter(t->t.getBookingItem().getId().equals(item.getId())).findFirst();
             if(old.isPresent()) {
                 Ticket t=old.get(); if(!"VALID".equals(t.getStatus())) throw conflict("TICKET_INCONSISTENT","Vé không còn hợp lệ.");
@@ -318,6 +321,8 @@ public class ModificationService {
                 db.update("UPDATE booking_modification_items SET new_ticket_id=? WHERE modification_id=? AND booking_item_id=?",replacement.getId(),mid,item.getId());
             }
         }
+        b.setGrossAmount(all.stream().map(BookingItem::getGrossAmount).reduce(BigDecimal.ZERO,BigDecimal::add));
+        b.setDiscountAmount(all.stream().map(BookingItem::getDiscountAmount).reduce(BigDecimal.ZERO,BigDecimal::add));
         b.setTrip(journey.trip()); b.setPickupTripStop(journey.pickup()); b.setDropoffTripStop(journey.dropoff()); b.setTotalAmount(decimal(m,"new_total")); b.setPaymentTokenHash(null);
         if(b.getPaymentDueAt()!=null && b.getPaymentDueAt().isAfter(journey.pickup().getPlannedDepartureTime())) b.setPaymentDueAt(journey.pickup().getPlannedDepartureTime());
         db.update("UPDATE booking_modifications SET status='COMPLETED',completed_at=?,updated_at=? WHERE id=?",parameter(now()),parameter(now()),mid);
@@ -325,6 +330,7 @@ public class ModificationService {
         notifications.record(b, com.busgo.notification.NotificationType.BOOKING_MODIFIED, Long.toString(mid));
         if(adjustmentPaymentId!=null)
             notifications.record(b, com.busgo.notification.NotificationType.PAYMENT_SUCCEEDED, adjustmentPaymentId.toString());
+        vouchers.deadline(b);
         return view(b,mid);
     }
     // Reused by cancellation; caller holds trip/operator/booking and payment locks.

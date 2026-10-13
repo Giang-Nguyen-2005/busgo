@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OperatorBookingService {
+    @org.springframework.beans.factory.annotation.Autowired private com.busgo.booking.repository.BookingRepository bookings;
     private final OperatorBookingQueryRepository queries;
     private final OperatorContextService context;
     private final CancellationService cancellations;
@@ -74,7 +75,7 @@ public class OperatorBookingService {
                 new Contact(row.contactName(), row.contactPhone(), row.contactEmail()),
                 new Stop(row.pickupId(), row.pickupLocationId(), row.pickupName(), api(row.pickupTime())),
                 new Stop(row.dropoffId(), row.dropoffLocationId(), row.dropoffName(), api(row.dropoffTime())),
-                items, payments, row.totalAmount(), api(row.createdAt()), api(row.updatedAt()), cancellations.operatorRead(user,bookingId));
+                items, payments, row.totalAmount(), api(row.createdAt()), api(row.updatedAt()), cancellations.operatorRead(user,bookingId), com.busgo.promotion.VoucherService.price(bookings.findById(bookingId).orElseThrow(OperatorBookingService::notFound)));
     }
 
     private static ResourceNotFoundException notFound() {

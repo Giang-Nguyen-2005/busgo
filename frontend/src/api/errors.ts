@@ -1,6 +1,21 @@
 import axios from "axios";
 import type { ApiError } from "../types/api";
 const messages: Record<string, string> = {
+  VOUCHER_CODE_INVALID: "Mã ưu đãi cần 3–40 chữ, số, dấu gạch ngang hoặc gạch dưới.",
+  VOUCHER_NOT_FOUND: "Không tìm thấy ưu đãi của nhà xe.",
+  VOUCHER_NOT_ELIGIBLE: "Mã ưu đãi không áp dụng cho chuyến này.",
+  VOUCHER_INACTIVE: "Mã ưu đãi chưa kích hoạt hoặc đã tạm dừng.",
+  VOUCHER_NOT_STARTED: "Mã ưu đãi chưa đến thời gian sử dụng.",
+  VOUCHER_EXPIRED: "Mã ưu đãi đã hết hạn.",
+  VOUCHER_ROUTE_MISMATCH: "Mã ưu đãi không áp dụng cho tuyến này.",
+  VOUCHER_MINIMUM_SPEND: "Đặt vé chưa đạt giá trị tối thiểu của ưu đãi.",
+  VOUCHER_LIMIT_REACHED: "Ưu đãi đã hết lượt hoặc bạn đã đạt giới hạn sử dụng. Hãy bỏ mã hoặc thử mã khác.",
+  VOUCHER_ZERO_PAYABLE: "Ưu đãi này không để lại số tiền thanh toán hợp lệ cho mỗi ghế.",
+  VOUCHER_TERMS_INVALID: "Thông tin ưu đãi không hợp lệ. Kiểm tra giá trị, thời hạn và giới hạn lượt dùng.",
+  VOUCHER_CODE_EXISTS: "Nhà xe đã có mã ưu đãi này.",
+  VOUCHER_TERMS_LOCKED: "Ưu đãi đã có lịch sử đặt vé; chỉ có thể tạm dừng hoặc kích hoạt lại.",
+  VOUCHER_UNAVAILABLE: "Ưu đãi đã hết hạn hoặc hết lượt; không thể kích hoạt.",
+  VOUCHER_SOURCE_INVALID: "Ưu đãi chỉ áp dụng cho đặt vé trực tuyến của khách hàng.",
   INVALID_TRIP_STATUS_TRANSITION: "Trạng thái chuyến đã thay đổi hoặc thao tác không còn hợp lệ. Vui lòng tải lại.",
   BUS_NOT_FOUND: "Không tìm thấy xe trong nhà xe.",
   LICENSE_PLATE_ALREADY_EXISTS: "Biển số xe đã được sử dụng.",

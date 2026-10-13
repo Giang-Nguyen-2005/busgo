@@ -97,6 +97,7 @@ export interface Stop {
   time: string;
 }
 export interface Booking {
+  price?: import("../features/booking/PromotionPrice").PromotionPriceData;
   operations?: import("../features/trip/liveTripModel").LiveTripState;
   recovery?: import("./recovery").Recovery | null;
   bookingId: number;
@@ -146,6 +147,7 @@ export interface Payment {
   paidAt: string;
 }
 export interface TicketBundle {
+  price?: import("../features/booking/PromotionPrice").PromotionPriceData;
   bookingId: number;
   bookingCode: string;
   status: BookingStatus;

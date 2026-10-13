@@ -33,5 +33,5 @@ public final class OperatorBookingDtos {
             BookingStatus status, com.busgo.booking.entity.BookingSource source, PaymentMethod paymentMethod, TripSummary trip, RouteSummary route,
             CustomerSummary customer, Contact contact, Stop pickup, Stop dropoff,
             List<BookingItemSummary> items, List<PaymentSummary> payments,
-            BigDecimal totalAmount, OffsetDateTime createdAt, OffsetDateTime updatedAt, CancellationDtos.Recovery recovery) {}
+            BigDecimal totalAmount, OffsetDateTime createdAt, OffsetDateTime updatedAt, CancellationDtos.Recovery recovery, com.busgo.promotion.VoucherDtos.Price price) {}
 }

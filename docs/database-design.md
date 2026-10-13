@@ -1170,3 +1170,11 @@ Mutations lock the existing trip first, then operator and qualifying booking row
 Locks: application → operator → invite for acceptance/reissue; application → newly created operator for approval; operator only for suspension/reactivation. Commerce retains trip → operator → booking/inventory. Supply creation checks operator after bus/maintenance checks; status changes acquire no downstream trip locks. Legal reservations and token/current-invite uniqueness cover concurrent requests; failures roll back user, role, membership, operator, invitation and workflow changes together.
 
 No gateway credentials, bank payout fields or settlement tables are added. Future M22 is platform-level; M27 handles settlement separately.
+
+## M24B — V24 operator promotions (13 October 2026)
+
+V24 adds `operator_vouchers`, `voucher_usages` and `voucher_management_history`. Funding is explicitly OPERATOR-only. Voucher code is unique within operator; usage is unique per booking and has a composite voucher/operator foreign key. RESERVED/REDEEMED/RELEASED timestamps and checks preserve redemption history. Capacity includes redeemed and unexpired reserved usages.
+
+Bookings/items gain current and original gross/discount snapshots; booking adds voucher identity/code/name. Existing `total_amount` and `unit_price` remain net, with SQL gross-minus-discount checks. Modification items gain old/new gross/discount snapshots. Legacy discounts are zero; existing payment/refund/net values are preserved, with original fare recovered from earliest completed modification history where present. V1–V23 are unchanged.
+
+Writes follow existing trip/operator/commerce locks before voucher/usage; management takes operator then voucher/usage. Current locking reads and operator serialization prevent cross-trip limit oversubscription and stale renamed-code acceptance. Clean V1–V24 and historical V23→V24 passed on isolated MySQL schemas without destructive development resets. Details, limits and future funding considerations: [M24B schema and report](m24b-promotions-vouchers.md#database-flyway-v24).

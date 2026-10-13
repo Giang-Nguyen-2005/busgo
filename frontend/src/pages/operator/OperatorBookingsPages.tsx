@@ -1,3 +1,4 @@
+import { PromotionPrice } from "../../features/booking/PromotionPrice";
 import { PartialCancellationSection } from "../../features/booking/PartialCancellation";
 import { ModificationSection } from "../../features/booking/Modification";
 import { QRCodeSVG } from "qrcode.react";
@@ -60,7 +61,7 @@ export function OperatorBookingRow({ booking: b }: { booking: OperatorBookingLis
 export function BookingDetailContent({ booking: b }: { booking: OperatorBookingDetail }) {
   const latest = b.payments.reduce<(typeof b.payments)[number] | undefined>((a, p) => !a || p.id > a.id ? p : a, undefined);
   return <article className="booking-dossier">
-    <header className="dossier-overview"><div><span className="eyebrow">ĐẶT VÉ</span><h2>{b.bookingCode}</h2><p>{b.source} · {paymentMethodLabel(b.paymentMethod)}</p><OperationsBadge status={b.status} /><p className="muted">Tạo: {dateTime(b.createdAt)} · Giờ Việt Nam</p></div><div className="dossier-total"><small>Tổng đặt vé</small><strong>{money(b.totalAmount)}</strong></div></header>
+    <PromotionPrice price={b.price} /><header className="dossier-overview"><div><span className="eyebrow">ĐẶT VÉ</span><h2>{b.bookingCode}</h2><p>{b.source} · {paymentMethodLabel(b.paymentMethod)}</p><OperationsBadge status={b.status} /><p className="muted">Tạo: {dateTime(b.createdAt)} · Giờ Việt Nam</p></div><div className="dossier-total"><small>Tổng đặt vé</small><strong>{money(b.totalAmount)}</strong></div></header>
     <div className="dossier-context">
       <section><h2>Hành trình</h2><h3>{b.route.name}</h3><p><Link to={`/operator/trips/${b.trip.id}`}>Chuyến #{b.trip.id}</Link> · <OperatorStatusBadge status={b.trip.status} /></p><dl className="dossier-stops"><div><dt>Đón</dt><dd><Stop stop={b.pickup} /></dd></div><div><dt>Trả</dt><dd><Stop stop={b.dropoff} /></dd></div></dl><p className="fine-print">Giờ toàn chuyến: {dateTime(b.trip.departureTime)} → {dateTime(b.trip.estimatedArrivalTime)}</p></section>
       <section><h2>Liên hệ đặt vé</h2><strong>{b.contact.name}</strong><p>{b.contact.phone}</p><p>{b.contact.email || "Chưa có email"}</p></section>

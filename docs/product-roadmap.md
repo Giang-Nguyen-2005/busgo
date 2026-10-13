@@ -262,3 +262,7 @@ Implemented partial same-trip seat changes and whole-booking trip changes, autho
 ## M21 — Partial cancellation / partial refund (2026-10-05)
 
 Implemented same-booking subset cancellation, authoritative quotes, simulated partial refunds using M20 accounting, immutable history and shared customer/operator detail workflow. M20 seat/trip changes and full cancellation now operate on remaining active items. V19 is additive; V1–V18 stay immutable. M22+ and M29 visual polish remain deferred. Verification: [M21 report](m21-partial-cancellation.md). No commit, push or tag.
+
+## M24B — Operator-funded promotions (13 October 2026)
+
+**COMPLETE.** Operator-admin voucher management and customer WEB discounts now preserve gross/discount/net snapshots through mock payment, M20 modification and M21 cancellation. Concurrent limits, release of unpaid reservations, permanent paid redemption history, tenant isolation, additive V24 migration and desktop/mobile checkout acceptance are verified. [M24B handoff](m24b-promotions-vouchers.md) records exact evidence and limitations. Earlier deferral notes remain historical. Platform-funded vouchers, M22 real payment integration and M27 commission/settlement remain separate future scope; no publishing operation was performed.

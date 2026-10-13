@@ -22,7 +22,7 @@ export function ModificationPrice({ value: m }: { value: ModificationMoney }) {
 }
 function Mapping({ quote: q }: { quote: ModificationQuote }) {
   return <><p>{q.journeyName}</p>{q.type === "TRIP_CHANGE" && <p>{dateTime(q.sourceDeparture)} → {dateTime(q.targetDeparture)}</p>}
-    <ul className="modification-mapping">{q.items.map(i => <li key={i.bookingItemId}><strong>{i.oldSeatLabel} → {i.newSeatLabel}</strong></li>)}</ul></>;
+    <ul className="modification-mapping">{q.items.map(i => <li key={i.bookingItemId}><strong>{i.oldSeatLabel} → {i.newSeatLabel}</strong>{i.newGross !== undefined && <span> · Giá gốc {money(i.newGross)} − ưu đãi {money(i.newDiscount ?? 0)} = {money(i.newFare)}</span>}</li>)}</ul></>;
 }
 export function ModificationSection({ bookingId, operator = false }: { bookingId: number; operator?: boolean }) {
   const auth = useAuth(); const base = `${operator ? "/operator" : ""}/bookings/${bookingId}`;

@@ -22,13 +22,17 @@ import {
   Steps,
 } from "../components/ui";
 import type { Booking, Hold } from "../types/customer";
+import { money } from "../utils/format";
 import { tripLink } from "../utils/format";
 export function BookingPage() {
   const [saved] = useState(readHold);
+  const [voucherCode, setVoucherCode] = useState("");
+  const [appliedCode, setAppliedCode] = useState("");
   const [now, setNow] = useState(Date.now());
   const navigate = useNavigate();
   const auth = useAuth();
   const cache = useQueryClient();
+  useEffect(() => { setAppliedCode(""); setVoucherCode(""); }, [auth.user?.id, saved?.holdToken]);
   const hold = useQuery({
     queryKey: ["active-hold", auth.user?.id, saved?.expiresAt],
     queryFn: ({ signal }) =>
@@ -42,6 +46,12 @@ export function BookingPage() {
     refetchInterval: 10_000,
     retry: false,
   });
+  const voucher = useQuery({
+    queryKey: ["checkout-voucher", auth.user?.id, saved?.holdToken, appliedCode, hold.data?.totalPrice, hold.data?.expiresAt],
+    queryFn: () => post<{ grossAmount: number; discountAmount: number; totalAmount: number; voucherCode: string }>("/bookings/voucher-quote", { holdToken: saved!.holdToken, voucherCode: appliedCode }),
+    enabled: !!appliedCode && !!hold.data && hold.data.status !== "EXPIRED",
+    retry: false, gcTime: 0, staleTime: 0,
+  });
   const form = useForm<z.infer<typeof contactSchema>>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
@@ -52,7 +62,7 @@ export function BookingPage() {
   });
   const booking = useMutation({
     mutationFn: (values: z.infer<typeof contactSchema>) =>
-      post<Booking>("/bookings", { holdToken: saved!.holdToken, ...values }),
+      post<Booking>("/bookings", { holdToken: saved!.holdToken, ...values, ...(appliedCode ? { voucherCode: appliedCode } : {}) }),
     onSuccess: (data) => {
       if (auth.user) rememberBooking(auth.user.id, data);
       saveHold(null);
@@ -163,7 +173,7 @@ export function BookingPage() {
                 </>
               )}
               <button
-                disabled={booking.isPending || expired || hold.isFetching || hold.isError}
+                disabled={booking.isPending || expired || hold.isFetching || hold.isError || (!!appliedCode && (voucher.isPending || voucher.isFetching || voucher.isError))}
               >
                 {booking.isPending
                   ? "Đang tạo đặt vé…"
@@ -180,10 +190,13 @@ export function BookingPage() {
               departure={hold.data!.pickup.departureTime}
               arrival={hold.data!.dropoff.arrivalTime}
             />
+            <Field label="Mã ưu đãi nhà xe" maxLength={40} value={voucherCode} disabled={booking.isPending} onChange={e => { setVoucherCode(e.target.value); setAppliedCode(""); }} />
+            <div className="actions"><button type="button" disabled={!voucherCode.trim() || expired || booking.isPending || voucher.isFetching} onClick={() => { const code=voucherCode.trim().toUpperCase(); if(code===appliedCode) void voucher.refetch(); else setAppliedCode(code); }}>Kiểm tra ưu đãi</button>{appliedCode && <button type="button" disabled={booking.isPending} className="secondary" onClick={() => { setAppliedCode(""); setVoucherCode(""); }}>Bỏ ưu đãi</button>}</div>
+            {appliedCode && (voucher.isPending ? <Loading /> : voucher.isError ? <ErrorState error={voucher.error} retry={() => voucher.refetch()} /> : <div role="status"><p>Giá gốc: {money(voucher.data.grossAmount)}</p><p>Ưu đãi {voucher.data.voucherCode}: −{money(voucher.data.discountAmount)}</p><strong>Thanh toán: {money(voucher.data.totalAmount)}</strong></div>)}
             <PriceSummary
               seats={hold.data!.seats.map((s) => s.seatCode)}
               unit={hold.data!.pricePerSeat}
-              total={hold.data!.totalPrice}
+              total={appliedCode && voucher.data ? voucher.data.totalAmount : hold.data!.totalPrice}
             />
             <div className={`notice ${seconds < 60 ? "warning" : "info"}`}>
               <Clock3 size={20} />

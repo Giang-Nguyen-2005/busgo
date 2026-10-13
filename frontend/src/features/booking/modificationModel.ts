@@ -11,7 +11,7 @@ export interface ModificationMoney {
 export interface ModificationQuote {
   type: ModificationType; sourceTripId: number; targetTripId: number; bookingCode: string;
   journeyName: string; sourceDeparture: string; targetDeparture: string; money: ModificationMoney;
-  items: { bookingItemId: number; oldSeatId: number; oldSeatLabel: string; newSeatId: number; newSeatLabel: string; oldFare: number; newFare: number }[];
+  items: { bookingItemId: number; oldSeatId: number; oldSeatLabel: string; newSeatId: number; newSeatLabel: string; oldFare: number; newFare: number; oldGross?: number; newGross?: number; oldDiscount?: number; newDiscount?: number }[];
 }
 export interface ModificationHistory {
   id: number; code: string; status: string; quote: ModificationQuote; actorType: string; actorName: string;

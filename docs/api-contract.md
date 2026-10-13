@@ -2014,3 +2014,11 @@ SYSTEM_ADMIN only:
 New responses use `Cache-Control: no-store`. Invitation secrets are 256-bit random, SHA-256 hashes only in MySQL, 72-hour expiry, one-time use. No invitation secret enters notifications/deliveries/history/log statements. Frontend uses a fragment and no-referrer policy; deployments must also redact token-bearing API paths from proxy/access logs. No invite email is sent.
 
 Legacy M13 direct creation remains for compatibility, provisioned as an already-onboarded operator; the new navigation directs to application review. Legacy status patch cannot modify onboarded application operators or transition to/from SUSPENDED. No generic history mutation API, no impersonation, booking, ticket, refund or trip-operation admin bypass.
+
+## M24B — Operator vouchers (13 October 2026)
+
+Own-operator admin/staff GET `/api/v1/operator/vouchers` supports `q`, persisted `state` (DRAFT/ACTIVE/PAUSED), `page` and `size` (1–100); GET `/{id}` returns detail. Admin-only POST creates a draft, PATCH `/{id}` replaces unused terms, POST `/{id}/activate` and `/{id}/pause` change availability. Operator identity comes from membership, never the request body; SYSTEM_ADMIN has no bypass. Used terms cannot be edited. Responses include `reserved`, `redeemed`, `editable` and `effective_state`, without customer redemption history.
+
+CUSTOMER POST `/api/v1/bookings/voucher-quote` takes `{holdToken, voucherCode}` and returns gross, discount and net without consuming capacity. Existing POST `/api/v1/bookings` accepts optional `voucherCode` and revalidates transactionally. Business rejection uses the standard error envelope; successful preview is not a reservation. PHONE requests remain unchanged.
+
+Booking/detail/ticket responses add `price` with current gross/discount/net, original gross/discount and voucher code/name. Modification items add old/new gross and discount; existing fare/total fields remain net. Full Terms fields, exact response naming, validation/error codes, lifecycle and acceptance evidence: [M24B contract and report](m24b-promotions-vouchers.md#api-contract).

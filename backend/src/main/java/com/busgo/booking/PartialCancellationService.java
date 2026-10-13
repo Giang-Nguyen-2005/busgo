@@ -140,6 +140,8 @@ public class PartialCancellationService {
             i.setCancelled(true);
         }
         for(var row:rows) if(db.update("UPDATE trip_seat_segment_inventory SET status='AVAILABLE',booking_item_id=NULL,version=version+1 WHERE id=? AND booking_item_id=? AND status='BOOKED'",row.id(),row.bookingItemId())!=1) throw inconsistent();
+        b.setGrossAmount(b.getGrossAmount().subtract(p.selected().stream().map(BookingItem::getGrossAmount).reduce(BigDecimal.ZERO,BigDecimal::add)));
+        b.setDiscountAmount(b.getDiscountAmount().subtract(p.selected().stream().map(BookingItem::getDiscountAmount).reduce(BigDecimal.ZERO,BigDecimal::add)));
         b.setTotalAmount(q.newTotal()); b.setPaymentTokenHash(null);
         em.flush();
         notifications.record(b, com.busgo.notification.NotificationType.PARTIAL_CANCELLATION_COMPLETED, Long.toString(cid));

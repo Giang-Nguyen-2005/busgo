@@ -16,6 +16,23 @@ import lombok.Setter;
 @Entity
 @Table(name = "bookings")
 public class Booking extends AuditedEntity {
+    @Column(name="gross_amount", precision=12, scale=2, nullable=false)
+    private BigDecimal grossAmount;
+    @Column(name="discount_amount", precision=12, scale=2, nullable=false)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+    @Column(name="original_gross_amount", precision=12, scale=2, nullable=false, updatable=false)
+    private BigDecimal originalGrossAmount;
+    @Column(name="original_discount_amount", precision=12, scale=2, nullable=false, updatable=false)
+    private BigDecimal originalDiscountAmount = BigDecimal.ZERO;
+    @PrePersist
+    private void initializeMoney() {
+        if(grossAmount==null) grossAmount=totalAmount;
+        if(originalGrossAmount==null) originalGrossAmount=grossAmount;
+    }
+    @Column(name="voucher_id", updatable=false) private Long voucherId;
+    @Column(name="voucher_code", length=40, updatable=false) private String voucherCode;
+    @Column(name="voucher_name", length=120, updatable=false) private String voucherName;
+
     @Column(name = "payment_due_at")
     private java.time.LocalDateTime paymentDueAt;
     @Column(name = "cancelled_at")

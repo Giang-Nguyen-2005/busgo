@@ -23,5 +23,5 @@ public final class PaymentTicketDtos {
             PaymentStatus paymentStatus, PaymentMethod paymentMethod, BigDecimal amount,
             Long tripId, NamedSummary operator, NamedSummary route, TicketStop pickup,
             TicketStop dropoff, OffsetDateTime departureTime, OffsetDateTime arrivalTime,
-            List<TicketItem> tickets) {}
+            List<TicketItem> tickets, com.busgo.promotion.VoucherDtos.Price price) {}
 }

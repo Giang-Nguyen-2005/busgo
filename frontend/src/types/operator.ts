@@ -182,6 +182,7 @@ export interface OperatorPayment {
   transactionReference: string | null; paidAt: string | null; createdAt: string;
 }
 export interface OperatorBookingDetail extends Omit<OperatorBookingListItem, "paymentStatus" | "tripId" | "seatCount"> {
+  price?: import("../features/booking/PromotionPrice").PromotionPriceData;
   trip: { id: number; status: TripStatus; departureTime: string; estimatedArrivalTime: string };
   customer: { id: number; fullName: string; email: string; phone: string | null } | null;
   items: OperatorBookingItem[]; payments: OperatorPayment[]; updatedAt: string;
