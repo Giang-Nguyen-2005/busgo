@@ -42,7 +42,8 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
           Component: (await import("../layouts/OperatorLayout")).OperatorLayout,
         }),
         children: [
-          { path: "reviews", lazy: async () => ({ Component: (await import("../features/marketplace/Marketplace")).OperatorReviewsPage }) },
+          { path: "vouchers", lazy: async () => ({ Component: (await import("../features/operator/Vouchers")).VouchersPage }) },
+      { path: "reviews", lazy: async () => ({ Component: (await import("../features/marketplace/Marketplace")).OperatorReviewsPage }) },
           { path: "notifications", lazy: async () => ({ Component: (await import("../features/notifications/Notifications")).NotificationsPage }) },
           { path: "maintenance", lazy: async () => ({ Component: (await import("../features/operator/FleetMaintenance")).OperatorMaintenancePage }) },
           { path: "customers", lazy: async () => ({ Component: (await import("../features/operator/Customers")).OperatorCustomersPage }) },

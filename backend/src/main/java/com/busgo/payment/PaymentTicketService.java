@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PaymentTicketService {
+    @org.springframework.beans.factory.annotation.Autowired private com.busgo.promotion.VoucherService vouchers;
     @org.springframework.beans.factory.annotation.Autowired
     private com.busgo.notification.NotificationService notifications;
     private final BookingRepository bookings;
@@ -170,6 +171,7 @@ public class PaymentTicketService {
         for (Ticket ticket : created) operations.expectTicket(ticket.getId(), booking.getPickupTripStop().getId());
         notifications.record(booking, com.busgo.notification.NotificationType.BOOKING_CONFIRMED, "once");
         notifications.record(booking, com.busgo.notification.NotificationType.PAYMENT_SUCCEEDED, payment.getId().toString());
+        vouchers.finish(booking,true);
         return confirmation(booking, payment);
     }
 
@@ -263,7 +265,8 @@ public class PaymentTicketService {
                         pickup.getLocation().getName(), api(pickup.getPlannedDepartureTime())),
                 new TicketStop(dropoff.getId(), dropoff.getLocation().getId(),
                         dropoff.getLocation().getName(), api(dropoff.getPlannedArrivalTime())),
-                api(pickup.getPlannedDepartureTime()), api(dropoff.getPlannedArrivalTime()), result);
+                api(pickup.getPlannedDepartureTime()), api(dropoff.getPlannedArrivalTime()), result,
+                com.busgo.promotion.VoucherService.price(booking));
     }
 
     private static String passengerName(Booking booking, BookingItem item) {

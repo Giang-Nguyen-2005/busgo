@@ -16,7 +16,8 @@ public final class BookingDtos {
             @NotBlank @Size(max = 100) String holdToken,
             @NotBlank @Size(max = 100) String contactName,
             @NotBlank @Size(max = 20) String contactPhone,
-            @NotBlank @Email @Size(max = 150) String contactEmail) {
+            @NotBlank @Email @Size(max = 150) String contactEmail, @Size(max=40) String voucherCode) {
+        public CreateBookingRequest(String holdToken,String contactName,String contactPhone,String contactEmail) { this(holdToken,contactName,contactPhone,contactEmail,null); }
         public CreateBookingRequest {
             holdToken = strip(holdToken);
             contactName = strip(contactName);
@@ -32,12 +33,12 @@ public final class BookingDtos {
             OffsetDateTime time) {}
     public record Contact(String name, String phone, String email) {}
     public record BookingSeat(Long bookingItemId, Long tripSeatId, String seatCode, String passengerName,
-            BigDecimal unitPrice, boolean cancelled) {}
+            BigDecimal unitPrice, boolean cancelled, BigDecimal grossAmount, BigDecimal discountAmount) {}
 
     public record BookingResponse(Long bookingId, String bookingCode, BookingStatus status,
             Long tripId, OperatorSummary operator, RouteSummary route, StopSummary pickup,
             StopSummary dropoff, Contact contact, List<BookingSeat> seats,
-            BigDecimal pricePerSeat, BigDecimal totalAmount, OffsetDateTime createdAt, CancellationDtos.Recovery recovery, com.busgo.trip.operations.LiveTripState operations) {}
+            BigDecimal pricePerSeat, BigDecimal totalAmount, OffsetDateTime createdAt, CancellationDtos.Recovery recovery, com.busgo.trip.operations.LiveTripState operations, com.busgo.promotion.VoucherDtos.Price price) {}
 
     public record BookingListItem(Long bookingId, String bookingCode, BookingStatus status,
             Long tripId, String routeName, String operatorName, StopSummary pickup,

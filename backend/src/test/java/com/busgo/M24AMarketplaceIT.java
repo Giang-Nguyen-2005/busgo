@@ -44,11 +44,11 @@ class M24AMarketplaceIT extends M8BookingTestSupport {
         String code = "M24-" + UUID.randomUUID();
         jdbc.update("""
             INSERT INTO bookings(booking_code,customer_id,trip_id,pickup_trip_stop_id,
-            dropoff_trip_stop_id,contact_name,contact_phone,contact_email,total_amount,status,created_at,updated_at)
-            VALUES(?,?,?,?,?,'Demo customer','0900000000','demo@example.test',300,?,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))
+            dropoff_trip_stop_id,contact_name,contact_phone,contact_email,total_amount,gross_amount,original_gross_amount,status,created_at,updated_at)
+            VALUES(?,?,?,?,?,'Demo customer','0900000000','demo@example.test',300,300,300,?,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))
             """, code, user.user().id(), f.trip().getId(), f.stops().get(0).getId(), f.stops().get(3).getId(), status);
         long id = jdbc.queryForObject("SELECT id FROM bookings WHERE booking_code=?", Long.class, code);
-        jdbc.update("INSERT INTO booking_items(booking_id,trip_seat_id,seat_code,unit_price,cancelled,created_at) VALUES(?,?,'A01',300,?,UTC_TIMESTAMP(6))",
+        jdbc.update("INSERT INTO booking_items(booking_id,trip_seat_id,seat_code,unit_price,gross_amount,original_gross_amount,cancelled,created_at) VALUES(?,?,'A01',300,300,300,?,UTC_TIMESTAMP(6))",
                 id, f.seats().get(0).getId(), cancelled);
         return id;
     }
@@ -89,7 +89,7 @@ class M24AMarketplaceIT extends M8BookingTestSupport {
     }
     @Test void partialCancellationCanReview() throws Exception {
         var f=fixture(); var u=customer("M24"); complete(f); long id=booking(f,u,"COMPLETED",true);
-        jdbc.update("INSERT INTO booking_items(booking_id,trip_seat_id,seat_code,unit_price,cancelled,created_at) VALUES(?,?,'A02',300,false,UTC_TIMESTAMP(6))",id,f.seats().get(1).getId());
+        jdbc.update("INSERT INTO booking_items(booking_id,trip_seat_id,seat_code,unit_price,gross_amount,original_gross_amount,cancelled,created_at) VALUES(?,?,'A02',300,300,300,false,UTC_TIMESTAMP(6))",id,f.seats().get(1).getId());
         mvc.perform(post("/api/v1/bookings/"+id+"/review").header("Authorization","Bearer "+u.token()).contentType(MediaType.APPLICATION_JSON).content(body(5))).andExpect(status().isCreated());
     }
     @ParameterizedTest @ValueSource(ints={0,6,-1})

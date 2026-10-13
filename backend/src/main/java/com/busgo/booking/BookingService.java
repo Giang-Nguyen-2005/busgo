@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class BookingService {
+    @org.springframework.beans.factory.annotation.Autowired private com.busgo.promotion.VoucherService vouchers;
     @org.springframework.beans.factory.annotation.Autowired
     private com.busgo.notification.NotificationService notifications;
     @org.springframework.beans.factory.annotation.Value("${busgo.booking.web-payment-window:PT15M}")
@@ -70,6 +71,7 @@ public class BookingService {
 
     @Transactional
     public BookingResponse create(CurrentUser currentUser, CreateBookingRequest request) {
+        requireCustomer(currentUser);
         return createFromHold(currentUser, request, BookingSource.WEB, com.busgo.payment.entity.PaymentMethod.MOCK_ONLINE);
     }
 
@@ -98,7 +100,19 @@ public class BookingService {
         OperatorRouteFare fare = currentFare(trip, pickup, dropoff);
         BigDecimal unitPrice = fare.getPrice();
 
+        BigDecimal gross=unitPrice.multiply(BigDecimal.valueOf(hold.seats().size()));
+        com.busgo.promotion.VoucherService.Application application=null;
+        if(request.voucherCode()!=null) {
+            if(source!=BookingSource.WEB) throw new BusinessException("VOUCHER_SOURCE_INVALID","Ưu đãi chỉ áp dụng đặt vé trực tuyến.",HttpStatus.CONFLICT,null);
+            application=vouchers.evaluate(operator.getId(),trip.getOperatorRoute().getId(),currentUser.id(),request.voucherCode(),gross,hold.seats().size(),true);
+        }
+        BigDecimal discount=application==null?BigDecimal.ZERO:application.quote().discountAmount();
+        var allocations=com.busgo.promotion.PromotionMoney.allocate(discount,Collections.nCopies(hold.seats().size(),unitPrice));
         Booking booking = new Booking();
+        booking.setGrossAmount(gross); booking.setOriginalGrossAmount(gross);
+        booking.setDiscountAmount(discount); booking.setOriginalDiscountAmount(discount);
+        if(application!=null) { booking.setVoucherId(application.voucherId()); booking.setVoucherCode(application.quote().voucherCode()); booking.setVoucherName(application.quote().voucherName()); }
+
         booking.setBookingCode(newBookingCode());
         booking.setCustomer(source == BookingSource.WEB ? entityManager.getReference(User.class, currentUser.id()) : null);
         booking.setSource(source);
@@ -117,16 +131,20 @@ public class BookingService {
             booking.setPaymentDueAt(deadline.isBefore(pickup.getPlannedDepartureTime())
                     ? deadline : pickup.getPlannedDepartureTime());
         }
-        booking.setTotalAmount(unitPrice.multiply(BigDecimal.valueOf(hold.seats().size())));
+        booking.setTotalAmount(gross.subtract(discount));
         booking = bookings.saveAndFlush(booking);
 
+        if(application!=null) vouchers.reserve(booking,application);
+        int allocationIndex=0;
         List<BookingItem> createdItems = new ArrayList<>();
         for (var seat : hold.seats().entrySet()) {
             BookingItem item = new BookingItem();
             item.setBooking(booking);
             item.setTripSeat(entityManager.getReference(TripSeat.class, seat.getKey()));
             item.setSeatCode(seat.getValue());
-            item.setUnitPrice(unitPrice);
+            item.setGrossAmount(unitPrice); item.setOriginalGrossAmount(unitPrice);
+            BigDecimal allocated=allocations.get(allocationIndex++);
+            item.setDiscountAmount(allocated); item.setOriginalDiscountAmount(allocated); item.setUnitPrice(unitPrice.subtract(allocated));
             createdItems.add(item);
         }
         createdItems = items.saveAllAndFlush(createdItems);
@@ -165,8 +183,26 @@ public class BookingService {
                 .orElseThrow(BookingService::bookingNotFound), cancellations.customerRead(user,bookingId));
     }
 
+    private static void requireCustomer(CurrentUser user) {
+        if(user==null || !user.roles().contains(com.busgo.user.entity.RoleCode.CUSTOMER) || user.roles().contains(com.busgo.user.entity.RoleCode.SYSTEM_ADMIN))
+            throw new BusinessException("ACCESS_DENIED","Chỉ khách hàng được áp dụng ưu đãi.",HttpStatus.FORBIDDEN,null);
+    }
+    @Transactional(readOnly=true)
+    public com.busgo.promotion.VoucherDtos.Quote voucherQuote(CurrentUser user,com.busgo.promotion.VoucherDtos.QuoteRequest request) {
+        requireCustomer(user);
+        var rows=inventory.readOwnedHold(request.holdToken(),user.id());
+        var hold=validateHold(rows,request.holdToken(),user.id(),utc(clock.instant()));
+        var trip=trips.findById(hold.tripId()).orElseThrow(BookingService::holdCorrupt);
+        if(trip.getOperatorRoute().getOperator().getStatus()!=OperatorStatus.ACTIVE || trip.getOperatorRoute().getStatus()!=ActiveStatus.ACTIVE) throw tripNotBookable();
+        var pickup=stops.findById(hold.pickupTripStopId()).orElseThrow(BookingService::holdCorrupt);
+        var dropoff=stops.findById(hold.dropoffTripStopId()).orElseThrow(BookingService::holdCorrupt);
+        validateJourney(trip,pickup,dropoff,hold.segmentIds(),utc(clock.instant()));
+        BigDecimal gross=currentFare(trip,pickup,dropoff).getPrice().multiply(BigDecimal.valueOf(hold.seats().size()));
+        return vouchers.evaluate(trip.getOperatorRoute().getOperator().getId(),trip.getOperatorRoute().getId(),user.id(),request.voucherCode(),gross,hold.seats().size(),false).quote();
+    }
     private HoldShape validateHold(List<LockedHoldRow> rows, String token, Long userId,
             LocalDateTime now) {
+        if(rows.isEmpty()) throw holdNotFound();
         if (rows.stream().anyMatch(row -> row.holdExpiresAt() == null)) throw holdCorrupt();
         LocalDateTime expiry = rows.get(0).holdExpiresAt();
         if (!expiry.isAfter(now)) throw holdExpired();
@@ -251,7 +287,7 @@ public class BookingService {
     private BookingResponse response(Booking booking, CancellationDtos.Recovery recovery) {
         List<BookingSeat> bookingSeats = booking.getItems().stream()
                 .map(item -> new BookingSeat(item.getId(), item.getTripSeat().getId(), item.getSeatCode(),
-                        item.getPassengerName(), item.getUnitPrice(), item.isCancelled())).toList();
+                        item.getPassengerName(), item.getUnitPrice(), item.isCancelled(), item.getGrossAmount(), item.getDiscountAmount())).toList();
         Trip trip = booking.getTrip();
         TripStop pickup = booking.getPickupTripStop();
         TripStop dropoff = booking.getDropoffTripStop();
@@ -265,7 +301,7 @@ public class BookingService {
                 new Contact(booking.getContactName(), booking.getContactPhone(),
                         booking.getContactEmail()), bookingSeats,
                 bookingSeats.stream().filter(i->!i.cancelled()).findFirst().orElse(bookingSeats.get(0)).unitPrice(), booking.getTotalAmount(),
-                api(booking.getCreatedAt()), recovery, com.busgo.trip.operations.LiveTripState.of(trip,pickup.getPlannedDepartureTime()));
+                api(booking.getCreatedAt()), recovery, com.busgo.trip.operations.LiveTripState.of(trip,pickup.getPlannedDepartureTime()), com.busgo.promotion.VoucherService.price(booking));
     }
 
     private BookingListItem listItem(Booking booking) {

@@ -1,6 +1,6 @@
 import { statusPresentation } from "./status";
 export const money = (value: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 2 }).format(
     value,
   );
 export const date = (value: string) => {

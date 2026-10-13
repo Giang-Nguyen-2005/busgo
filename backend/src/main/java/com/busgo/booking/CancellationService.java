@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CancellationService {
+    @org.springframework.beans.factory.annotation.Autowired private com.busgo.promotion.VoucherService vouchers;
     @org.springframework.beans.factory.annotation.Autowired
     private com.busgo.notification.NotificationService notifications;
     @org.springframework.beans.factory.annotation.Autowired
@@ -151,6 +152,7 @@ public class CancellationService {
             }
         }
         BookingStatus previous=b.getStatus();
+        vouchers.finish(b,false);
         b.setStatus(BookingStatus.CANCELLED); b.setCancelledAt(now); b.setCancelledByUserId(actor);
         b.setCancellationReason(reason); b.setCancellationNote(note);
         BookingStatusHistory history=new BookingStatusHistory(); history.setBooking(b); history.setFromStatus(previous);

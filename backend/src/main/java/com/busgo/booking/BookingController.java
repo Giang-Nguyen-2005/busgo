@@ -23,6 +23,9 @@ public class BookingController {
         this.service = service;
     }
 
+    @PostMapping("/voucher-quote")
+    public ApiResponse<com.busgo.promotion.VoucherDtos.Quote> voucherQuote(@AuthenticationPrincipal CurrentUser user,@Valid @RequestBody com.busgo.promotion.VoucherDtos.QuoteRequest request) { return ApiResponse.of(service.voucherQuote(user,request)); }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<BookingResponse> create(@AuthenticationPrincipal CurrentUser user,

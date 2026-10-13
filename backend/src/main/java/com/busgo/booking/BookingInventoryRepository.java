@@ -44,7 +44,11 @@ public class BookingInventoryRepository {
     }
 
     public List<LockedHoldRow> lockOwnedHold(String holdToken, Long userId) {
-        return jdbc.query(LOCK_OWNED_HOLD, new MapSqlParameterSource()
+        return readOwnedHold(holdToken,userId,true);
+    }
+    public List<LockedHoldRow> readOwnedHold(String holdToken,Long userId) { return readOwnedHold(holdToken,userId,false); }
+    private List<LockedHoldRow> readOwnedHold(String holdToken,Long userId,boolean lock) {
+        return jdbc.query(lock?LOCK_OWNED_HOLD:LOCK_OWNED_HOLD.replace("FOR UPDATE",""), new MapSqlParameterSource()
                         .addValue("holdToken", holdToken).addValue("userId", userId),
                 (rs, rowNumber) -> new LockedHoldRow(
                         rs.getLong("id"), rs.getLong("trip_seat_id"),

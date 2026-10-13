@@ -14,7 +14,7 @@ public final class ModificationDtos {
                           @NotEmpty @Size(max=20) List<@Valid Selection> items) {}
     public record Rule(boolean allowed, String reasonCode, String message) {}
     public record Item(long bookingItemId, long oldSeatId, String oldSeatLabel, long newSeatId,
-                       String newSeatLabel, BigDecimal oldFare, BigDecimal newFare) {}
+                       String newSeatLabel, BigDecimal oldFare, BigDecimal newFare, BigDecimal oldGross, BigDecimal newGross, BigDecimal oldDiscount, BigDecimal newDiscount) {}
     public record CurrentItem(long bookingItemId, long seatId, String seatLabel) {}
     public record Eligibility(Rule seatChange, Rule tripChange, String bookingCode, String source,
                               String contactName, long tripId, List<CurrentItem> items) {}

@@ -46,7 +46,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/users/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/me/change-password").authenticated()
                         .requestMatchers("/api/v1/admin/**").hasRole("SYSTEM_ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/operator/marketplace-profile", "/api/v1/operator/reviews",
+                        .requestMatchers(HttpMethod.GET, "/api/v1/operator/vouchers", "/api/v1/operator/vouchers/*", "/api/v1/operator/marketplace-profile", "/api/v1/operator/reviews",
                                 "/api/v1/operator/trips", "/api/v1/operator/trips/*",
                                 "/api/v1/operator/employees", "/api/v1/operator/employees/*",
                                 "/api/v1/operator/trips/*/operations", "/api/v1/operator/trips/*/operational-history",
