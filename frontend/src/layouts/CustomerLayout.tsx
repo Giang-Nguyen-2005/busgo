@@ -31,7 +31,7 @@ export function CustomerLayout() {
               Trang chủ
             </NavLink>
             <NavLink to="/operator-application">Đăng ký nhà xe</NavLink>
-            {customer && <NavLink to="/my-bookings">Vé của tôi</NavLink>}
+            {customer && <NavLink to="/my-bookings">Vé của tôi</NavLink>}{customer && <NavLink to="/support">Hỗ trợ</NavLink>}
           </nav>
           <div className="account-nav">
             {auth.authenticated ? (

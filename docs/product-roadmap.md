@@ -266,3 +266,13 @@ Implemented same-booking subset cancellation, authoritative quotes, simulated pa
 ## M24B — Operator-funded promotions (13 October 2026)
 
 **COMPLETE.** Operator-admin voucher management and customer WEB discounts now preserve gross/discount/net snapshots through mock payment, M20 modification and M21 cancellation. Concurrent limits, release of unpaid reservations, permanent paid redemption history, tenant isolation, additive V24 migration and desktop/mobile checkout acceptance are verified. [M24B handoff](m24b-promotions-vouchers.md) records exact evidence and limitations. Earlier deferral notes remain historical. Platform-funded vouchers, M22 real payment integration and M27 commission/settlement remain separate future scope; no publishing operation was performed.
+
+## M28 — Support and dispute operations (20 October 2026)
+
+Role-based customer support, operator queues/assignment/notes, bounded escalation,
+platform governance-only decisions and selected append-only audit metadata are
+implemented with V25. Customer, staff, operator-admin and platform workspaces reuse
+the existing UI and security foundation. Final status, tests, browser evidence and
+limitations: [M28 report](m28-audit-support-disputes.md). M22 payment gateways, M27
+settlement/commission and M29 global visual changes remain separate; no automatic
+dispute refund, anonymous support or external messaging is introduced.

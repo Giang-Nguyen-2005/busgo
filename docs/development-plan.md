@@ -1678,3 +1678,15 @@ Final acceptance closure (12 October 2026): **M26 COMPLETE**. The 20 API/databas
 Acceptance now includes discounted mock payment, receipt persistence after reload and operator usage 1 redeemed/0 reserved, alongside earlier desktop/390px checks. Verification: expanded backend 118 passed; M20 33 and M21 21 included; final voucher 37 passed; schema recheck 44 passed; receipt/payment 32 passed; frontend final 139 passed and production build passed; clean/historical V24 migrations passed. Broad run had 61 unit passes and 467/468 integration passes; its sole schema-inventory expectation failure was fixed and verified by the 44-test recheck. No unnecessary full rerun was made. Exact evidence and limitations: [M24B report](m24b-promotions-vouchers.md).
 
 Changes stay unstaged/uncommitted on `feature/v2-operator-promotions` at `96f72da`. The unrelated `tatus --short` remains untouched. No push, merge, tag or identity switch. Earlier milestone deferral notes above remain historical.
+
+## M28 — Audit, customer support and disputes (20 October 2026)
+
+Implemented customer-owned WEB support cases, category/assignment-aware staff
+handling, operator-admin review/assignment/priority, bounded reopening/appeals,
+platform dispute findings, immutable conversations/internal notes, selected
+transactional audit hooks and scoped support inboxes. V25 is additive. Commerce,
+refund, inventory, voucher, governance ownership and suspended-passenger-service
+rules remain guarded by their original services. No financial execution through
+support or platform decisions. Current status and exact acceptance evidence are
+recorded in [M28 handoff](m28-audit-support-disputes.md); this entry supersedes only
+historical M28 deferral notes. No commit, push, merge or tag.

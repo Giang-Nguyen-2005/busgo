@@ -20,11 +20,13 @@ import org.springframework.transaction.annotation.*;
 @Transactional(isolation=Isolation.READ_COMMITTED)
 public class OnboardingService {
     private final JdbcTemplate db;
+    private final com.busgo.audit.AuditService audit;
     private final Clock clock;
     private final PasswordEncoder passwords;
     private final com.busgo.notification.NotificationService notifications;
     private static final SecureRandom RANDOM=new SecureRandom();
-    public OnboardingService(JdbcTemplate db,Clock clock,PasswordEncoder passwords,com.busgo.notification.NotificationService notifications) {
+    public OnboardingService(JdbcTemplate db,Clock clock,PasswordEncoder passwords,com.busgo.notification.NotificationService notifications,com.busgo.audit.AuditService audit) {
+        this.audit=audit;
         this.db=db;this.clock=clock;this.passwords=passwords;this.notifications=notifications;
     }
     private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(),ZoneOffset.UTC); }
@@ -60,6 +62,7 @@ public class OnboardingService {
     private void history(Long aid,Long oid,String event,CurrentUser actor,String category,String old,String state,String note) {
         db.update("INSERT INTO operator_onboarding_history(application_id,operator_id,event_type,actor_category,actor_id,old_state,new_state,note,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
             aid,oid,event,category,actor==null?null:actor.id(),old,state,note,now());
+        if(actor!=null) audit.record(actor,oid,"GOVERNANCE",oid==null?aid:oid,event);
     }
     public Map<String,Object> submit(ApplicationRequest r) {
         if(db.queryForObject("SELECT COUNT(*) FROM transport_operators WHERE legal_code=?",Long.class,r.legalCode())>0) throw duplicate();

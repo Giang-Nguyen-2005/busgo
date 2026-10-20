@@ -20,9 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class VoucherService {
     private final JdbcTemplate db;
+    private final com.busgo.audit.AuditService auditEvents;
     private final OperatorContextService context;
     private final Clock clock;
-    public VoucherService(JdbcTemplate db, OperatorContextService context, Clock clock) {
+    public VoucherService(JdbcTemplate db, OperatorContextService context, Clock clock,com.busgo.audit.AuditService auditEvents) {
+        this.auditEvents=auditEvents;
         this.db=db; this.context=context; this.clock=clock;
     }
     private LocalDateTime now() { return utc(clock.instant()); }
@@ -97,7 +99,7 @@ public class VoucherService {
         }
         return view(voucher(op,id,false));
     }
-    private void audit(long id,CurrentUser actor,String event) { db.update("INSERT INTO voucher_management_history(voucher_id,actor_id,event,created_at) VALUES(?,?,?,?)",id,actor.id(),event,parameter(now())); }
+    private void audit(long id,CurrentUser actor,String event) { auditEvents.record(actor,db.queryForObject("SELECT operator_id FROM operator_vouchers WHERE id=?",Long.class,id),"VOUCHER",id,event); db.update("INSERT INTO voucher_management_history(voucher_id,actor_id,event,created_at) VALUES(?,?,?,?)",id,actor.id(),event,parameter(now())); }
     @Transactional(readOnly=true)
     public Map<String,Object> detail(CurrentUser actor,long id) { return view(voucher(owner(actor,false),id,false)); }
     @Transactional(readOnly=true)

@@ -39,6 +39,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/trips/search", "/api/v1/trips/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/trips/*/seats").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
+                        .requestMatchers("/api/v1/support/**").hasRole("CUSTOMER")
+                        .requestMatchers("/api/v1/operator/support/**").hasAnyRole("OPERATOR_STAFF", "OPERATOR_ADMIN")
                         .requestMatchers("/api/v1/seat-holds/**").hasRole("CUSTOMER")
                         .requestMatchers("/api/v1/bookings/**").hasRole("CUSTOMER")
                         .requestMatchers("/api/v1/notifications/**", "/api/v1/notification-preferences").hasRole("CUSTOMER")

@@ -27,7 +27,7 @@ class M24BMigrationIT extends M20Support {
             var unpaid=web(f,owner,2);cancellation.customerCancel(owner.user(),unpaid.bookingId(),new CancellationDtos.Request(null));
             // Every copied table is from this isolated integration schema, never the development database.
             try(var connection=source.getConnection()) {
-                String from=connection.getCatalog();assertThat(from).contains("m24b_test");
+                String from=connection.getCatalog();assertThat(from).matches("busgo_m(?:24b|28)_test");
                 String schema="busgo_m24b_upgrade_"+UUID.randomUUID().toString().replace("-","");
                 try(var statement=connection.createStatement()) { statement.execute("CREATE DATABASE `"+schema+"`"); }
                 String url=connection.getMetaData().getURL().replace("/"+from,"/"+schema);
@@ -46,7 +46,7 @@ class M24BMigrationIT extends M20Support {
                         }
                     } finally {statement.execute("SET FOREIGN_KEY_CHECKS=1");}
                 }
-                var flyway=Flyway.configure().dataSource(url,user,password).load();assertThat(flyway.migrate().migrationsExecuted).isOne();flyway.validate();
+                var flyway=Flyway.configure().dataSource(url,user,password).target("24").load();assertThat(flyway.migrate().migrationsExecuted).isOne();flyway.validate();
                 assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM `"+schema+"`.bookings WHERE discount_amount<>0 OR gross_amount<>total_amount",Long.class)).isZero();
                 assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM `"+schema+"`.booking_items WHERE discount_amount<>0 OR gross_amount<>unit_price",Long.class)).isZero();
                 assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM `"+schema+"`.payments p JOIN payments old ON old.id=p.id WHERE p.amount<>old.amount OR NOT(p.paid_at<=>old.paid_at)",Long.class)).isZero();

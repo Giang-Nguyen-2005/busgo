@@ -34,7 +34,7 @@ export function OperatorLayout() {
           aria-label="Quản lý nhà xe"
         >
           {[
-            ["Điều hành", ["", "/trips", "/bookings"]],
+            ["Điều hành", ["", "/trips", "/bookings", "/support"]],
             ["Kinh doanh", ["/customers", "/reports", "/reviews", "/vouchers"]],
             ["Nguồn lực", ["/buses", "/maintenance", "/employees"]],
             ["Cấu hình", ["/routes", "/bus-types", "/staff"]],
@@ -43,7 +43,7 @@ export function OperatorLayout() {
             return items.length > 0 && <div className="operator-nav-section" key={String(group)}><span className="operator-nav-group">{group}</span>{items.map(([path, label]) => <NavLink key={path} end={!path} to={`/operator${path}`} onClick={() => setOpen(false)}><NavigationIcon path={path} />{label}</NavLink>)}</div>;
           })}
         </nav>
-        <div className="workspace-identity"><strong>ĐIỀU HÀNH NHÀ XE</strong><span>{auth.user?.fullName}</span><span>{canManageOperator(auth.user?.roles) ? "Quản trị viên nhà xe" : "Nhân viên · Chỉ xem"}</span></div>
+        <div className="workspace-identity"><strong>ĐIỀU HÀNH NHÀ XE</strong><span>{auth.user?.fullName}</span><span>{canManageOperator(auth.user?.roles) ? "Quản trị viên nhà xe" : "Nhân viên hỗ trợ"}</span></div>
       </aside>
       <div className="operator-workspace">
         <header className="operator-topbar">
@@ -54,7 +54,7 @@ export function OperatorLayout() {
             <div className="operator-account-panel">
             <p>{auth.user?.email}</p>
             <p>{auth.user?.phone || "Chưa có số điện thoại"}</p>
-            <p>{canManageOperator(auth.user?.roles) ? "Quản trị viên nhà xe" : "Nhân viên · Chỉ xem"}</p>
+            <p>{canManageOperator(auth.user?.roles) ? "Quản trị viên nhà xe" : "Nhân viên hỗ trợ"}</p>
             <button onClick={auth.logout}>Đăng xuất</button>
             </div>
           </details>
