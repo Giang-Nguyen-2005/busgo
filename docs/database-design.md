@@ -1178,3 +1178,24 @@ V24 adds `operator_vouchers`, `voucher_usages` and `voucher_management_history`.
 Bookings/items gain current and original gross/discount snapshots; booking adds voucher identity/code/name. Existing `total_amount` and `unit_price` remain net, with SQL gross-minus-discount checks. Modification items gain old/new gross/discount snapshots. Legacy discounts are zero; existing payment/refund/net values are preserved, with original fare recovered from earliest completed modification history where present. V1–V23 are unchanged.
 
 Writes follow existing trip/operator/commerce locks before voucher/usage; management takes operator then voucher/usage. Current locking reads and operator serialization prevent cross-trip limit oversubscription and stale renamed-code acceptance. Clean V1–V24 and historical V23→V24 passed on isolated MySQL schemas without destructive development resets. Details, limits and future funding considerations: [M24B schema and report](m24b-promotions-vouchers.md#database-flyway-v24).
+
+## M28 — V25 audit, support and disputes
+
+Additive `V25__audit_support_disputes.sql` creates support_tickets,
+support_activity, support_disputes, support_requests, support_notifications and
+audit_events. V1–V24 and all existing commerce tables remain unchanged.
+Tickets derive authority from owned WEB bookings; progress and escalation are
+separate. Assignment and bounded reopening are versioned. Unique customer/request
+keys serialize creation retries without exclusive user-row locks. Unique
+per-ticket/actor receipts protect commands, and unique dispute/ticket linkage
+bounds a case to one platform round.
+
+Activity stores immutable actor/role, visibility, content, old/new status,
+assignment and server time. Generic audit stores committed-success metadata, never
+conversation/request/secret payloads. Support inbox occurrences are durable and
+recipient/operator/audience-scoped; existing M23 tables are unchanged. Foreign
+keys, CHECKs and tenant/customer/assignment/history/dispute/audit indexes protect
+structural rules. Ticket commands use row locks, versions and READ_COMMITTED;
+business, activity, audit, receipts and notifications commit/roll back together.
+No support service updates commerce rows. [Design, coverage and clean/populated
+migration evidence](m28-audit-support-disputes.md).

@@ -19,6 +19,9 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
         { index: true, lazy: async () => ({ Component: (await import("../features/onboarding/Onboarding")).PlatformDashboard }) },
         { path: "operator-applications", lazy: async () => ({ Component: (await import("../features/onboarding/Onboarding")).ApplicationsPage }) },
         { path: "operator-applications/:applicationId", lazy: async () => ({ Component: (await import("../features/onboarding/Onboarding")).ApplicationDetailPage }) },
+        { path: "disputes", lazy: async () => ({ Component: (await import("../features/support/Support")).SupportList }) },
+        { path: "disputes/:id", lazy: async () => ({ Component: (await import("../features/support/Support")).SupportDetail }) },
+        { path: "audit-events", lazy: async () => ({ Component: (await import("../features/support/Support")).AuditPage }) },
         { path: "operators", lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminOperatorsPage }) },
         { path: "operators/new", lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminOperatorCreatePage }) },
         { path: "operators/:operatorId", lazy: async () => ({ Component: (await import("../pages/admin/AdminPages")).AdminOperatorDetailPage }) },
@@ -42,6 +45,9 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
           Component: (await import("../layouts/OperatorLayout")).OperatorLayout,
         }),
         children: [
+          { path: "support", lazy: async () => ({ Component: (await import("../features/support/Support")).SupportList }) },
+          { path: "support/tickets/:id", lazy: async () => ({ Component: (await import("../features/support/Support")).SupportDetail }) },
+          { path: "audit-events", lazy: async () => ({ Component: (await import("../features/support/Support")).AuditPage }) },
           { path: "vouchers", lazy: async () => ({ Component: (await import("../features/operator/Vouchers")).VouchersPage }) },
       { path: "reviews", lazy: async () => ({ Component: (await import("../features/marketplace/Marketplace")).OperatorReviewsPage }) },
           { path: "notifications", lazy: async () => ({ Component: (await import("../features/notifications/Notifications")).NotificationsPage }) },
@@ -191,6 +197,9 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
       {
         element: <CustomerGuard />,
         children: [
+          { path: "/support", lazy: async () => ({ Component: (await import("../features/support/Support")).SupportList }) },
+          { path: "/support/new", lazy: async () => ({ Component: (await import("../features/support/Support")).SupportNew }) },
+          { path: "/support/tickets/:id", lazy: async () => ({ Component: (await import("../features/support/Support")).SupportDetail }) },
           { path: "/notifications", lazy: async () => ({ Component: (await import("../features/notifications/Notifications")).NotificationsPage }) },
           { path: "/notification-preferences", lazy: async () => ({ Component: (await import("../features/notifications/Notifications")).NotificationPreferencesPage }) },
           {

@@ -2022,3 +2022,34 @@ Own-operator admin/staff GET `/api/v1/operator/vouchers` supports `q`, persisted
 CUSTOMER POST `/api/v1/bookings/voucher-quote` takes `{holdToken, voucherCode}` and returns gross, discount and net without consuming capacity. Existing POST `/api/v1/bookings` accepts optional `voucherCode` and revalidates transactionally. Business rejection uses the standard error envelope; successful preview is not a reservation. PHONE requests remain unchanged.
 
 Booking/detail/ticket responses add `price` with current gross/discount/net, original gross/discount and voucher code/name. Modification items add old/new gross and discount; existing fare/total fields remain net. Full Terms fields, exact response naming, validation/error codes, lifecycle and acceptance evidence: [M24B contract and report](m24b-promotions-vouchers.md#api-contract).
+
+## M28 — Support, disputes and audit
+
+Customer `/api/v1/support`, operator `/api/v1/operator/support` and platform
+`/api/v1/admin/disputes` share GET `/tickets`, GET `/tickets/{ticketId}`,
+GET `/tickets/{ticketId}/messages`, POST `/tickets/{ticketId}/{action}`,
+GET `/dashboard`, GET `/notifications` and POST `/notifications/read-all`.
+Customer-only POST `/support/tickets` accepts owned WEB bookingId, category,
+subject, description and requestKey. Operator-admin GET `/operator/support/assignees`
+returns bounded eligible staff choices. Platform GET `/admin/disputes/tickets/{ticketId}/dispute`
+returns a formally escalated case and its decision. All dispute path IDs are
+original **ticket IDs**, not separate dispute IDs.
+
+Commands require `{version,requestKey,content}` and optional internal,
+assignedUserId, status, priority or outcome. Actions are messages, claim, assign,
+priority, transition, resolve, escalate, reopen, accept-resolution, appeal, review,
+request-information and decision. The server validates role, current membership,
+category, assignment, state and escalation. Ticket detail returns permitted
+`actions`. Customer activity omits internal notes. Reopen/appeal: seven days after
+resolution, at most two reopens and one platform round. Platform decisions execute
+no commercial operation.
+
+Audit GET `/api/v1/operator/audit-events` (own operator admin) and
+`/api/v1/admin/audit-events` (SYSTEM_ADMIN) accepts resource/resourceId filters and
+returns metadata only. Support/activity/audit/inbox pages use size 1–100, page
+0–100000 and timestamp/ID ordering. Platform queues accept disputeStatus; operator
+queues accept mine/unassigned. Request keys are case-sensitive ASCII alphanumeric,
+hyphen or underscore, length 1–100. Matching retries are idempotent; changed payload
+or stale version returns 409. Foreign case IDs return 404. No-store and method/route
+authorization apply. Full contract, permission matrix and deliberate namespace
+changes: [M28 contract and handoff](m28-audit-support-disputes.md).
