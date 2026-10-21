@@ -2053,3 +2053,29 @@ hyphen or underscore, length 1–100. Matching retries are idempotent; changed p
 or stale version returns 409. Foreign case IDs return 404. No-store and method/route
 authorization apply. Full contract, permission matrix and deliberate namespace
 changes: [M28 contract and handoff](m28-audit-support-disputes.md).
+
+## M27A — Internal finance (V26)
+
+`/api/v1/admin/finance` requires SYSTEM_ADMIN; `/api/v1/operator/finance`
+requires own-operator OPERATOR_ADMIN. Staff and foreign-operator access are denied.
+GET overview, ledger (alias transactions), policies (alias commission-policy),
+reconciliations, reconciliations/{id}, reconciliations/{id}/exceptions, statements
+and statements/{id} expose scoped simulated finance. Platform-only GET operators
+and operator-comparison support oversight. POST policies, policies/{id}/activate,
+reconciliations and reconciliations/{id}/statement are platform-only, including
+namespace enforcement. They grant no payment/refund or settlement authority.
+
+Overview/ledger/comparison accept inclusive from/to Vietnam dates (maximum 93
+days); optional operatorId scopes platform reads. Ledger accepts bookingId and
+channel. Lists use page=0, size=20 defaults, page 0–10000 and size 1–100.
+Policy input: operatorId, rate (0–100, four decimal places), validFrom, optional
+validTo and required reason (maximum 500 characters). Reconciliation input:
+operatorId, from, to, projectMissing. Responses use ApiResponse and paginated
+data/page/size/total. Policy/event timestamps return UTC offsets.
+
+Null commission means unpriced, not zero; null allocations mean unknown or
+unpriced custody. Currency VND and verification SIMULATED do not assert real
+payment confirmation. Read summaries include source totals and uncertainty
+counts; NOT_CHECKED is distinct from a frozen CLEAN/EXCEPTIONS run. Statement
+issuance is idempotent per run. Detailed fields, formulas, bounded backfill,
+permissions and evidence: [M27A handoff](m27a-financial-management.md).

@@ -1690,3 +1690,18 @@ rules remain guarded by their original services. No financial execution through
 support or platform decisions. Current status and exact acceptance evidence are
 recorded in [M28 handoff](m28-audit-support-disputes.md); this entry supersedes only
 historical M28 deferral notes. No commit, push, merge or tag.
+
+## M27A — Financial management handoff (21 October 2026)
+
+**COMPLETE; ready for human review, uncommitted.**
+
+Commission policies, immutable payment/refund projections, exact reversals,
+simulated WEB/PHONE classification, separate payable/receivable summaries,
+bounded reconciliation/backfill, frozen statements and both admin finance
+workspaces are implemented with additive V26. M17/M20/M21/M24B transactions
+retain commerce authority and locking order. Final status, exact test evidence,
+file inventory and limitations: [M27A handoff](m27a-financial-management.md).
+This entry supersedes historical M27 commission deferrals only. M22 real provider
+confirmation and M27B settlement remain separate additive work; M29 is unchanged.
+Changes remain uncommitted on feature/v2-commission-reconciliation. No push,
+merge, tag or identity change; unrelated files are preserved.

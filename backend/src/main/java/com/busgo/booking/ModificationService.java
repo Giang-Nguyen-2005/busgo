@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class ModificationService {
+    @org.springframework.beans.factory.annotation.Autowired private com.busgo.finance.FinancialLedger financialLedger;
     @org.springframework.beans.factory.annotation.Autowired private com.busgo.promotion.VoucherService vouchers;
     @org.springframework.beans.factory.annotation.Autowired
     private com.busgo.notification.NotificationService notifications;
@@ -331,6 +332,7 @@ public class ModificationService {
         if(adjustmentPaymentId!=null)
             notifications.record(b, com.busgo.notification.NotificationType.PAYMENT_SUCCEEDED, adjustmentPaymentId.toString());
         vouchers.deadline(b);
+        financialLedger.postBooking(b.getId());
         return view(b,mid);
     }
     // Reused by cancellation; caller holds trip/operator/booking and payment locks.

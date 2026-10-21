@@ -1199,3 +1199,28 @@ structural rules. Ticket commands use row locks, versions and READ_COMMITTED;
 business, activity, audit, receipts and notifications commit/roll back together.
 No support service updates commerce rows. [Design, coverage and clean/populated
 migration evidence](m28-audit-support-disputes.md).
+
+## M27A — Commission ledger (V26)
+
+Additive V26 creates finance_mutex, commission_policies, financial_events,
+financial_runs, financial_exceptions and financial_statements. V1–V25 remain
+unchanged. DECIMAL(12,2) stores signed money, DECIMAL(7,4) percentage snapshots,
+and UTC DATETIME(6) stores finance timestamps. Payment/refund source keys and
+separate collection-payment/refund unique constraints make projection idempotent.
+UPDATE/DELETE triggers protect events and issued statements; policy triggers
+protect terms/history while allowing only future shortening of validity ends.
+
+Finance source IDs intentionally have no commerce FKs, avoiding implicit parent
+locks after finance locks. Reconciliation validates logical source linkage.
+Exceptions/statements reference finance runs. Posting joins the existing commerce
+transaction after inventory/voucher work; its per-operator database mutex comes
+after existing commerce locks, and finance never reacquires commerce row locks.
+READ_COMMITTED reconciliation uses the same mutex; dashboard/comparison/event
+snapshots use read-only REPEATABLE_READ. Refunds preserve collection policy and
+channel and reverse cumulative rounded commission exactly.
+
+Clean V1–V26 and populated V25→V26 migration tests passed with historical source
+preservation and idempotent backfill. Source timestamp conversion retains the
+existing JpaJdbcTime bridge. No real provider evidence or bank settlement schema
+is implied. Full invariants, migration evidence and future additive M22/M27B
+strategy: [M27A report](m27a-financial-management.md).
