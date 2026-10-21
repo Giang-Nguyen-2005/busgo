@@ -276,3 +276,16 @@ the existing UI and security foundation. Final status, tests, browser evidence a
 limitations: [M28 report](m28-audit-support-disputes.md). M22 payment gateways, M27
 settlement/commission and M29 global visual changes remain separate; no automatic
 dispute refund, anonymous support or external messaging is introduced.
+
+## M27A — Internal commission and reconciliation (21 October 2026)
+
+**COMPLETE; ready for human review, uncommitted.**
+
+Implemented configurable historical commission, source-linked immutable ledger,
+simulated collection classification, payable/receivable visibility, reconciliation,
+backfill and internal statements, with platform/own-operator finance UI. See
+[M27A status and evidence](m27a-financial-management.md). Earlier milestone notes
+remain historical. M22 must add verified provider evidence without relabeling
+simulated history; M27B must add separate settlement allocations without rewriting
+ledger events or issued statements. No real payout, bank confirmation or M29
+redesign is included. Working-tree changes await human review; no publication.

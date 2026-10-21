@@ -16,6 +16,7 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
     children: [{
       lazy: async () => ({ Component: (await import("../layouts/AdminLayout")).AdminLayout }),
       children: [
+        { path: "finance", lazy: async () => ({ Component: (await import("../features/finance/Finance")).FinancePage }) },
         { index: true, lazy: async () => ({ Component: (await import("../features/onboarding/Onboarding")).PlatformDashboard }) },
         { path: "operator-applications", lazy: async () => ({ Component: (await import("../features/onboarding/Onboarding")).ApplicationsPage }) },
         { path: "operator-applications/:applicationId", lazy: async () => ({ Component: (await import("../features/onboarding/Onboarding")).ApplicationDetailPage }) },
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
           Component: (await import("../layouts/OperatorLayout")).OperatorLayout,
         }),
         children: [
+          { path: "finance", lazy: async () => ({ Component: (await import("../features/finance/Finance")).FinancePage }) },
           { path: "support", lazy: async () => ({ Component: (await import("../features/support/Support")).SupportList }) },
           { path: "support/tickets/:id", lazy: async () => ({ Component: (await import("../features/support/Support")).SupportDetail }) },
           { path: "audit-events", lazy: async () => ({ Component: (await import("../features/support/Support")).AuditPage }) },

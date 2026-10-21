@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PaymentTicketService {
+    @org.springframework.beans.factory.annotation.Autowired private com.busgo.finance.FinancialLedger financialLedger;
     @org.springframework.beans.factory.annotation.Autowired private com.busgo.promotion.VoucherService vouchers;
     @org.springframework.beans.factory.annotation.Autowired
     private com.busgo.notification.NotificationService notifications;
@@ -172,6 +173,7 @@ public class PaymentTicketService {
         notifications.record(booking, com.busgo.notification.NotificationType.BOOKING_CONFIRMED, "once");
         notifications.record(booking, com.busgo.notification.NotificationType.PAYMENT_SUCCEEDED, payment.getId().toString());
         vouchers.finish(booking,true);
+        financialLedger.postBooking(booking.getId());
         return confirmation(booking, payment);
     }
 

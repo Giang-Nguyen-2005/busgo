@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class PartialCancellationService {
+    @org.springframework.beans.factory.annotation.Autowired private com.busgo.finance.FinancialLedger financialLedger;
     @org.springframework.beans.factory.annotation.Autowired
     private com.busgo.notification.NotificationService notifications;
     private final ModificationService commerce;
@@ -145,6 +146,7 @@ public class PartialCancellationService {
         b.setTotalAmount(q.newTotal()); b.setPaymentTokenHash(null);
         em.flush();
         notifications.record(b, com.busgo.notification.NotificationType.PARTIAL_CANCELLATION_COMPLETED, Long.toString(cid));
+        financialLedger.postBooking(b.getId());
         return view(b,cid);
     }
     @Transactional(readOnly=true)

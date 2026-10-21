@@ -21,5 +21,5 @@ export function loginDestination(roles: string[], requested: string | null) {
 export function operatorNavigation(roles: string[] = []) {
   if (!canReadOperator(roles)) return [];
   const items = [["/support", "Hỗ trợ khách hàng"], ["", "Tổng quan"], ["/trips", "Chuyến xe"], ["/bookings", "Đặt vé"], ["/reviews", "Hồ sơ và đánh giá"], ["/vouchers", "Khuyến mãi"], ["/bus-types", "Loại xe"]];
-  return canManageOperator(roles) ? [...items, ["/customers", "Khách hàng"], ["/reports", "Báo cáo"], ["/buses", "Đội xe"], ["/maintenance", "Bảo trì"], ["/routes", "Tuyến vận hành"], ["/employees", "Nhân sự vận hành"], ["/staff", "Tài khoản nhân viên"]] : [...items, ["/employees", "Nhân sự vận hành"]];
+  return canManageOperator(roles) ? [...items, ["/customers", "Khách hàng"], ["/reports", "Báo cáo"], ["/finance", "Tài chính"], ["/buses", "Đội xe"], ["/maintenance", "Bảo trì"], ["/routes", "Tuyến vận hành"], ["/employees", "Nhân sự vận hành"], ["/staff", "Tài khoản nhân viên"]] : [...items, ["/employees", "Nhân sự vận hành"]];
 }

@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CancellationService {
+    @org.springframework.beans.factory.annotation.Autowired private com.busgo.finance.FinancialLedger financialLedger;
     @org.springframework.beans.factory.annotation.Autowired private com.busgo.promotion.VoucherService vouchers;
     @org.springframework.beans.factory.annotation.Autowired
     private com.busgo.notification.NotificationService notifications;
@@ -160,6 +161,7 @@ public class CancellationService {
         history.setReasonCode(reason); history.setNote(note); history.setChangedAt(now); histories.save(history);
         em.flush();
         notifications.record(b, com.busgo.notification.NotificationType.BOOKING_CANCELLED, "once");
+        financialLedger.postBooking(b.getId());
         return view(b,operator);
     }
 
