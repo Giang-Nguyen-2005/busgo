@@ -9,7 +9,6 @@ import {
   ArrowRight,
   BusFront,
   Check,
-  LoaderCircle,
   MapPin,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -25,14 +24,7 @@ import {
 import type { BookingStatus, Trip } from "../types/customer";
 import type { PagedResponse } from "../types/api";
 
-export function Loading() {
-  return (
-    <div className="loading" role="status">
-      <LoaderCircle className="spin" size={24} />
-      <span>Đang tải thông tin…</span>
-    </div>
-  );
-}
+export { LoadingIndicator as Loading } from "./foundations/Loading";
 export function ErrorState({
   error,
   retry,

@@ -1,43 +1,50 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NotificationBell } from "../features/notifications/Notifications";
-import { BusFront, LogOut, UserRound } from "lucide-react";
+import { BusFront, LogOut, UserRound, Menu } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthProvider";
 import { customerAccess } from "../features/customer/presentation";
 import "../features/customer/customer.css";
+import { Drawer } from "../components/foundations/Drawer";
+import { IconButton } from "../components/foundations/IconButton";
+import { PageContent } from "../components/foundations/PageContent";
+import { customerIcons } from "../components/foundations/navigationIcons";
+import "./shells.css";
 export function CustomerLayout() {
   const auth = useAuth();
+  const [open, setOpen] = useState(false);
   const location = useLocation();
   const customer = customerAccess(auth.user?.roles);
   const workspace = auth.user?.roles.includes("SYSTEM_ADMIN") ? "/admin" : "/operator";
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
+  useEffect(() => { setOpen(false); }, [location.key]);
+  const navigation = <>
+    <NavLink to="/" end><customerIcons.home aria-hidden="true" />Trang chủ</NavLink>
+    <NavLink to="/operator-application"><customerIcons.application aria-hidden="true" />Đăng ký nhà xe</NavLink>
+    {customer && <NavLink to="/my-bookings"><customerIcons.bookings aria-hidden="true" />Vé của tôi</NavLink>}
+    {customer && <NavLink to="/support"><customerIcons.support aria-hidden="true" />Hỗ trợ</NavLink>}
+  </>;
   return (
     <div className="customer-shell">
       <a className="skip-link" href="#main">
         Đến nội dung chính
       </a>
-      <header className="site-header">
-        <div className="header-inner">
+      <header className="customer-header">
+        <div className="customer-header-inner">
           <Link className="brand" to="/" aria-label="BusGo trang chủ">
             <span className="logo-mark">
               <BusFront size={23} />
             </span>
             BusGo<span className="brand-dot">.</span>
           </Link>
-          <nav className="main-nav" aria-label="Điều hướng chính">
-            <NavLink className="home-nav" to="/" end>
-              Trang chủ
-            </NavLink>
-            <NavLink to="/operator-application">Đăng ký nhà xe</NavLink>
-            {customer && <NavLink to="/my-bookings">Vé của tôi</NavLink>}{customer && <NavLink to="/support">Hỗ trợ</NavLink>}
-          </nav>
-          <div className="account-nav">
+          <nav className="customer-navigation" aria-label="Điều hướng chính">{navigation}</nav>
+          <div className="customer-account">
             {auth.authenticated ? (
               <>
                 {customer && <NotificationBell />}
-                <Link className="profile-link" to={customer ? "/profile" : workspace}>
+                <Link className="customer-profile" to={customer ? "/profile" : workspace}>
                   <UserRound size={18} />
                   <span>{customer ? "Hồ sơ" : "Khu vực quản lý"}</span>
                 </Link>
@@ -52,7 +59,7 @@ export function CustomerLayout() {
               </>
             ) : (
               <>
-                <Link className="login-link" to="/login">
+                <Link className="customer-login" to="/login">
                   Đăng nhập
                 </Link>
                 <Link className="button small" to="/register">
@@ -61,13 +68,20 @@ export function CustomerLayout() {
               </>
             )}
           </div>
+          <IconButton className="shell-menu-trigger" label="Mở điều hướng" aria-expanded={open} aria-controls="customer-navigation" onClick={() => setOpen(true)}><Menu /></IconButton>
         </div>
       </header>
-      <main id="main" className="container">
-        <Outlet />
+      <Drawer id="customer-navigation" title="Điều hướng BusGo" open={open} onClose={() => setOpen(false)}>
+        <nav className="customer-mobile-navigation" aria-label="Điều hướng chính · di động" onClick={event => { if ((event.target as Element).closest("a")) setOpen(false); }}>
+          {navigation}
+          {auth.authenticated ? <><Link to={customer ? "/profile" : workspace}><UserRound aria-hidden="true" />{customer ? "Hồ sơ" : "Khu vực quản lý"}</Link><button className="secondary" onClick={() => { setOpen(false); auth.logout(); }}>Đăng xuất</button></> : <><Link to="/login">Đăng nhập</Link><Link to="/register">Đăng ký</Link></>}
+        </nav>
+      </Drawer>
+      <main id="main" className="container" tabIndex={-1}>
+        <PageContent><Outlet /></PageContent>
       </main>
-      <footer className="site-footer">
-        <div className="footer-inner">
+      <footer className="customer-footer">
+        <div className="customer-footer-inner">
           <div>
             <Link className="brand" to="/">
               <BusFront size={24} />

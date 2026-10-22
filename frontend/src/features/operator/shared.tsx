@@ -1,4 +1,5 @@
 import { DomainStatusBadge } from "../../components/DomainStatusBadge";
+import { PageHeader } from "../../components/foundations/PageHeader";
 import type { ReactNode } from "react";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
@@ -27,10 +28,7 @@ export function OperatorPageHeader({
   children?: ReactNode;
 }) {
   return (
-    <div className="operator-heading">
-      <h1>{title}</h1>
-      <div className="operator-actions">{children}</div>
-    </div>
+    <PageHeader title={title} actions={children} className="operator-heading" actionsClassName="operator-actions" />
   );
 }
 export function OperatorError({

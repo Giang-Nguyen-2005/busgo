@@ -1,0 +1,83 @@
+/* Shell ownership lives here. Feature-local styles continue to own their page content. */
+.workspace-shell { display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); min-height: 100dvh; background: var(--color-bg); font-size: var(--text-body); }
+.ws-sidebar { position: sticky; top: 0; height: 100dvh; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; background: var(--color-structural); color: var(--color-on-structural); padding: 24px 14px; }
+.ws-brand { display: flex; align-items: center; gap: 10px; padding: 0 12px; color: white; font-size: 27px; font-weight: 800; letter-spacing: -.8px; }
+.ws-brand:hover { color: white; text-decoration: none; }
+.ws-brand > svg { width: 38px; height: 38px; padding: 7px; background: #ffffff12; border-radius: 10px; color: var(--color-brand-warm); }
+.ws-brand > span { color: var(--color-brand-warm); margin-left: -9px; }
+.ws-context { margin: 12px 12px 8px; font-size: 12px; color: #bfd4cf; }
+.ws-nav, .ws-nav-section { display: grid; gap: 4px; }
+.ws-nav-group { color: #b7cdc7; font-size: 12px; font-weight: 650; padding: 20px 12px 6px; }
+.ws-nav a { display: flex; align-items: center; gap: 12px; padding: 11px 12px; min-height: 44px; border-radius: 8px; color: #e0eeea; font-size: 14px; line-height: 1.4; transition: background var(--transition-fast), color var(--transition-fast); }
+.ws-nav svg { width: 18px; height: 18px; stroke-width: 1.8; flex: 0 0 18px; }
+.ws-nav a:hover { background: #ffffff0d; text-decoration: none; }
+.ws-nav a.active { background: #ffffff16; box-shadow: inset 3px 0 var(--color-highlight); color: white; font-weight: 700; }
+.ws-identity { display: grid; gap: 6px; margin-top: auto; padding: 24px 12px 0; color: #bed3cc; font-size: 12px; overflow-wrap: anywhere; }
+.ws-identity strong { border-top: 1px solid #ffffff24; padding-top: 20px; color: white; font-weight: 650; }
+.ws-workspace { min-width: 0; }
+.ws-topbar { min-height: var(--topbar-height); display: flex; align-items: center; gap: 16px; padding: 12px var(--layout-gutter); background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+.ws-location { min-width: 0; display: grid; gap: 3px; }
+.ws-location > span { color: var(--color-text-muted); font-size: 12px; }
+.ws-location > strong { font-size: 14px; font-weight: 650; }
+.ws-topbar-actions { display: flex; align-items: center; gap: 16px; margin-left: auto; }
+.ws-customer-link { font-size: 13px; white-space: nowrap; }
+.ws-account { position: relative; }
+.ws-account summary { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: var(--radius-pill); background: var(--color-bg-subtle); color: var(--color-text); cursor: pointer; min-height: 44px; font-size: 13px; list-style: none; }
+.ws-account summary::-webkit-details-marker { display: none; }
+.ws-account summary > svg:first-child { width: 20px; height: 20px; }
+.ws-account summary > span { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-account-panel { position: absolute; top: calc(100% + 8px); right: 0; width: min(300px, calc(100vw - 32px)); z-index: 40; padding: 20px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); overflow-wrap: anywhere; }
+.ws-account-panel p { margin: 8px 0; font-size: 13px; color: var(--color-text-secondary); }
+.ws-account-panel a { display: block; padding-block: 12px; }
+.ws-account-panel button { width: 100%; }
+.workspace-shell .ws-content { width: 100%; max-width: var(--content-max-width); padding: var(--layout-gutter); margin: 0 auto; min-width: 0; }
+.ws-content .app-page-content > .card { margin-bottom: 20px; }
+.workspace-shell :focus-visible, .customer-shell :focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
+.workspace-shell .ws-sidebar :focus-visible, .workspace-shell .app-drawer :focus-visible { outline-color: var(--color-brand-warm); }
+.shell-menu-trigger { display: none; }
+.customer-header { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid var(--color-border); background: var(--color-surface); }
+.customer-header-inner { display: flex; align-items: center; gap: 24px; max-width: 1248px; padding: 12px var(--layout-gutter); margin: auto; min-height: var(--topbar-height); }
+.customer-header .brand { font-size: 26px; color: var(--color-structural); }
+.customer-shell .brand-dot { color: var(--color-brand-warm); }
+.customer-navigation { display: flex; align-items: center; gap: 8px; }
+.customer-navigation a { display: flex; align-items: center; gap: 7px; padding: 12px 8px; min-height: 44px; font-size: 14px; color: var(--color-text-secondary); border-radius: 8px; white-space: nowrap; }
+.customer-navigation a.active { background: var(--color-bg-subtle); color: var(--color-primary-dark); box-shadow: inset 0 -2px var(--color-primary); font-weight: 650; }
+.customer-navigation a:hover { background: var(--color-bg-subtle); text-decoration: none; }
+.customer-navigation svg, .customer-mobile-navigation svg { width: 18px; height: 18px; stroke-width: 1.8; flex-shrink: 0; }
+.customer-account { display: flex; align-items: center; gap: 12px; margin-left: auto; font-size: 14px; }
+.customer-account > a { min-height: 44px; display: inline-flex; align-items: center; }
+.customer-profile { gap: 8px; white-space: nowrap; }
+.customer-mobile-navigation { display: grid; gap: 8px; padding-top: 12px; }
+.customer-mobile-navigation a { display: flex; align-items: center; gap: 12px; color: #e0eeea; padding: 12px; min-height: 44px; border-radius: 8px; }
+.customer-mobile-navigation a.active { background: #ffffff16; box-shadow: inset 3px 0 var(--color-highlight); color: white; }
+.customer-shell .app-drawer :focus-visible { outline-color: var(--color-brand-warm); }
+.customer-footer { border-top: 1px solid var(--color-border); background: var(--color-surface); }
+.customer-footer-inner { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 24px 40px; max-width: 1248px; padding: 32px var(--layout-gutter); margin: auto; font-size: 14px; color: var(--color-text-secondary); }
+.customer-footer-inner p { margin: 8px 0; }
+.customer-footer-inner small { font-size: 12px; }
+.customer-footer-inner > div:last-child { display: flex; flex-direction: column; }
+.customer-footer-inner > div:last-child a { display: flex; align-items: center; min-height: 44px; }
+@media (max-width: 1050px) {
+  .workspace-shell { display: block; }
+  .ws-sidebar, .customer-navigation { display: none; }
+  .shell-menu-trigger { display: inline-flex; }
+  .ws-topbar { gap: 12px; }
+  .ws-topbar-actions { gap: 10px; }
+  .ws-customer-link { display: none; }
+  .customer-header-inner { gap: 12px; }
+}
+@media (max-width: 600px) {
+  .ws-account summary > span, .ws-account summary > svg:last-child { display: none; }
+  .ws-account summary { padding: 11px; }
+  .ws-location > strong { font-size: 13px; }
+  .ws-location > span { font-size: 12px; }
+  .ws-topbar { padding: 12px 16px; }
+  .ws-topbar-actions { gap: 6px; }
+  .customer-header-inner { gap: 8px; padding: 10px 16px; }
+  .customer-header .brand { font-size: 23px; gap: 6px; }
+  .customer-header .logo-mark { padding: 6px; }
+  .customer-account { gap: 4px; }
+  .customer-account > .customer-profile, .customer-account > .icon-button, .customer-account > .button { display: none; }
+  .customer-login { padding: 10px 6px; font-size: 13px; }
+  .customer-footer-inner { flex-direction: column; }
+}

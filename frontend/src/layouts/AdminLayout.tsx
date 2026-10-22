@@ -1,9 +1,12 @@
-import { useState } from "react";
-import { BusFront, LayoutDashboard, Building2 } from "lucide-react";
-import { Link, NavLink, Outlet } from "react-router-dom";
-import { useAuth } from "../features/auth/AuthProvider";
+import { NavLink, useLocation } from "react-router-dom";
+import { adminNavigation } from "../components/foundations/navigationIcons";
+import { WorkspaceShell } from "./WorkspaceShell";
 import "../features/admin/admin.css";
+
 export function AdminLayout() {
- const auth = useAuth(); const [open, setOpen] = useState(false);
- return <div className="admin-shell"><a className="skip-link" href="#admin-main">Đến nội dung chính</a><aside className="admin-sidebar"><Link className="admin-brand" to="/admin"><BusFront aria-hidden="true" />BusGo<span className="brand-dot">.</span></Link><button className="admin-menu" aria-expanded={open} aria-controls="admin-navigation" onClick={() => setOpen(!open)}>Điều hướng</button><nav id="admin-navigation" className={'admin-nav' + (open ? ' is-open' : '')} aria-label="Quản trị hệ thống"><NavLink end to="/admin" onClick={() => setOpen(false)}><LayoutDashboard size={18} aria-hidden="true" />Tổng quan</NavLink><NavLink to="/admin/operator-applications" onClick={() => setOpen(false)}>Đơn đăng ký nhà xe</NavLink><NavLink to="/admin/operators" onClick={() => setOpen(false)}><Building2 size={18} aria-hidden="true" />Nhà xe</NavLink><NavLink to="/admin/finance">Tài chính</NavLink><NavLink to="/admin/disputes">Tranh chấp</NavLink><NavLink to="/admin/audit-events">Nhật ký kiểm toán</NavLink></nav><div className="workspace-identity"><strong>QUẢN TRỊ HỆ THỐNG</strong><span>{auth.user?.fullName}</span><span>Quản trị viên BusGo</span></div></aside><div className="admin-workspace"><header className="admin-topbar"><Link to="/">Trang khách hàng</Link><details><summary>{auth.user?.fullName} · Tài khoản</summary><div className="admin-profile"><p>{auth.user?.email}</p><p>Quản trị hệ thống</p><button className="secondary" onClick={auth.logout}>Đăng xuất</button></div></details></header><main id="admin-main" className="admin-content"><Outlet /></main></div></div>;
+  const { pathname } = useLocation();
+  const current = adminNavigation.find(({ to }) => pathname === to || (to !== "/admin" && pathname.startsWith(`${to}/`)))?.label || "Quản trị hệ thống";
+  return <WorkspaceShell kind="admin" title="Quản trị hệ thống" role="Quản trị viên BusGo" current={current}
+    navigation={<div className="ws-nav-section"><span className="ws-nav-group">Nền tảng BusGo</span>{adminNavigation.map(({ to, label, icon: Icon }) =>
+      <NavLink key={to} end={to === "/admin"} to={to}><Icon size={18} aria-hidden="true" />{label}</NavLink>)}</div>} />;
 }

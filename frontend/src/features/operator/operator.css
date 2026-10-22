@@ -1,8 +1,3 @@
-.operator-shell {
-  display: grid;
-  grid-template-columns: 230px minmax(0, 1fr);
-  min-height: 100vh;
-}
 .operator-contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 20px; overflow-wrap: anywhere; }
 .operator-stop-time { display: block; }
 .operator-status-dialog { max-width: min(540px, calc(100vw - 32px)); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
@@ -13,63 +8,6 @@
 .operator-status-HELD { background: #fff0d1; color: #815300; }
 .operator-status-BOOKED, .operator-status-CONFIRMED { background: #deebff; color: #234b81; }
 .operator-status-BLOCKED { background: #f4e3e3; color: #973333; }
-.operator-sidebar {
-  background: #143d3d;
-  color: white;
-  padding: 24px 16px;
-}
-.operator-brand {
-  display: block;
-  font-size: 21px;
-  font-weight: 750;
-  color: white;
-  padding: 12px;
-}
-.operator-nav {
-  display: grid;
-  gap: 8px;
-  margin-top: 24px;
-}
-.operator-nav a {
-  padding: 13px 16px;
-  color: #e0eeee;
-  border-radius: 8px;
-}
-.operator-nav a.active {
-  background: #246360;
-  color: white;
-  font-weight: 700;
-}
-.operator-menu {
-  display: none;
-}
-.operator-workspace {
-  min-width: 0;
-}
-.operator-topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-  padding: 20px 28px;
-  border-bottom: 1px solid var(--border);
-  background: white;
-}
-.operator-topbar details {
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-.operator-topbar summary {
-  cursor: pointer;
-}
-.operator-content {
-  padding: 28px;
-  max-width: 1500px;
-  margin: auto;
-}
-.operator-content > .card {
-  margin-bottom: 20px;
-}
 .operator-heading,
 .operator-actions,
 .operator-pagination {
@@ -261,43 +199,11 @@
   border-style: dashed;
 }
 @media (max-width: 1050px) {
-  .operator-shell {
-    grid-template-columns: 190px minmax(0, 1fr);
-  }
-  .operator-content {
-    padding: 20px;
-  }
   .operator-fare-row {
     grid-template-columns: 1fr 1fr;
   }
 }
 @media (max-width: 700px) {
-  .operator-shell {
-    display: block;
-  }
-  .operator-sidebar {
-    padding: 10px 16px;
-  }
-  .operator-brand {
-    display: inline-block;
-  }
-  .operator-menu {
-    display: inline-flex;
-    float: right;
-  }
-  .operator-nav {
-    display: none;
-    margin-top: 12px;
-  }
-  .operator-nav.is-open {
-    display: grid;
-  }
-  .operator-topbar {
-    padding: 16px;
-  }
-  .operator-content {
-    padding: 20px 14px;
-  }
   .operator-heading h1 {
     font-size: 24px;
   }
@@ -317,18 +223,10 @@
 .management-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .management-grid dd { margin: 4px 0; overflow-wrap: anywhere; }
 .management-form input, .management-form select { min-width: 0; width: 100%; }
-@media (max-width: 700px) { .management-grid { grid-template-columns: 1fr; } .operator-topbar { flex-wrap: wrap; gap: 10px; } }
+@media (max-width: 700px) { .management-grid { grid-template-columns: 1fr; } }
 
 /* M14A dispatch surface: all overrides are confined to the operator shell. */
-.operator-shell { background: #f3f7f6; }
-.operator-shell .operator-sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-.operator-shell .operator-nav-group { color: #b3d0cd; font-size: 12px; letter-spacing: .06em; padding: 14px 16px 2px; text-transform: uppercase; }
-.operator-shell .operator-topbar { padding: 12px 24px; }
-.operator-shell .operator-topbar summary { list-style: none; border: 1px solid #cbdad7; border-radius: 9px; padding: 10px 14px; min-height: 44px; }
-.operator-shell .operator-topbar summary::-webkit-details-marker { display: none; }
-.operator-shell .operator-content { padding: 22px; }
 .operator-shell button, .operator-shell .button, .operator-shell select, .operator-shell input { min-height: 44px; }
-.operator-shell :focus-visible { outline: 3px solid #8759cd; outline-offset: 3px; }
 .operator-shell .operator-trip-header { border-top: 4px solid #147d74; padding: 18px 22px 0; margin-bottom: 22px; }
 .operator-shell .operator-trip-header h1 { font-size: 24px; }
 .operator-shell .operator-trip-header .operator-heading { margin: 12px 0 0; }
@@ -375,16 +273,9 @@
 .operator-shell .operator-metadata { font-size: 13px; color: #536966; margin: 16px 0; }
 .operator-shell .operator-metadata summary { min-height: 44px; padding: 12px; cursor: pointer; }
 @media (max-width: 1050px) {
-  .operator-shell { display: block; }
-  .operator-shell .operator-sidebar { height: auto; position: static; padding: 8px 16px; }
-  .operator-shell .operator-brand { display: inline-block; }
-  .operator-shell .operator-menu { display: inline-flex; float: right; }
-  .operator-shell .operator-nav { display: none; margin-top: 12px; }
-  .operator-shell .operator-nav.is-open { display: grid; }
   .operator-shell .operator-passenger { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 700px) {
-  .operator-shell .operator-content { padding: 14px; }
   .operator-shell .operator-trip-header { padding: 14px 12px 0; }
   .operator-shell .operator-trip-header h1 { font-size: 20px; }
   .operator-shell .operator-trip-row { grid-template-columns: 88px minmax(0, 1fr); padding: 14px; gap: 12px; }
@@ -477,25 +368,6 @@
 @media (max-width: 700px) { .operator-shell .operator-passenger { grid-template-columns: .8fr 1.2fr; } }
 
 /* M15.5 dispatch console. Geometry remains defined by each trip's seat snapshot. */
-.operator-shell { background: var(--color-bg-subtle); }
-.operator-shell .operator-sidebar { background: linear-gradient(165deg,#163b3a,#102c30); padding: 22px 14px; display: flex; flex-direction: column; }
-.operator-shell .operator-brand { display: flex; align-items: center; gap: 10px; padding: 12px 10px; font-size: 25px; letter-spacing: -.7px; }
-.operator-shell .operator-brand svg { padding: 6px; width: 38px; height: 38px; background: #ffffff12; border-radius: 10px; color: #ffbf77; }
-.operator-shell .operator-nav { gap: 4px; margin-top: 16px; }
-.operator-shell .operator-nav-group { font-size: 10px; color: #a3c1ba; padding-left: 14px; letter-spacing: 1.5px; }
-.operator-shell .operator-nav a { display: flex; align-items: center; gap: 12px; font-size: 14px; padding: 12px 14px; transition: background var(--transition-fast); }
-.operator-shell .operator-nav a:hover { background: #ffffff0c; text-decoration: none; }
-.operator-shell .operator-nav a.active { background: #ffffff14; box-shadow: inset 3px 0 var(--color-accent-bright); color: white; }
-.operator-shell .operator-nav a.active svg { color: #ffbf77; }
-.workspace-identity { margin-top: auto; padding: 22px 12px 4px; border-top: 1px solid #ffffff20; color: #c7d9d5; font-size: 12px; overflow-wrap: anywhere; }
-.workspace-identity strong { color: white; display: block; font-weight: 600; margin-bottom: 6px; }
-.workspace-identity span { display: block; }
-.operator-shell .operator-topbar { background: #f9fbf8; align-items: center; padding: 12px 28px; }
-.operator-shell .operator-topbar > a { font-size: 13px; }
-.operator-shell .operator-topbar details { position: relative; font-size: 13px; max-width: 440px; }
-.operator-shell .operator-topbar summary { border: 0; background: #eaf0eb; border-radius: var(--radius-pill); }
-.operator-account-panel { position: absolute; top: calc(100% + 10px); right: 0; width: min(340px,calc(100vw - 40px)); background: white; box-shadow: var(--shadow-lg); border: 1px solid var(--color-border); border-radius: 14px; padding: 20px; z-index: 25; text-align: left; }
-.operator-shell .operator-content { padding: 28px; }
 .operator-shell .operator-heading h1 { font-size: 25px; letter-spacing: -.7px; }
 .operator-shell .operator-heading { padding-bottom: 16px; border-bottom: 1px solid var(--color-border); margin-bottom: 20px; }
 .operator-shell .card { border-color: transparent; box-shadow: var(--shadow-sm); }
@@ -567,16 +439,7 @@
 .operator-shell .operator-passenger { background: white; padding: 16px; margin: 8px 0; border: 0; border-radius: 10px; box-shadow: var(--shadow-sm); }
 .operator-shell .operator-seat-code { display: inline-block; background: var(--color-structural); color: #ffbf77; font-size: 23px; padding: 6px 12px; border-radius: 8px; }
 @keyframes drawer-arrive { from { opacity: .5; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
-@media (max-width: 1050px) {
- .operator-shell .operator-sidebar { display: block; padding: 8px 16px; }
- .operator-shell .operator-brand { display: inline-flex; padding: 6px 0; font-size: 23px; }
- .operator-shell .operator-menu { margin-top: 4px; }
- .operator-shell .workspace-identity { display: none; }
- .operator-shell .operator-nav.is-open + .workspace-identity { display: block; margin-top: 12px; }
-}
 @media (max-width: 700px) {
- .operator-shell .operator-content { padding: 20px 14px; }
- .operator-shell .operator-topbar { padding: 10px 16px; gap: 8px; }
  .operator-shell .operator-heading h1 { font-size: 23px; }
  .operator-shell .operator-trip-row { padding: 16px 12px; }
  .operator-shell .operator-trip-header { padding: 18px 16px 0; }
@@ -759,8 +622,6 @@
 .operator-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 
 /* M19.1: operational identity first; metadata and secondary actions stay quiet. */
-.operator-nav-section { display:grid; gap:4px; }
-.operator-shell .operator-nav-section .operator-nav-group { margin-top:10px; }
 .quick-filters { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 12px; }
 .quick-filters button[aria-pressed=true] { background:var(--color-primary); color:white; border-color:var(--color-primary); }
 .operator-shell .attention-links { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 24px; }

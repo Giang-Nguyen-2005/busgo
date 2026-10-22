@@ -12,15 +12,16 @@
 .assisted-progress [aria-current="step"] { color: var(--color-primary-dark); font-weight: 750; text-decoration: underline; text-underline-offset: 5px; }
 .assisted-booking fieldset { min-width: 0; }
 .assisted-actions { overflow-wrap: anywhere; }
-textarea:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }
+textarea:focus-visible, [tabindex]:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 
 :root {
-  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
   color: var(--color-text);
   background: var(--color-bg);
   font-synthesis: none;
-  --primary: var(--color-primary-dark);
+  --primary: var(--color-primary);
   --primary-hover: var(--color-primary-hover);
   --background: var(--color-bg);
   --surface: var(--color-surface);
@@ -85,7 +86,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 summary:focus-visible {
-  outline: 3px solid #54b9b0;
+  outline: var(--focus-ring);
   outline-offset: 3px;
 }
 button.secondary,
@@ -124,6 +125,7 @@ button.secondary:hover,
   background: transparent;
   color: var(--muted);
   padding: 10px;
+  min-width: 44px;
 }
 .icon-button:hover {
   background: #eef5f4;
@@ -189,23 +191,6 @@ small {
   padding: 36px 32px 64px;
   min-height: calc(100vh - 265px);
 }
-.site-header {
-  position: sticky;
-  top: 0;
-  background: #ffffffef;
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  z-index: 30;
-}
-.header-inner {
-  max-width: 1184px;
-  margin: auto;
-  padding: 0 32px;
-  min-height: 76px;
-  display: flex;
-  gap: 48px;
-  align-items: center;
-}
 .brand {
   display: inline-flex;
   align-items: center;
@@ -229,64 +214,6 @@ small {
   border-radius: 9px;
   padding: 7px;
   display: flex;
-}
-.main-nav {
-  display: flex;
-  align-items: center;
-  gap: 26px;
-}
-.main-nav a {
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 600;
-  padding: 27px 0;
-}
-.main-nav a.active {
-  color: var(--primary);
-  box-shadow: inset 0 -3px var(--primary);
-}
-.account-nav {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  font-size: 14px;
-}
-.profile-link {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  max-width: 210px;
-}
-.profile-link span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.site-footer {
-  background: white;
-  border-top: 1px solid var(--border);
-}
-.footer-inner {
-  max-width: 1184px;
-  padding: 35px 32px;
-  margin: auto;
-  display: flex;
-  justify-content: space-between;
-  gap: 30px;
-  font-size: 13px;
-  color: var(--muted);
-}
-.footer-inner p {
-  margin: 8px 0;
-}
-.footer-inner > div:last-child {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.footer-inner strong {
-  color: var(--text);
 }
 .skip-link {
   position: fixed;
@@ -470,7 +397,7 @@ select {
   color: var(--muted);
 }
 .field input[aria-invalid="true"] {
-  border-color: #c97171;
+  border-color: var(--color-danger);
 }
 .field-error {
   color: var(--danger);
@@ -1333,9 +1260,7 @@ select {
   gap: 17px;
 }
 @media (min-width: 1400px) {
-  .container,
-  .header-inner,
-  .footer-inner {
+  .container {
     max-width: 1248px;
   }
   .hero {
@@ -1349,9 +1274,6 @@ select {
   }
 }
 @media (max-width: 1050px) {
-  .header-inner {
-    gap: 30px;
-  }
   .container {
     padding: 28px 24px 48px;
   }
@@ -1437,40 +1359,11 @@ select {
   }
 }
 @media (max-width: 760px) {
-  .site-header {
-    backdrop-filter: none;
-    background: white;
-  }
-  .header-inner {
-    padding: 0 20px;
-    gap: 12px;
-    min-height: 68px;
-    flex-wrap: wrap;
-  }
   .brand {
     font-size: 24px;
   }
   .logo-mark {
     padding: 6px;
-  }
-  .account-nav {
-    gap: 12px;
-    font-size: 12px;
-  }
-  .account-nav .small {
-    padding: 8px 12px;
-  }
-  .profile-link {
-    max-width: 140px;
-  }
-  .main-nav {
-    order: 3;
-    width: 100%;
-    gap: 28px;
-  }
-  .main-nav a {
-    padding: 10px 0 12px;
-    font-size: 13px;
   }
   .container {
     padding: 22px 18px 40px;
@@ -1543,21 +1436,6 @@ select {
     font-size: 23px;
   }
   .how-section li {
-    font-size: 12px;
-  }
-  .footer-inner {
-    padding: 30px 23px;
-    flex-wrap: wrap;
-    gap: 24px;
-  }
-  .footer-inner > div:first-child {
-    width: 100%;
-  }
-  .footer-inner > div:nth-child(2) {
-    max-width: 65%;
-    font-size: 12px;
-  }
-  .footer-inner > div:last-child {
     font-size: 12px;
   }
   .page-heading {
@@ -2551,7 +2429,7 @@ h3 { font-size: var(--text-card); }
 .card { border-color: transparent; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
 button, .button { transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast); }
 button:not(:disabled):active, .button:active { transform: translateY(1px); }
-:where(button, a, input, select, summary, [tabindex]):focus-visible { outline: 3px solid var(--color-info); outline-offset: 3px; }
+:where(button, a, input, select, summary, [tabindex]):focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
 :where(.trip-price, .payment-amount, .total, .operator-departure, .admin-counts, .price-summary) { font-variant-numeric: tabular-nums; }
 .notice.info { background: var(--color-info-soft); color: var(--color-info); }
 .notice.warning { background: var(--color-warning-soft); color: var(--color-warning); }
@@ -2594,3 +2472,10 @@ button:not(:disabled):active, .button:active { transform: translateY(1px); }
 .modification-money > div:last-child { border-top: 1px solid var(--border); padding-top: .8rem; }
 .modification-mapping { display: flex; flex-wrap: wrap; gap: .6rem 1.5rem; padding-left: 1.2rem; }
 .modification-workspace select { width: 100%; min-width: 0; }
+
+/* Explicit action variants; seat, finance and support widgets retain scoped rules. */
+button.tertiary, .button.tertiary { background: transparent; color: var(--color-primary-dark); border-color: transparent; }
+button.tertiary:hover, .button.tertiary:hover { background: var(--color-bg-subtle); }
+button.destructive, .button.destructive { background: var(--color-danger); color: white; }
+button.destructive:hover, .button.destructive:hover { background: #922f2c; }
+button:disabled { opacity: .65; }

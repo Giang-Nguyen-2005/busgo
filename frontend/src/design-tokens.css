@@ -1,13 +1,13 @@
 /* BusGo foundations. Semantic foregrounds are darkened for readable text on soft surfaces. */
 :root {
-  --color-primary: #0f8b83;
-  --color-primary-hover: #0b716b;
-  --color-primary-dark: #0b5f5a;
-  --color-structural: #163b3a;
+  --color-primary: #0f766e;
+  --color-primary-hover: #115e59;
+  --color-primary-dark: #115e59;
+  --color-structural: #102f2e;
   --color-accent: #b94b24;
   --color-accent-bright: #f59e42;
   --color-accent-soft: #fff0e2;
-  --color-bg: #f5f7f4;
+  --color-bg: #f6f8f7;
   --color-bg-subtle: #eef3f1;
   --color-surface: #fff;
   --color-surface-elevated: #fff;
@@ -48,6 +48,20 @@
   --text-small: 13px;
   --text-label: 12px;
   --text-number: 30px;
-  --transition-fast: 140ms ease;
-  --transition-normal: 200ms ease;
+  --color-highlight: #14b8a6;
+  --color-brand-warm: #d6a76b;
+  --color-on-structural: #f2f8f6;
+  --color-focus: #0f766e;
+  --focus-ring: 3px solid var(--color-focus);
+  --sidebar-width: 252px;
+  --topbar-height: 72px;
+  --content-max-width: 1500px;
+  --layout-gutter: clamp(16px, 2.2vw, 32px);
+  --font-body: Inter, "Segoe UI", Arial, sans-serif;
+  --motion-fast: 140ms;
+  --motion-content: 180ms;
+  --motion-overlay: 220ms;
+  --motion-ease: cubic-bezier(.2,.7,.25,1);
+  --transition-fast: var(--motion-fast) var(--motion-ease);
+  --transition-normal: var(--motion-content) var(--motion-ease);
 }

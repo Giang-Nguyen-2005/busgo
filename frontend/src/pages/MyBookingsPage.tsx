@@ -1,3 +1,4 @@
+import { LoadingSkeleton } from "../components/foundations/Loading";
 import { historyEmpty } from "../features/customer/presentation";
 import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
 import { useQuery } from "@tanstack/react-query";
@@ -9,7 +10,6 @@ import type { PagedResponse } from "../types/api";
 import {
   Empty,
   ErrorState,
-  Loading,
   Pagination,
   StatusBadge,
   statuses,
@@ -57,7 +57,7 @@ export function MyBookingsPage() {
       </nav>
       <RefreshNotice query={query} />
       {query.isPending ? (
-        <Loading />
+        <LoadingSkeleton label="Đang tải vé của bạn…" />
       ) : blockingQueryError(query) ? (
         <ErrorState error={query.error} retry={() => query.refetch()} />
       ) : (

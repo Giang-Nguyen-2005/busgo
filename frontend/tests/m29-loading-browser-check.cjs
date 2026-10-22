@@ -1,0 +1,27 @@
+const fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const {dataFor}=require('./fixtures/m29-api.cjs');
+const out=path.resolve(__dirname,'../../.tools/m29-browser'),origin=process.env.BUSGO_ORIGIN||'http://127.0.0.1:5188';
+const results=[];fs.mkdirSync(out,{recursive:true});
+(async()=>{const b=await chromium.launch({channel:'msedge',headless:true});try{
+ const context=await b.newContext({viewport:{width:390,height:844}});await context.addInitScript(()=>sessionStorage.setItem('busgo.auth',JSON.stringify({accessToken:'fixture',refreshToken:'fixture',expiresIn:3600})));
+ let mode='pending',release;const gate=new Promise(resolve=>release=resolve);
+ await context.route('**/api/v1/**',async route=>{const path=new URL(route.request().url()).pathname.replace('/api/v1','');if(path==='/bookings/me'&&mode==='pending')await gate;const fail=path==='/bookings/me'&&mode==='fail';const data=dataFor(path,'CUSTOMER');assert.ok(data,path);await route.fulfill({status:fail?500:200,contentType:'application/json',body:JSON.stringify(fail?{message:'Test connection failure'}:data)});});
+ const p=await context.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));
+ await p.goto(origin+'/my-bookings');await p.getByRole('status',{name:'Đang tải vé của bạn…'}).waitFor();await p.screenshot({path:path.join(out,'customer-loading-390.png')});
+ assert.equal(await p.locator('.app-loading-skeleton').count(),1);await p.emulateMedia({reducedMotion:'reduce'});assert.equal(await p.locator('.app-skeleton').first().evaluate(e=>e.getAnimations().length),0);
+ mode='ready';release();await p.locator('.booking-card').waitFor();assert.equal(await p.locator('.app-loading-skeleton').count(),0);results.push('Initial skeleton is labelled, reduced-motion safe, and removed as soon as data arrives');
+ // Hold only a test module response so actual router pending behavior can be observed.
+ let releaseModule;const moduleGate=new Promise(resolve=>releaseModule=resolve);
+ await context.route('**/src/pages/ProfilePage.tsx',async route=>{await moduleGate;await route.continue();});
+ await p.getByRole('button',{name:'Mở điều hướng'}).click();await p.getByRole('dialog').getByRole('link',{name:'Hồ sơ',exact:true}).click();await p.locator('.route-progress').waitFor();await p.screenshot({path:path.join(out,'route-progress-390.png')});releaseModule();await p.waitForURL('**/profile');await p.locator('.route-progress').waitFor({state:'detached'});
+ await p.evaluate(()=>{window.progressFlashes=0;window.progressObserver=new MutationObserver(()=>{if(document.querySelector('.route-progress'))window.progressFlashes++});window.progressObserver.observe(document.body,{childList:true,subtree:true});window.shellBefore=document.querySelector('.customer-header');});
+ await p.goBack();await p.waitForURL('**/my-bookings');await p.waitForTimeout(300);assert.equal(await p.evaluate(()=>window.progressFlashes),0);assert.equal(await p.evaluate(()=>window.shellBefore===document.querySelector('.customer-header')),true);results.push('Slow lazy route shows progress; cached fast navigation does not flash; header DOM is preserved');
+ // Existing 15-second staleTime is unchanged. On remount, a failed refresh must keep valid data.
+ await p.waitForTimeout(15500);mode='fail';await p.goForward();await p.waitForURL('**/profile');await p.goBack();await p.waitForURL('**/my-bookings');await p.getByText('Không thể cập nhật. Đang hiển thị thông tin lần tải trước.',{exact:false}).waitFor();assert.equal(await p.locator('.booking-card').count(),1);assert.equal(await p.locator('.app-loading-skeleton').count(),0);await p.screenshot({path:path.join(out,'customer-stale-error-390.png')});results.push('Failed background refresh retains stale booking data and recovery action');
+ // A fresh failed load keeps a visible error and Retry, without a misleading skeleton.
+ await p.reload();await p.getByRole('alert').waitFor();assert.equal(await p.locator('.app-loading-skeleton').count(),0);await p.screenshot({path:path.join(out,'customer-error-390.png')});mode='ready';await p.getByRole('alert').getByRole('button',{name:'Thử lại'}).click();await p.locator('.booking-card').waitFor();results.push('Blocking error remains visible; Retry restores data');assert.deepEqual(errors,[]);
+ await context.close();
+ const guest=await b.newContext({viewport:{width:360,height:844}});await guest.route('**/api/v1/**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({data:[]})}));const g=await guest.newPage();await g.goto(origin+'/login');await g.getByRole('button',{name:'Mở điều hướng'}).click();const menu=g.getByRole('dialog');await menu.getByRole('link',{name:'Đăng nhập',exact:true}).waitFor();await menu.getByRole('link',{name:'Đăng ký',exact:true}).waitFor();await g.screenshot({path:path.join(out,'guest-drawer-360.png')});await menu.getByRole('link',{name:'Đăng ký',exact:true}).click();await g.waitForURL('**/register');assert.equal(await menu.isVisible(),false);results.push('Guest login/register links accessible on mobile; successful navigation dismisses drawer');await guest.close();
+ console.log('PASS',results.length,'loading/navigation scenarios');
+}finally{fs.writeFileSync(path.join(out,'loading-acceptance.json'),JSON.stringify({results},null,2));await b.close()}})().catch(e=>{console.error(e);process.exit(1)});
