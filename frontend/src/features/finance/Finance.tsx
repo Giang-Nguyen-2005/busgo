@@ -30,14 +30,16 @@ const summaryLabels: [keyof Totals, string][] = [
   ["operatorPayable", "Nền tảng phải trả nhà xe (nội bộ)"], ["platformReceivable", "Hoa hồng nhà xe phải trả (nội bộ)"],
   ["unknownAmount", "Giá trị ròng chưa rõ bên thu"], ["unpricedAmount", "Giá trị ròng chưa tính hoa hồng"],
 ];
-function Summary({ value }: { value: Overview }) {
+export function Summary({ value }: { value: Overview }) {
   return <><p>{value.operatorName} · Kỳ {value.period.from} – {value.period.to} · Giờ Việt Nam · VND</p>
     <p>Đối soát: {financeLabel(value.reconciliationStatus)} · {value.totals.unknownCount} sự kiện chưa rõ bên thu · {value.totals.unpricedCount} sự kiện chưa có hoa hồng.</p>
+    <section className="finance-reconciliation" aria-label="Nguồn và sổ nội bộ"><div><h2>Nguồn thanh toán</h2><p>Thu <strong>{money(value.totals.sourceCollections)}</strong></p><p>Hoàn {money(value.totals.sourceRefunds)}</p><small>{value.totals.sourceCount} sự kiện nguồn</small></div><div><h2>Sổ đã ghi</h2><p>Thu <strong>{money(value.totals.collections)}</strong></p><p>Hoàn {money(value.totals.refunds)}</p><small>{value.totals.eventCount} bút toán</small></div><div><h2>Cần xác minh</h2><p>{value.totals.missingCount} sự kiện chưa ghi sổ</p><p>{value.totals.unknownCount} chưa rõ bên thu · {money(value.totals.unknownAmount)}</p><p>{value.totals.unpricedCount} chưa tính hoa hồng · {money(value.totals.unpricedAmount)}</p></div></section>
+    <p className="finance-liabilities">Phải trả nhà xe (nội bộ): <strong>{money(value.totals.operatorPayable)}</strong> · Phải thu hoa hồng (nội bộ): <strong>{money(value.totals.platformReceivable)}</strong>. Chưa xác nhận thanh toán thực tế.</p>
     <p>Nguồn thanh toán ghi nhận: thu {money(value.totals.sourceCollections)}, hoàn {money(value.totals.sourceRefunds)}.</p>
     <p>{value.totals.eventCount} bút toán / {value.totals.sourceCount} sự kiện nguồn · {value.totals.missingCount} sự kiện chưa ghi sổ.
       Số tổng hợp bên dưới lấy từ sổ đã ghi; kết quả đối soát chi tiết nằm trong từng lần chạy.</p>
-    <div className="finance-summary">{summaryLabels.map(([key, label]) =>
-      <div key={key}><span>{label}</span><strong>{money(value.totals[key])}</strong></div>)}</div></>;
+    <details className="finance-metrics"><summary>Chi tiết số liệu sổ nội bộ</summary><div className="finance-summary">{summaryLabels.map(([key, label]) =>
+      <div key={key}><span>{label}</span><strong>{money(value.totals[key])}</strong></div>)}</div></details></>;
 }
 function Pager({ page, total, set }: { page: number; total: number; set: (n: number) => void }) {
   return <div className="finance-pager"><button disabled={page === 0} onClick={() => set(page - 1)}>Trước</button>
@@ -78,7 +80,7 @@ function FinanceWorkspace({ platform }: { platform: boolean }) {
   const loading = overview.isFetching || [events, policies, runs, statements, exceptions, comparison].some(q => q.isFetching);
   const failed = overview.isError || operators.isError || [events, policies, runs, statements, exceptions, comparison].some(q => q.isError);
   const changeTab = (value: string) => { setTab(value); setPage(0); setSelectedRun(undefined); };
-  return <section className="finance"><h1>Tài chính / Doanh thu & Hoa hồng</h1>
+  return <section className="finance"><h1>Tài chính / Sổ nội bộ & Hoa hồng</h1>
     <p className="finance-banner"><strong>MÔ PHỎNG / NỘI BỘ</strong> — Số liệu công nợ nội bộ, chưa xác nhận tiền ngân hàng hoặc chi trả thực tế.
       Khoản chưa rõ bên thu hoặc chưa có hoa hồng không được cộng vào công nợ đã xác định.</p>
     <div className="finance-controls">
@@ -92,14 +94,14 @@ function FinanceWorkspace({ platform }: { platform: boolean }) {
     {loading && <p role="status">Đang tải số liệu…</p>}
     {failed && <p role="alert">Không tải được số liệu. <button onClick={() => void cache.invalidateQueries({ queryKey: ["finance"] })}>Thử lại</button></p>}
     {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
-    {periodValid && overview.data && <Summary value={overview.data} />}
     <nav className="finance-tabs" aria-label="Báo cáo tài chính">{[["ledger", "Giao dịch"], ["policies", "Chính sách hoa hồng"], ["runs", "Đối soát"], ["statements", "Bảng kê"], ...(platform ? [["comparison", "So sánh nhà xe"]] : [])].map(([key, label]) =>
       <button key={key} aria-pressed={tab === key} onClick={() => changeTab(key)}>{label}</button>)}</nav>
+    {periodValid && overview.data && <Summary value={overview.data} />}
     {tab === "ledger" && <div className="finance-controls"><label>Mã đặt vé<input type="number" min="1" value={bookingId} onChange={e => { setBookingId(e.target.value); setPage(0); }} /></label>
       <label>Bên thu<select aria-label="Bên thu" value={channel} onChange={e => { setChannel(e.target.value); setPage(0); }}><option value="">Tất cả</option>{["PLATFORM_MEDIATED_SIMULATED", "OPERATOR_RECORDED_SIMULATED", "UNKNOWN_OR_UNVERIFIED"].map(c => <option key={c} value={c}>{financeLabel(c)}</option>)}</select></label></div>}
-    {tab === "comparison" && comparison.data && <><div className="finance-table"><table><caption>So sánh nhà xe trong kỳ</caption><thead><tr><th>Nhà xe</th><th>Thu trừ hoàn</th><th>Hoa hồng</th><th>Phải trả nhà xe</th><th>Phải thu hoa hồng</th><th>Chưa xác định</th></tr></thead><tbody>
+    {tab === "comparison" && comparison.data && <><div className="finance-table" role="region" aria-label="Bảng số liệu — cuộn ngang để xem đầy đủ" tabIndex={0}><table><caption>So sánh nhà xe trong kỳ</caption><thead><tr><th>Nhà xe</th><th>Thu trừ hoàn</th><th>Hoa hồng</th><th>Phải trả nhà xe</th><th>Phải thu hoa hồng</th><th>Chưa xác định</th></tr></thead><tbody>
       {comparison.data.data.map(o => <tr key={o.id}><td><button onClick={() => { setOperator(String(o.id)); changeTab("ledger"); }}>{o.name}</button></td><td>{money(o.totals.netCollections)}</td><td>{money(o.totals.netCommission)}</td><td>{money(o.totals.operatorPayable)}</td><td>{money(o.totals.platformReceivable)}</td><td>{o.totals.unknownCount} bên thu / {o.totals.unpricedCount} hoa hồng</td></tr>)}</tbody></table></div><Pager page={page} total={comparison.data.total} set={setPage} /></>}
-    {tab === "ledger" && events.data && <><div className="finance-table"><table><caption>Thu và hoàn theo từng sự kiện nguồn</caption><thead><tr><th>Thời điểm</th><th>Đặt vé</th><th>Loại</th><th>Bên thu</th><th>Số tiền</th><th>Hoa hồng</th></tr></thead>
+    {tab === "ledger" && events.data && <><div className="finance-table" role="region" aria-label="Bảng số liệu — cuộn ngang để xem đầy đủ" tabIndex={0}><table><caption>Thu và hoàn theo từng sự kiện nguồn</caption><thead><tr><th>Thời điểm</th><th>Đặt vé</th><th>Loại</th><th>Bên thu</th><th>Số tiền</th><th>Hoa hồng</th></tr></thead>
       <tbody>{events.data.data.map(e => <tr key={e.id}><td>{financeDate(e.occurredAt)}</td><td>#{e.bookingId}<small>Khoản thu #{e.paymentId}</small></td><td>{financeLabel(e.eventType)}</td>
         <td>{financeLabel(e.channel)}</td><td>{money(e.amount)}</td><td>{money(e.commission)}<small>{e.rate == null ? "Chưa cấu hình" : `${e.rate}%`}</small></td></tr>)}</tbody></table></div>
       {!events.data.total && <p>Chưa có giao dịch trong kỳ.</p>}<Pager page={page} total={events.data.total} set={setPage} /></>}

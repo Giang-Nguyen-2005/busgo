@@ -92,3 +92,4 @@ body:has(.admin-shell) { min-width: 0; }
 .admin-shell .admin-filters { padding:14px 16px; background:#eaf0ec; border-radius:8px; gap:12px; }
 .admin-shell .admin-operator-directory th:last-child { width:120px; }
 .admin-shell .admin-operator-directory .button { white-space:nowrap; }
+.admin-shell .admin-operator-directory thead{background:var(--surface,#fff)}.admin-shell .admin-operator-directory td{padding:18px 14px}.admin-shell .admin-operator-directory tbody tr:hover{background:#f2f8f5}.admin-shell .admin-counts{padding:16px;background:#f2f8f5;border-radius:12px}.admin-shell .admin-heading{padding-bottom:12px;border-bottom:1px solid var(--border)}

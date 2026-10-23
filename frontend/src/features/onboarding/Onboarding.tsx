@@ -1,3 +1,4 @@
+import { ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
@@ -51,16 +52,27 @@ export function OperatorInvitationPage() {
   </fieldset></form></>}</section>;
 }
 
+function PlatformWorkQueue() {
+ const q=useQuery({queryKey:["admin","dispute-counters"],queryFn:({signal})=>get<{key:string;count:number}[]>("/admin/disputes/dashboard",undefined,signal)});
+ return <section className="card platform-queue"><h2>Tranh chấp cần chú ý</h2>{q.isPending?<Loading/>:q.isError?<ErrorState error={q.error} retry={()=>q.refetch()}/>:<dl>{["SUBMITTED","UNDER_REVIEW","WAITING_INFORMATION"].map(key=><div key={key}><dt>{key==="WAITING_INFORMATION"?"Chờ bổ sung":stateLabel(key)}</dt><dd>{q.data.find(c=>c.key===key)?.count ?? "Chưa xác định"}</dd></div>)}</dl>}<Link to="/admin/disputes">Mở hàng đợi tranh chấp →</Link><p>Đối soát: chọn nhà xe và kỳ tại <Link to="/admin/finance">Tài chính</Link> để xem ngoại lệ của từng lần chạy.</p></section>;
+}
 export function PlatformDashboard() {
  const q=useQuery({queryKey:["admin","dashboard"],queryFn:()=>get<Record<string,number>>("/admin/dashboard")});
- return <><h1>Tổng quan nền tảng</h1>{q.isPending?<Loading/>:q.isError?<ErrorState error={q.error}/>:<div className="admin-stats">{Object.entries(q.data).map(([key,value])=><section className="card admin-stat" key={key}><span>{stateLabel(key)}</span><strong>{value}</strong></section>)}</div>}<Link className="button" to="/admin/operator-applications">Xem đơn đăng ký nhà xe</Link></>;
+ return <section className="platform-overview"><header className="platform-hero"><ShieldCheck aria-hidden="true" size={28}/><p>BUSGO / QUẢN TRỊ NỀN TẢNG</p><h1>Tổng quan nền tảng</h1><p>Theo dõi đăng ký, trạng thái nhà xe và nguồn cung vận hành.</p><Link className="button" to="/admin/operator-applications">Xem đơn đăng ký nhà xe</Link></header>
+ {q.isPending?<Loading/>:q.isError?<ErrorState error={q.error}/>:<div className="platform-sections">{[
+ {title:"Đơn đăng ký đang xử lý",keys:["SUBMITTED","UNDER_REVIEW"],note:"Số đơn theo trạng thái xem xét."},
+ {title:"Chờ hoàn tất đăng ký",keys:["ONBOARDING"],note:"Đơn đã duyệt có nhà xe chưa hoàn tất nhận lời mời."},
+ {title:"Trạng thái nhà xe",keys:["ACTIVE","SUSPENDED"],note:"Số nhà xe theo trạng thái hoạt động; không phải số đơn đăng ký."},
+ {title:"Nguồn cung nền tảng",keys:["ACTIVE_ROUTES","UPCOMING_TRIPS"],note:"Tuyến hoạt động của nhà xe hoạt động và chuyến đã lên lịch sắp tới."}
+ ].map(group=><section className="card" key={group.title}><h2>{group.title}</h2><p>{group.note}</p><dl>{group.keys.map(key=><div key={key}><dt>{stateLabel(key)}</dt><dd>{q.data[key] ?? "Chưa xác định"}</dd></div>)}</dl></section>)}</div>}
+ <PlatformWorkQueue/><nav className="platform-links" aria-label="Công việc nền tảng">{[["operator-applications","Đơn đăng ký"],["operators","Danh bạ nhà xe"],["disputes","Tranh chấp"],["finance","Tài chính / Đối soát"],["audit-events","Nhật ký kiểm toán"]].map(([path,title])=><Link key={path} to={`/admin/${path}`}>{title} →</Link>)}</nav></section>;
 }
 
 export function ApplicationsPage() {
  const [status,setStatus]=useState("");const [search,setSearch]=useState("");const [page,setPage]=useState(0);
  const q=useQuery({queryKey:["admin","applications",status,search,page],queryFn:async()=> (await apiClient.get<PagedResponse<Row>>("/admin/operator-applications",{params:{status:status||undefined,q:search||undefined,page,size:20}})).data});
  return <><h1>Đơn đăng ký nhà xe</h1><div className="admin-filters"><Field label="Tìm tên hoặc mã số thuế" value={search} maxLength={100} onChange={e=>{setSearch(e.target.value);setPage(0);}}/><label className="field"><span>Trạng thái</span><select value={status} onChange={e=>{setStatus(e.target.value);setPage(0);}}><option value="">Tất cả</option>{["SUBMITTED","UNDER_REVIEW","APPROVED","REJECTED"].map(s=><option key={s} value={s}>{stateLabel(s)}</option>)}</select></label></div>
- {q.isPending?<Loading/>:q.isError?<ErrorState error={q.error}/>:<><div className="onboarding-list">{q.data.data.map(a=><section className="card" key={a.id}><Link to={`/admin/operator-applications/${a.id}`}><strong>{a.name}</strong></Link><p>{a.legal_code} · {stateLabel(String(a.status))}</p><p>{a.submitted_at}</p></section>)}{!q.data.data.length&&<p>Không có đơn đăng ký phù hợp.</p>}</div><nav className="admin-actions"><button disabled={page===0} onClick={()=>setPage(page-1)}>Trước</button><span>Trang {page+1} · {q.data.pagination.totalElements} đơn</span><button disabled={page+1>=q.data.pagination.totalPages} onClick={()=>setPage(page+1)}>Sau</button></nav></>}
+ {q.isPending?<Loading/>:q.isError?<ErrorState error={q.error}/>:<><div className="onboarding-list">{q.data.data.map(a=><section className="card" key={a.id}><Link to={`/admin/operator-applications/${a.id}`}><strong>{a.name}</strong></Link><p>{a.legal_code} · <span className="onboarding-status">{stateLabel(String(a.status))}</span></p><p>{a.submitted_at}</p></section>)}{!q.data.data.length&&<p>Không có đơn đăng ký phù hợp.</p>}</div><nav className="admin-actions"><button disabled={page===0} onClick={()=>setPage(page-1)}>Trước</button><span>Trang {page+1} · {q.data.pagination.totalElements} đơn</span><button disabled={page+1>=q.data.pagination.totalPages} onClick={()=>setPage(page+1)}>Sau</button></nav></>}
  </>;
 }
 
@@ -74,15 +86,15 @@ export function ApplicationDetailPage() {
  {invite&&<section className="card notice success" role="status"><h2>Sao chép lời mời ngay</h2><p>Liên kết chỉ hiển thị lần này. Chia sẻ riêng với quản trị viên được mời. Hết hạn: {invite.expiresAt}</p><input aria-label="Liên kết mời một lần" readOnly value={window.location.origin+invite.invitationPath}/><button onClick={()=>navigator.clipboard.writeText(window.location.origin+invite.invitationPath).then(()=>setCopied(true)).catch(()=>setCopied(false))}>{copied?"Đã sao chép":"Sao chép liên kết"}</button><button className="secondary" onClick={()=>setInvite(null)}>Ẩn liên kết</button></section>}
  <section className="card form-stack"><Field label="Ghi chú nội bộ / lý do từ chối" description="Lý do từ chối sẽ được gửi cho người đăng ký. Các ghi chú xem xét khác chỉ hiển thị nội bộ." value={note} maxLength={1000} onChange={e=>setNote(e.target.value)}/><div className="admin-actions">
  {a.status==="SUBMITTED"&&<button disabled={act.isPending} onClick={()=>act.mutate("review")}>Bắt đầu xem xét</button>}
- {a.status==="UNDER_REVIEW"&&<button disabled={act.isPending} onClick={()=>act.mutate("approve")}>Phê duyệt và tạo lời mời</button>}
- {["SUBMITTED","UNDER_REVIEW"].includes(String(a.status))&&<button className="secondary" disabled={act.isPending||!note.trim()} onClick={()=>act.mutate("reject")}>Từ chối đơn</button>}
- {a.status==="APPROVED"&&pending&&<button disabled={act.isPending} onClick={()=>act.mutate("invitation/reissue")}>Thu hồi và cấp lại lời mời</button>}</div>{act.isError&&<ErrorState error={act.error}/>}</section><Invites rows={a.invitations}/><History rows={a.history}/></>;
+ {a.status==="UNDER_REVIEW"&&<button disabled={act.isPending} onClick={()=>{if(window.confirm("Phê duyệt và tạo lời mời?"))act.mutate("approve");}}>Phê duyệt và tạo lời mời</button>}
+ {["SUBMITTED","UNDER_REVIEW"].includes(String(a.status))&&<button className="secondary" disabled={act.isPending||!note.trim()} onClick={()=>{if(window.confirm("Từ chối đơn với lý do đã nhập?"))act.mutate("reject");}}>Từ chối đơn</button>}
+ {a.status==="APPROVED"&&pending&&<button disabled={act.isPending} onClick={()=>{if(window.confirm("Thu hồi và cấp lại lời mời?"))act.mutate("invitation/reissue");}}>Thu hồi và cấp lại lời mời</button>}</div>{act.isError&&<ErrorState error={act.error}/>}</section><Invites rows={a.invitations}/><History rows={a.history}/></>;
 }
 
 export function OperatorGovernance({id}:{id:number}) {
- const cache=useQueryClient();const [reason,setReason]=useState("");
+ const cache=useQueryClient();const [reason,setReason]=useState("");const [confirm,setConfirm]=useState(false);
  const q=useQuery({queryKey:["admin","operators",id,"governance"],queryFn:()=>get<Governance>(`/admin/operators/${id}/governance`)});
- const change=useMutation({mutationFn:(action:string)=>post(`/admin/operators/${id}/${action}`,{reason}),onSuccess:()=>{setReason("");return cache.invalidateQueries({queryKey:["admin"]});}});
+ const change=useMutation({mutationFn:(action:string)=>post(`/admin/operators/${id}/${action}`,{reason}),onSuccess:()=>{setReason("");setConfirm(false);return cache.invalidateQueries({queryKey:["admin"]});}});
  if(q.isPending)return <Loading/>;if(q.isError)return <ErrorState error={q.error}/>;const o=q.data;
- return <><section className="card"><h2>Đăng ký và pháp lý</h2><Facts data={o}/>{o.applications.map(a=><p key={a.id}><Link to={`/admin/operator-applications/${a.id}`}>Đơn đăng ký #{a.id}</Link></p>)}{!o.applications.length&&<p>Nhà xe được tạo trước quy trình đăng ký công khai.</p>}</section><Invites rows={o.invitations}/><section className="card form-stack"><h2>Trạng thái nền tảng: {stateLabel(String(o.status))}</h2><p>Đình chỉ ngăn bán vé và tạo nguồn cung mới. Đặt vé hiện có, các quyền hủy hợp lệ và vận hành chuyến được giữ lại.</p>{["ACTIVE","SUSPENDED"].includes(String(o.status))&&<><Field label="Lý do thay đổi trạng thái *" value={reason} maxLength={1000} onChange={e=>setReason(e.target.value)}/><button disabled={!reason.trim()||change.isPending} onClick={()=>change.mutate(o.status==="ACTIVE"?"suspend":"reactivate")}>{o.status==="ACTIVE"?"Đình chỉ nhà xe":"Kích hoạt lại nhà xe"}</button></>}{change.isError&&<ErrorState error={change.error}/>}</section><History rows={o.history}/></>;
+ return <><section className="card"><h2>Đăng ký và pháp lý</h2><Facts data={o}/>{o.applications.map(a=><p key={a.id}><Link to={`/admin/operator-applications/${a.id}`}>Đơn đăng ký #{a.id}</Link></p>)}{!o.applications.length&&<p>Nhà xe được tạo trước quy trình đăng ký công khai.</p>}</section><Invites rows={o.invitations}/><section className="card form-stack"><h2>Trạng thái nền tảng: {stateLabel(String(o.status))}</h2><p>Đình chỉ ngăn bán vé và tạo nguồn cung mới. Đặt vé hiện có, các quyền hủy hợp lệ và vận hành chuyến được giữ lại.</p>{["ACTIVE","SUSPENDED"].includes(String(o.status))&&<><Field label="Lý do thay đổi trạng thái *" value={reason} maxLength={1000} onChange={e=>{setReason(e.target.value);setConfirm(false);}}/><button disabled={!reason.trim()||change.isPending} onClick={()=>setConfirm(true)}>{o.status==="ACTIVE"?"Đình chỉ nhà xe":"Kích hoạt lại nhà xe"}</button></>}{confirm&&<section className="admin-confirm" role="region" aria-label="Xác nhận trạng thái"><h3>Xác nhận {o.status==="ACTIVE"?"đình chỉ":"kích hoạt lại"} nhà xe</h3><p>{reason}</p><button disabled={change.isPending||!reason.trim()} onClick={()=>change.mutate(o.status==="ACTIVE"?"suspend":"reactivate")}>Xác nhận thay đổi</button><button disabled={change.isPending} onClick={()=>setConfirm(false)}>Quay lại</button></section>}{change.isError&&<ErrorState error={change.error}/>}</section><History rows={o.history}/></>;
 }
