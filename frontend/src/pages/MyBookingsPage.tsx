@@ -55,7 +55,7 @@ export function MyBookingsPage() {
           </button>
         ))}
       </nav>
-      <RefreshNotice query={query} />
+      {query.data !== undefined && !blockingQueryError(query) && <RefreshNotice query={query} />}
       {query.isPending ? (
         <LoadingSkeleton label="Đang tải vé của bạn…" />
       ) : blockingQueryError(query) ? (

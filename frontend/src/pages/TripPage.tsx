@@ -151,13 +151,13 @@ function TripSelection() {
   return (
     <>
       <Link className="back-link" to={searchReturn(params.get("search"))}>← Kết quả tìm chuyến</Link>
-      <LiveTripBlock state={detail.data?.operations} /><Steps current={0} />
+      <div className="trip-progress"><Steps current={0} /></div>
       {recovery.data && ["PENDING", "CONFIRMED"].includes(recovery.data.status) && <div className="notice info" role="status">
         <div>Ghế {recovery.data.seats.map(s => s.seatCode).join(", ")} đã thuộc đặt vé {recovery.data.bookingCode} của bạn. {recovery.data.status === "PENDING" ? "Đặt vé đang chờ thanh toán." : "Đặt vé đã được xác nhận."}
           <p><Link to={`/my-bookings/${recoveryId}`}>Xem chi tiết đặt vé</Link> · {recovery.data.status === "PENDING" && <><Link to={`/payment?bookingId=${recoveryId}`}>Tiếp tục thanh toán</Link> · </>}<Link to="/my-bookings">Vé của tôi</Link></p>
         </div>
       </div>}
-      <RefreshNotice query={detail} /><RefreshNotice query={seats} />
+      {detail.data !== undefined && !blockingQueryError(detail) && <RefreshNotice query={detail} />}{seats.data !== undefined && !blockingQueryError(seats) && <RefreshNotice query={seats} />}
       {location.state?.notice && (
         <div className="notice warning" role="status">
           {String(location.state.notice)}
@@ -180,7 +180,7 @@ function TripSelection() {
         />
       ) : (
         <>
-          <div className="page-heading">
+          <div className="page-heading trip-heading">
             <div>
               <span className="eyebrow">CHỌN CHỖ CHO HÀNH TRÌNH</span>
               <h1>
@@ -194,10 +194,9 @@ function TripSelection() {
               Đổi hành trình
             </Link>
           </div>
-          <div className="checkout-layout">
-            <section className="card">
-              <Journey pickup={detail.data!.pickup.name} dropoff={detail.data!.dropoff.name} departure={detail.data!.pickup.departureTime} arrival={detail.data!.dropoff.arrivalTime} />
-              <details className="itinerary"><summary>Xem lịch trình chuyến xe</summary><ol>{detail.data!.stops.map(stop => <li key={stop.tripStopId}><strong>{stop.name}</strong><small>{stop.arrivalTime ? `Đến ${dateTime(stop.arrivalTime)}` : ""}{stop.departureTime ? ` · Đi ${dateTime(stop.departureTime)}` : ""}</small></li>)}</ol></details>
+          <div className="trip-operation"><LiveTripBlock state={detail.data!.operations} /></div>
+          <div className="checkout-layout seat-checkout">
+            <section className="card seat-workspace">
               <div className="section-title">
                 <BusFront size={22} />
                 <div>
@@ -212,6 +211,7 @@ function TripSelection() {
                 <Empty title="Chưa có sơ đồ ghế" />
               ) : (
                 <SeatMap
+                  floorNavigation
                   seats={seats.data!.seats}
                   selected={availableSelection}
                   disabled={hold.isPending}
@@ -224,6 +224,8 @@ function TripSelection() {
                   }
                 />
               )}
+              <Journey pickup={detail.data!.pickup.name} dropoff={detail.data!.dropoff.name} departure={detail.data!.pickup.departureTime} arrival={detail.data!.dropoff.arrivalTime} />
+              <details className="itinerary"><summary>Xem lịch trình chuyến xe</summary><ol>{detail.data!.stops.map(stop => <li key={stop.tripStopId}><strong>{stop.name}</strong><small>{stop.arrivalTime ? `Đến ${dateTime(stop.arrivalTime)}` : ""}{stop.departureTime ? ` · Đi ${dateTime(stop.departureTime)}` : ""}</small></li>)}</ol></details>
               {seats.data!.availableSeatCount === 0 && (
                 <div className="notice warning">
                   Hành trình hiện đã hết chỗ. Vui lòng chọn chuyến khác.

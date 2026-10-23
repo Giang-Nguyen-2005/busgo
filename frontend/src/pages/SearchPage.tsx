@@ -1,3 +1,5 @@
+import { LoadingSkeleton } from "../components/foundations/Loading";
+import { X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -18,7 +20,6 @@ import {
   Empty,
   ErrorState,
   Field,
-  Loading,
   Pagination,
   TripCard,
 } from "../components/ui";
@@ -88,16 +89,17 @@ export function SearchPage() {
   });
   const operators = useQuery({ queryKey: ["marketplace", "search-operators"], queryFn: async ({signal}) => (await apiClient.get<PagedResponse<PublicOperator>>("/public/operators", {params:{size:100},signal})).data });
   const types = useQuery({ queryKey: ["marketplace", "search-types"], queryFn: ({signal}) => get<Named[]>("/public/discovery/bus-types",undefined,signal) });
-  const form = useForm<z.infer<typeof filterSchema>>({
-    resolver: zodResolver(filterSchema),
-    values: {
+  const appliedValues = {
       operatorId: params.get("operatorId") || "", busTypeId: params.get("busTypeId") || "", minRating: params.get("minRating") || "", minSeats: params.get("minSeats") || "",
       minPrice: params.get("minPrice") || "",
       maxPrice: params.get("maxPrice") || "",
       departureFrom: params.get("departureFrom") || "",
       departureTo: params.get("departureTo") || "",
-    },
-  });
+    };
+  const form = useForm<z.infer<typeof filterSchema>>({ resolver: zodResolver(filterSchema), values: appliedValues });
+  const emptyFilters = { minPrice: "", maxPrice: "", departureFrom: "", departureTo: "", operatorId: "", busTypeId: "", minRating: "", minSeats: "" };
+  const filterLabels: Record<string, string> = { minPrice: "Giá từ", maxPrice: "Giá đến", departureFrom: "Khởi hành từ", departureTo: "Khởi hành đến", operatorId: "Nhà xe", busTypeId: "Loại xe", minRating: "Sao tối thiểu", minSeats: "Chỗ trống tối thiểu" };
+  const filterValue = (key: string, value: string) => key === "operatorId" ? operators.data?.data.find(o => String(o.id) === value)?.name || value : key === "busTypeId" ? types.data?.find(t => String(t.id) === value)?.name || value : value;
   const update = (values: Record<string, string>) => {
     const next = new URLSearchParams(params);
     next.delete("page");
@@ -130,20 +132,22 @@ export function SearchPage() {
         </div>
 
       </div>
-      <details className="search-editor" open><summary>Chỉnh sửa hành trình</summary><SearchForm /></details>
+      <details className="search-editor"><summary>Chỉnh sửa hành trình</summary><SearchForm /></details>
       <div className="results-layout">
         <FilterPanel
           activeCount={activeFilters}
+          onOpen={() => form.reset(appliedValues)}
           onCloseReady={(close) => {
             closeFilters.current = close;
           }}
         >
-          <form className="form-stack" onSubmit={form.handleSubmit(update)}>
-            <label className="field">Nhà xe<select {...form.register("operatorId")} value={form.watch("operatorId")}><option value="">Tất cả nhà xe</option>{operators.data?.data.map(op=><option value={op.id} key={op.id}>{op.name}</option>)}</select></label>
+          <form className="form-stack filter-form" onSubmit={form.handleSubmit(update)}>
+            <div className="filter-fields">
+            <label className="field">Nhà xe<select aria-label="Nhà xe" {...form.register("operatorId")} value={form.watch("operatorId")}><option value="">Tất cả nhà xe</option>{operators.data?.data.map(op=><option value={op.id} key={op.id}>{op.name}</option>)}</select></label>
             {operators.isError && <ErrorState error={operators.error} retry={()=>operators.refetch()} />}
-            <label className="field">Loại xe<select {...form.register("busTypeId")} value={form.watch("busTypeId")}><option value="">Tất cả loại xe</option>{types.data?.map(t=><option value={t.id} key={t.id}>{t.name}</option>)}</select></label>
+            <label className="field">Loại xe<select aria-label="Loại xe" {...form.register("busTypeId")} value={form.watch("busTypeId")}><option value="">Tất cả loại xe</option>{types.data?.map(t=><option value={t.id} key={t.id}>{t.name}</option>)}</select></label>
             {types.isError && <ErrorState error={types.error} retry={()=>types.refetch()} />}
-            <label className="field">Đánh giá tối thiểu<select {...form.register("minRating")} value={form.watch("minRating")}><option value="">Không giới hạn</option>{[4,3,2,1].map(v=><option key={v} value={v}>{v} sao trở lên</option>)}</select></label>
+            <label className="field">Đánh giá tối thiểu<select aria-label="Đánh giá tối thiểu" {...form.register("minRating")} value={form.watch("minRating")}><option value="">Không giới hạn</option>{[4,3,2,1].map(v=><option key={v} value={v}>{v} sao trở lên</option>)}</select></label>
             <Field label="Số chỗ trống tối thiểu" type="number" min="1" max="100" step="1" {...form.register("minSeats")} />
             <fieldset className="filter-group"><legend>Khoảng giá (đ)</legend>
               <Field
@@ -176,23 +180,8 @@ export function SearchPage() {
                 error={form.formState.errors.departureTo?.message}
               />
             </fieldset>
-            <button>Áp dụng bộ lọc</button>
-            <button
-              type="button"
-              className="text-button"
-              onClick={() =>
-                update({
-                  minPrice: "",
-                  maxPrice: "",
-                  departureFrom: "",
-                  departureTo: "",
-                  operatorId: "",
-                  busTypeId: "", minRating: "", minSeats: "",
-                })
-              }
-            >
-              Xóa bộ lọc
-            </button>
+            </div>
+            <div className="filter-actions"><button>Áp dụng bộ lọc</button><button type="button" className="secondary" onClick={() => form.reset(emptyFilters)}>Đặt lại</button></div>
           </form>
         </FilterPanel>
         <section className="results">
@@ -200,7 +189,7 @@ export function SearchPage() {
             <span>
               {result.data
                 ? `${result.data!.pagination.totalElements} chuyến phù hợp`
-                : "Đang tìm chuyến…"}
+                : result.isError ? "Chưa tải được kết quả" : "Đang tìm chuyến…"}
             </span>
             <label>
               Sắp xếp{" "}
@@ -217,10 +206,11 @@ export function SearchPage() {
               </select>
             </label>
           </div>
-          {activeFilters > 0 && <div className="filter-chips"><span>{activeFilters} điều kiện lọc</span><button className="text-button" onClick={() => update({ minPrice: "", maxPrice: "", departureFrom: "", departureTo: "", operatorId: "", busTypeId: "", minRating: "", minSeats: "" })}>Xóa bộ lọc</button></div>}
-          <RefreshNotice query={result} />
+          {activeFilters > 0 && <div className="filter-chips" aria-label="Bộ lọc đang áp dụng">{Object.entries(appliedValues).filter(([, value]) => value).map(([key, value]) => <button key={key} className="filter-chip" onClick={() => update({ [key]: "" })} aria-label={`Bỏ ${filterLabels[key]}: ${filterValue(key, value)}`}>{filterLabels[key]}: {filterValue(key, value)}<X size={14} aria-hidden="true" /></button>)}<button className="text-button" onClick={() => update(emptyFilters)}>Xóa tất cả ({activeFilters})</button></div>}
+
+          {result.data !== undefined && !blockingQueryError(result) && <RefreshNotice query={result} />}
           {result.isPending ? (
-            <Loading />
+            <LoadingSkeleton label="Đang tìm chuyến phù hợp…" />
           ) : blockingQueryError(result) ? (
             <ErrorState error={result.error} retry={() => result.refetch()} />
           ) : (
@@ -231,6 +221,7 @@ export function SearchPage() {
                 ))
               ) : (
                 <Empty title={activeFilters ? "Không có chuyến khớp bộ lọc" : "Chưa có chuyến cho hành trình và ngày này"}>
+                  {activeFilters > 0 && <button className="secondary" onClick={() => update(emptyFilters)}>Xóa bộ lọc</button>}
                   <p>{activeFilters ? "Xóa bộ lọc để xem lại kết quả cho hành trình đã chọn." : "Thử ngày đi khác hoặc chỉnh sửa hành trình phía trên."}</p>
                 </Empty>
               )}

@@ -108,7 +108,7 @@ export function BookingPage() {
     );
   return (
     <>
-      <Steps current={1} /><RefreshNotice query={hold} />
+      <Steps current={1} />{hold.data !== undefined && !blockingQueryError(hold) && <RefreshNotice query={hold} />}
       <div className="page-heading">
         <div>
           <h1>Hoàn tất thông tin đặt vé</h1>
@@ -133,13 +133,24 @@ export function BookingPage() {
         </>
       ) : (
         <div className="checkout-layout booking-checkout">
-          <section className="card">
-            <h2>Thông tin liên hệ đặt vé</h2>
+          <section className="card checkout-contact">
+            <div className={`notice ${seconds < 60 ? "warning" : "info"}`}>
+              <Clock3 size={20} />
+              <div>
+                Chỗ ngồi đang được giữ tạm thời.
+                <strong className="countdown">
+                  {Math.floor(seconds / 60)}:
+                  {String(seconds % 60).padStart(2, "0")}
+                </strong>
+              </div>
+            </div>
+            <span className="eyebrow">THÔNG TIN KHÁCH HÀNG</span><h2>Thông tin liên hệ đặt vé</h2>
             <p className="muted">
               Thông tin dùng để liên hệ về đặt vé. Bạn chưa cung cấp tên riêng cho từng khách trên chỗ.
             </p>
             <form
               className="form-stack"
+              id="booking-contact"
               onSubmit={form.handleSubmit((values) => booking.mutate(values))}
             >
               <Field
@@ -172,13 +183,7 @@ export function BookingPage() {
                   </p>
                 </>
               )}
-              <button
-                disabled={booking.isPending || expired || hold.isFetching || hold.isError || (!!appliedCode && (voucher.isPending || voucher.isFetching || voucher.isError))}
-              >
-                {booking.isPending
-                  ? "Đang tạo đặt vé…"
-                  : "Tiếp tục đến thanh toán"}
-              </button>
+
             </form>
           </section>
           <aside className="card summary sticky">
@@ -198,20 +203,21 @@ export function BookingPage() {
               unit={hold.data!.pricePerSeat}
               total={appliedCode && voucher.data ? voucher.data.totalAmount : hold.data!.totalPrice}
             />
-            <div className={`notice ${seconds < 60 ? "warning" : "info"}`}>
-              <Clock3 size={20} />
-              <div>
-                Chỗ ngồi đang được giữ tạm thời.
-                <strong className="countdown">
-                  {Math.floor(seconds / 60)}:
-                  {String(seconds % 60).padStart(2, "0")}
-                </strong>
-              </div>
-            </div>
             <p className="fine-print">
               Giá cuối cùng do hệ thống xác nhận khi tạo đặt vé.
             </p>
+
           </aside>
+          <div className="checkout-confirm card">
+            <div><small>Tổng thanh toán</small><strong>{money(appliedCode && voucher.data ? voucher.data.totalAmount : hold.data!.totalPrice)}</strong></div>
+              <button form="booking-contact"
+                disabled={booking.isPending || expired || hold.isFetching || hold.isError || (!!appliedCode && (voucher.isPending || voucher.isFetching || voucher.isError))}
+              >
+                {booking.isPending
+                  ? "Đang tạo đặt vé…"
+                  : "Tiếp tục đến thanh toán"}
+              </button>
+          </div>
         </div>
       )}
     </>

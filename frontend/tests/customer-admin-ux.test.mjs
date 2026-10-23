@@ -69,7 +69,10 @@ test('booking summary and countdown remain available alongside the contact form'
  const hold={...trip,holdToken:'fixture',expiresAt:new Date(Date.now()+600000).toISOString(),status:'ACTIVE',seats:booking.seats,pricePerSeat:350000,totalPrice:1750000};
  globalThis.sessionStorage={getItem:()=>JSON.stringify(hold)};
  try{const html=render(h(BookingPage),{path:'/booking',seed:c=>c.setQueryData(['active-hold',1,hold.expiresAt],hold)});assert.match(html,/booking-checkout/);assert.match(html,/Thông tin liên hệ đặt vé/);assert.match(html,/countdown/);assert.match(html,/A5/);assert.match(html,/1\.750\.000/);}finally{delete globalThis.sessionStorage;}
- const css=readFileSync(new URL('../src/features/customer/customer.css',import.meta.url),'utf8');assert.match(css,/grid-template-areas: "summary" "form"/);
+ const css=readFileSync(new URL('../src/features/customer/customer.css',import.meta.url),'utf8');assert.match(css,/grid-template-areas: 'form' 'summary' 'confirm'/);
+ const source=readFileSync(new URL('../src/pages/BookingPage.tsx',import.meta.url),'utf8');
+ assert.match(source,/id="booking-contact"/);assert.match(source,/<button form="booking-contact"/);
+ assert.ok(source.indexOf('id="booking-contact"') < source.indexOf('className="card summary sticky"'));
 });
 test('payment states expose only appropriate confirmation or ticket actions',()=>{
  for(const status of ['PENDING','CONFIRMED','CANCELLED']){const html=render(h(PaymentPage),{path:'/payment?bookingId=101',seed:c=>c.setQueryData(['booking',1,'101'],{...booking,status})});assert.match(html,/Không có giao dịch ngân hàng/);if(status==='CONFIRMED'){assert.match(html,/Xem vé điện tử/);assert.doesNotMatch(html,/>Xác nhận thanh toán giả lập</);}if(status==='CANCELLED')assert.doesNotMatch(html,/>Xác nhận thanh toán giả lập</);}

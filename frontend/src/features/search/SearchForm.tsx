@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeftRight, MapPin, Search } from "lucide-react";
+import { ArrowLeftRight, CalendarDays, MapPin, Navigation, Search } from "lucide-react";
 import { get } from "../../api/client";
 import type { Location } from "../../types/customer";
 import { today } from "../../utils/format";
@@ -28,11 +28,13 @@ const schema = z
   });
 function LocationInput({
   label,
+  destination = false,
   onChange,
   value,
   error,
 }: {
   label: string;
+  destination?: boolean;
   onChange: (id: number, label: string) => void;
   value: string;
   error?: string;
@@ -56,6 +58,10 @@ function LocationInput({
     enabled: open,
     staleTime: 60_000,
   });
+  useEffect(() => {
+    if (open) document.getElementById(`${id}-${active}`)?.scrollIntoView({ block: "nearest" });
+  }, [active, open, id]);
+  const suggestionsReady = query === text.trim() && !locations.isPending && !locations.isError;
   const choose = (location: Location) => {
     onChange(location.id, location.name);
     setOpen(false);
@@ -69,9 +75,9 @@ function LocationInput({
     >
       <label className="field" htmlFor={id}>
         <span>
-          <MapPin size={15} />
           {label}
         </span>
+        <span className="search-field-icon" aria-hidden="true">{destination ? <Navigation size={20} /> : <MapPin size={20} />}</span>
         <input
           id={id}
           role="combobox"
@@ -81,7 +87,7 @@ function LocationInput({
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}
           aria-activedescendant={
-            open && locations.data?.[active] ? `${id}-${active}` : undefined
+            open && suggestionsReady && locations.data?.[active] ? `${id}-${active}` : undefined
           }
           autoComplete="off"
           placeholder="Tỉnh, thành phố, bến xe"
@@ -108,7 +114,7 @@ function LocationInput({
             if (event.key === "Enter" && open) {
               event.preventDefault();
               const item = locations.data?.[active];
-              if (item) choose(item);
+              if (item && suggestionsReady) choose(item);
             }
           }}
         />
@@ -125,7 +131,7 @@ function LocationInput({
           role="listbox"
           aria-label={label}
         >
-          {locations.isPending ? (
+          {query !== text.trim() || locations.isPending ? (
             <p>Đang tìm địa điểm…</p>
           ) : locations.isError ? (
             <ErrorState
@@ -202,6 +208,7 @@ function JourneyForm({ params }: { params: URLSearchParams }) {
         control={form.control}
         render={({ field, fieldState }) => (
           <LocationInput
+            destination
             label="Điểm trả"
             value={form.watch("dropoffLabel")}
             onChange={(id, label) => { field.onChange(id); form.setValue("dropoffLabel", label); }}
@@ -209,7 +216,7 @@ function JourneyForm({ params }: { params: URLSearchParams }) {
           />
         )}
       />
-      <Field
+      <div className="search-date"><CalendarDays size={20} aria-hidden="true" /><Field
         label="Ngày đi"
         type="date"
         min={today()}
@@ -217,6 +224,7 @@ function JourneyForm({ params }: { params: URLSearchParams }) {
         value={form.watch("departureDate")}
         error={form.formState.errors.departureDate?.message}
       />
+      </div>
       <button type="submit">
         <Search size={18} />
         Tìm chuyến

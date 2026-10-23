@@ -5,18 +5,26 @@ export function FilterPanel({
   children,
   activeCount,
   onCloseReady,
+  onOpen,
 }: {
   children: ReactNode;
   activeCount: number;
   onCloseReady: (close: () => void) => void;
+  onOpen: () => void;
 }) {
   const [mobile, setMobile] = useState(
     () => window.matchMedia("(max-width: 760px)").matches,
   );
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const previousOverflow = useRef<string | null>(null);
+  const unlock = () => {
+    if (previousOverflow.current !== null) document.body.style.overflow = previousOverflow.current;
+    previousOverflow.current = null;
+  };
   const close = () => {
     dialog.current?.close();
+    unlock();
     trigger.current?.focus();
   };
   useEffect(() => {
@@ -30,7 +38,7 @@ export function FilterPanel({
   });
   useEffect(
     () => () => {
-      document.body.style.overflow = "";
+      unlock();
     },
     [mobile],
   );
@@ -51,7 +59,11 @@ export function FilterPanel({
         className="secondary filter-trigger"
         aria-haspopup="dialog"
         onClick={() => {
+          onOpen();
+          previousOverflow.current = document.body.style.overflow;
           dialog.current?.showModal();
+          dialog.current?.querySelector<HTMLButtonElement>(".icon-button")?.focus({ preventScroll: true });
+          dialog.current?.querySelector(".filter-fields")?.scrollTo(0, 0);
           document.body.style.overflow = "hidden";
         }}
       >
@@ -78,7 +90,7 @@ export function FilterPanel({
           }
         }}
         onClose={() => {
-          document.body.style.overflow = "";
+          unlock();
         }}
         onClick={(event) => {
           if (event.target === dialog.current) close();

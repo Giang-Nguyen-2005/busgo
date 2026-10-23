@@ -46,11 +46,11 @@ export function PaymentPage() {
   return (
     <>
       <Link className="back-link" to={`/my-bookings/${id}`}>← Quay lại chi tiết đặt vé</Link>
-      <Steps current={2} /><RefreshNotice query={booking} />
+      <Steps current={2} />{booking.data !== undefined && !blockingQueryError(booking) && <RefreshNotice query={booking} />}
       <div className="page-heading">
         <div>
-          <h1>Thanh toán đặt vé</h1>
-          <p className="muted">Chỉ còn một bước để nhận vé điện tử.</p>
+          <h1>Thanh toán mô phỏng</h1>
+          <p className="muted">Kiểm tra trạng thái và số tiền của đặt vé.</p>
         </div>
       </div>
       {booking.isPending ? (
@@ -62,7 +62,7 @@ export function PaymentPage() {
           <section className="card payment-card">
             <span className="badge">THANH TOÁN MÔ PHỎNG</span><h2>{booking.data!.bookingCode}</h2><div className="payment-amount">{money(booking.data!.totalAmount)}</div><p className="notice info" role="status">{paymentPresentation(booking.data!.status, payment.isPending)}</p>
             <h2>Thanh toán QR mô phỏng</h2>
-            {booking.data!.status === "PENDING" && booking.data!.recovery?.paymentDueAt && <p>Hạn thanh toán: {dateTime(booking.data!.recovery.paymentDueAt)}</p>}
+            {booking.data!.status === "PENDING" && booking.data!.recovery?.paymentDueAt && <p className="payment-deadline">Hạn thanh toán: {dateTime(booking.data!.recovery.paymentDueAt)}</p>}
             <p className="muted">Mã đặt vé {booking.data!.bookingCode}</p>
             {booking.data!.status === "PENDING" && <div className="mock-qr">
               <QrCode size={96} strokeWidth={1} />
