@@ -2,7 +2,7 @@ import { Armchair, Building2, BusFront, CalendarDays, ChartNoAxesCombined, Clipb
 
 // Explicit vocabulary for every existing menu entry. Access remains in auth/access.ts.
 export const operatorIcons = {
-  "": LayoutDashboard, "/trips": CalendarDays, "/bookings": Ticket, "/support": Headset,
+  "": LayoutDashboard, "/dispatch": ClipboardList, "/trips": CalendarDays, "/bookings": Ticket, "/support": Headset,
   "/customers": Contact, "/reports": ChartNoAxesCombined, "/finance": Wallet,
   "/reviews": Star, "/vouchers": Tags, "/buses": BusFront, "/maintenance": Wrench,
   "/employees": UsersRound, "/routes": Route, "/bus-types": Armchair, "/staff": UserCog,

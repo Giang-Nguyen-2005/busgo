@@ -4,8 +4,8 @@ import { IconButton } from "./IconButton";
 import "./foundations.css";
 
 /** Native modal semantics keep the background inert and contain keyboard focus. */
-export function Drawer({ id, open, onClose, title, children }: {
-  id: string; open: boolean; onClose: () => void; title: string; children: ReactNode;
+export function Drawer({ id, open, onClose, title, children, closeLabel = "Đóng điều hướng" }: {
+  id: string; open: boolean; onClose: () => void; title: string; children: ReactNode; closeLabel?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -45,7 +45,7 @@ export function Drawer({ id, open, onClose, title, children }: {
       const rect = event.currentTarget.getBoundingClientRect();
       if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose();
     } }}>
-    <div className="app-drawer-header"><h2 id={titleId}>{title}</h2><IconButton label="Đóng điều hướng" onClick={onClose}><X /></IconButton></div>
+    <div className="app-drawer-header"><h2 id={titleId}>{title}</h2><IconButton label={closeLabel} onClick={onClose}><X /></IconButton></div>
     <div className="app-drawer-body">{children}</div>
   </dialog>;
 }

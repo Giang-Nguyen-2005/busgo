@@ -7,7 +7,7 @@ import { WorkspaceShell } from "./WorkspaceShell";
 import "../features/operator/operator.css";
 
 const groups = [
-  ["Điều hành", ["", "/trips", "/bookings", "/support"]],
+  ["Điều hành", ["", "/dispatch", "/trips", "/bookings", "/support"]],
   ["Kinh doanh", ["/customers", "/reports", "/finance", "/reviews", "/vouchers"]],
   ["Nguồn lực", ["/buses", "/maintenance", "/employees"]],
   ["Cấu hình", ["/routes", "/bus-types", "/staff"]],

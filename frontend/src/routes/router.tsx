@@ -99,6 +99,7 @@ export const router = createBrowserRouter([{ element: <><RouteProgress /><Outlet
                 .OperatorTripCreatePage,
             }),
           },
+          { path: "dispatch", lazy: async () => ({ Component: (await import("../pages/operator/OperatorDispatchPage")).OperatorDispatchPage }) },
           operatorTripRoute,
           {
             path: "buses",
