@@ -35,8 +35,9 @@ class M28MigrationIT extends M20Support {
             String url=original.replaceFirst("/[^/?]+(?=\\?|$)","/"+schema);
             String user=env.getRequiredProperty("spring.datasource.username"),password=env.getRequiredProperty("spring.datasource.password");
             Flyway.configure().dataSource(url,user,password).target("24").load().migrate();
-            var tables=jdbc.queryForList("SELECT table_name FROM information_schema.tables WHERE table_schema=DATABASE() ORDER BY table_name",String.class).stream()
-                .filter(t->!t.equals("flyway_schema_history")&&!t.startsWith("support_")&&!t.equals("audit_events")).toList();
+            // Copy exactly the V24 legacy tables. Later milestones may add tables
+            // to the source schema; those do not belong to this V24 -> V25 test.
+            var tables=jdbc.queryForList("SELECT table_name FROM information_schema.tables WHERE table_schema=? AND table_name<>'flyway_schema_history' ORDER BY table_name",String.class,schema);
             var orderedTables=new ArrayList<>(tables);orderedTables.sort(Comparator.comparingInt(t->t.equals("refunds")?1:0));
             var columns=new LinkedHashMap<String,String>();
             for(String table:tables) columns.put(table,String.join(",",jdbc.queryForList("SELECT column_name FROM information_schema.columns WHERE table_schema=? AND table_name=? AND generation_expression='' ORDER BY ordinal_position",String.class,schema,table).stream().map(c->"`"+c+"`").toList()));
@@ -65,7 +66,7 @@ class M28MigrationIT extends M20Support {
                 }return null;
             });
             for(String table:tables) assertThat(jdbc.queryForList("SELECT * FROM "+schema+"."+table)).as("V24 baseline "+table).containsExactlyInAnyOrderElementsOf(expected.get(table));
-            var migration=Flyway.configure().dataSource(url,user,password).load();
+            var migration=Flyway.configure().dataSource(url,user,password).target("25").load();
             assertThat(migration.migrate().migrationsExecuted).isOne();migration.validate();
             assertThat(migration.info().applied()).hasSize(25);
             for(String table:tables) assertThat(jdbc.queryForList("SELECT * FROM "+schema+"."+table)).as(table).containsExactlyInAnyOrderElementsOf(expected.get(table));

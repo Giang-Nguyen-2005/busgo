@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { get, post } from "../../api/client";
 import { getSessionVersion } from "../../api/session";
+import { date } from "../../utils/format";
 import { useAuth } from "../auth/AuthProvider";
 import { canManageOperator, isSystemAdmin } from "../auth/access";
 import { financeDate, financeLabel, financeMoney as money, validFinancePeriod, policyLifecycle } from "./financeModel";
@@ -31,7 +32,7 @@ const summaryLabels: [keyof Totals, string][] = [
   ["unknownAmount", "Giá trị ròng chưa rõ bên thu"], ["unpricedAmount", "Giá trị ròng chưa tính hoa hồng"],
 ];
 export function Summary({ value }: { value: Overview }) {
-  return <><p>{value.operatorName} · Kỳ {value.period.from} – {value.period.to} · Giờ Việt Nam · VND</p>
+  return <><p>{value.operatorName} · Kỳ {date(value.period.from)} – {date(value.period.to)} · Giờ Việt Nam · VND</p>
     <p>Đối soát: {financeLabel(value.reconciliationStatus)} · {value.totals.unknownCount} sự kiện chưa rõ bên thu · {value.totals.unpricedCount} sự kiện chưa có hoa hồng.</p>
     <section className="finance-reconciliation" aria-label="Nguồn và sổ nội bộ"><div><h2>Nguồn thanh toán</h2><p>Thu <strong>{money(value.totals.sourceCollections)}</strong></p><p>Hoàn {money(value.totals.sourceRefunds)}</p><small>{value.totals.sourceCount} sự kiện nguồn</small></div><div><h2>Sổ đã ghi</h2><p>Thu <strong>{money(value.totals.collections)}</strong></p><p>Hoàn {money(value.totals.refunds)}</p><small>{value.totals.eventCount} bút toán</small></div><div><h2>Cần xác minh</h2><p>{value.totals.missingCount} sự kiện chưa ghi sổ</p><p>{value.totals.unknownCount} chưa rõ bên thu · {money(value.totals.unknownAmount)}</p><p>{value.totals.unpricedCount} chưa tính hoa hồng · {money(value.totals.unpricedAmount)}</p></div></section>
     <p className="finance-liabilities">Phải trả nhà xe (nội bộ): <strong>{money(value.totals.operatorPayable)}</strong> · Phải thu hoa hồng (nội bộ): <strong>{money(value.totals.platformReceivable)}</strong>. Chưa xác nhận thanh toán thực tế.</p>
@@ -126,7 +127,7 @@ function FinanceWorkspace({ platform }: { platform: boolean }) {
       <button disabled={!operator || !periodValid || mutation.isPending} onClick={() => mutation.mutate({ path: "/reconciliations", body: { operatorId: Number(operator), from, to, projectMissing: true } })}>Bổ sung sự kiện thiếu & đối soát</button>
       {!operator && <p>Chọn một nhà xe để đối soát.</p>}</div>}
       {runs.data?.data.map(r => <article key={r.id}><h3>Đối soát #{r.id} · {financeLabel(r.status)}</h3>
-        <p>{r.from} – {r.to} · {r.exceptionCount} vấn đề · Bổ sung {r.projectedCount} bút toán</p>
+        <p>{date(r.from)} – {date(r.to)} · {r.exceptionCount} vấn đề · Bổ sung {r.projectedCount} bút toán</p>
         <button onClick={() => { setSelectedRun(r.id); setExceptionPage(0); }}>Xem vấn đề</button>
         {platform && <button disabled={mutation.isPending} onClick={() => mutation.mutate({ path: `/reconciliations/${r.id}/statement` })}>Phát hành bảng kê nội bộ</button>}</article>)}
       {runs.data && !runs.data.total && <p>Chưa có lần đối soát.</p>}{runs.data && <Pager page={page} total={runs.data.total} set={setPage} />}
