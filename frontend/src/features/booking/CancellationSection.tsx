@@ -53,10 +53,11 @@ export function CancellationSection({ bookingId, bookingCode, route, pickup, sea
   if(query.isError) return <ErrorState error={query.error} retry={()=>query.refetch()} />;
   const r=query.data; const permitted=!operator || canManageOperator(auth.user?.roles);
   const action=operator ? "Hủy đặt vé" : r.paid ? "Huỷ và hoàn tiền mô phỏng" : "Huỷ đặt chỗ";
-  return <section className="card cancellation-section"><h2>Hủy đặt vé và khôi phục chỗ</h2>
+  return <section className="card cancellation-section"><h2>{operator ? "Hủy đặt vé và khôi phục chỗ" : "Hủy toàn bộ đặt vé"}</h2>
     {r.paymentDueAt && r.status==="PENDING" && <p>Hạn thanh toán: {dateTime(r.paymentDueAt)}</p>}
     {r.cancelledAt ? <><p role="status">Đã hủy · {dateTime(r.cancelledAt)}</p><p>{reasons[r.reasonCode || ""] || r.reasonCode} · {r.cancelledBy ? `Người thực hiện #${r.cancelledBy}` : "Hệ thống"}</p>{r.note && <p>{r.note}</p>}</> : <>
-      <p>{operator ? "Có thể hủy trước khi chuyến khởi hành và trước khi điểm đón đóng. Khách đã điểm danh, lên xe hoặc vắng mặt không thể hủy." : "Chỉ hủy toàn bộ đặt vé, đến 6 giờ trước giờ đón dự kiến. Không thể hủy sau điểm danh, lên xe hoặc ghi nhận vắng mặt."}</p>
+      <p>{operator ? "Có thể hủy trước khi chuyến khởi hành và trước khi điểm đón đóng. Khách đã điểm danh, lên xe hoặc vắng mặt không thể hủy." : "Khu vực này hủy toàn bộ các chỗ còn lại của đặt vé, đến 6 giờ trước giờ đón dự kiến. Không thể hủy sau điểm danh, lên xe hoặc ghi nhận vắng mặt."}</p>
+      {!operator && <p>Muốn giữ lại một số hành khách? <a href="#booking-partial">Xem điều kiện hủy một phần</a>.</p>}
       {!operator && r.customerCutoffAt && <p>Hạn hủy: {dateTime(r.customerCutoffAt)}</p>}
       {!r.eligible && <p className="notice info">{reasons[r.ineligibleReason || ""] || "Không thể hủy đặt vé này."}</p>}
       {r.eligible && permitted && <button className="secondary" onClick={()=>{cancel.reset();setReview(true);}}>{action}</button>}

@@ -17,6 +17,7 @@ function render(recovery,operator=false,roles=["CUSTOMER"]) {
   return renderToStaticMarkup(React.createElement(QueryClientProvider,{client},React.createElement(AuthContext.Provider,{value:{user:{id:1,roles},authenticated:true,loading:false}},React.createElement(CancellationSection,{bookingId:9,bookingCode:"TEST",route:"Route",pickup:"Pickup",seats:["A01"],contact:"Customer",amount:100,operator}))));
 }
 test("customer sees correct paid/unpaid action and explicit pickup cutoff",()=>{
+  assert.match(render(base),/Hủy toàn bộ đặt vé/); assert.doesNotMatch(render(base),/Chỉ hủy toàn bộ/); assert.match(render(base),/href="#booking-partial"/);
   assert.match(render(base),/Huỷ đặt chỗ/); assert.match(render(base),/6 giờ trước giờ đón/);
   assert.match(render({...base,paid:true,status:"CONFIRMED"}),/Huỷ và hoàn tiền mô phỏng/);
 });

@@ -25,3 +25,13 @@ export const ticketHeading = (fresh: boolean) => fresh ? "Đặt vé thành côn
 export const readonlyEmailExplanation = "Email dùng để đăng nhập và hiện chưa hỗ trợ thay đổi.";
 export const passwordCompletion = "Đã đổi mật khẩu thành công. Vui lòng đăng nhập lại.";
 export const fallbackBusAlt = "Ảnh xe khách minh họa, không phải ảnh xác nhận của nhà xe";
+
+// A discovered route does not imply a departure date or available service.
+export function routeSearch(route: { id: number; name: string; pickupLocationId: number; dropoffLocationId: number }, operatorId?: number) {
+  const params = new URLSearchParams({ pickupLocationId: String(route.pickupLocationId), dropoffLocationId: String(route.dropoffLocationId), routeName: route.name });
+  if (operatorId) params.set("operatorId", String(operatorId));
+  return `/search?${params}`;
+}
+export function profileReturn(value: string | null) {
+  return value && /^\/(?:search(?:\?|$)|trips\/\d+\?)/.test(value) && !/[\\\r\n]/.test(value) ? value : "/";
+}

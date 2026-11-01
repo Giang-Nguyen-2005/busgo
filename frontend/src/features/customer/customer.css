@@ -236,3 +236,6 @@ body:has(.customer-shell) { min-width: 0; }
 @media (prefers-reduced-motion: reduce) {
  .customer-shell *, .customer-shell *::before, .customer-shell *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+.customer-shell .booking-action-section { scroll-margin-top: 90px; }
+.customer-shell .booking-navigation .market-actions { gap: 12px 24px; }

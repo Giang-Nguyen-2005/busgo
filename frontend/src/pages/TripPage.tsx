@@ -16,6 +16,7 @@ import { get, post } from "../api/client";
 import { errorCode } from "../api/errors";
 import { useAuth } from "../features/auth/AuthProvider";
 import { saveHold } from "../features/booking/holdStore";
+import { Rating } from "../features/marketplace/Rating";
 import { SeatMap } from "../features/trip/SeatMap";
 import {
   readSelection,
@@ -100,7 +101,7 @@ function TripSelection() {
       setSelectionNotice(
         kept.length === draft.tripSeatIds.length
           ? "Đã khôi phục ghế bạn chọn và kiểm tra lại chỗ trống. Tiếp tục để giữ chỗ."
-          : "Một số ghế bạn chọn trước khi đăng nhập không còn khả dụng. Các ghế còn trống được giữ trong lựa chọn; vui lòng chọn lại ghế khác nếu cần.",
+          : "Một số ghế bạn chọn trước đó không còn khả dụng. Các ghế còn trống được giữ trong lựa chọn; vui lòng chọn lại ghế khác nếu cần.",
       );
     } else {
       const kept = revalidateSelection(selected, seats.data!.seats);
@@ -189,6 +190,11 @@ function TripSelection() {
               <p className="muted">
                 {detail.data!.operator.name} · {detail.data!.busType.name}
               </p>
+              <div><Rating {...detail.data!.operator} /></div>
+              <Link to={`/operators/${detail.data!.operator.id}?returnTo=${encodeURIComponent(location.pathname + location.search)}`} onClick={() => {
+                if (availableSelection.length) saveSelection({ tripId: Number(tripId), ...journey, tripSeatIds: availableSelection, returnTo: location.pathname + location.search });
+                else clearSelection();
+              }}>Thông tin và đánh giá nhà xe</Link>
             </div>
             <Link className="text-button" to={searchReturn(params.get("search"))}>
               Đổi hành trình
@@ -250,9 +256,9 @@ function TripSelection() {
                 total={availableSelection.length * seats.data!.price}
               />
               <p className="fine-print">
-                Giá tạm tính. Hệ thống sẽ xác nhận giá và giữ chỗ khi bạn tiếp
-                tục.
+                Ghế đang chọn chưa được giữ chỗ. Giá tạm tính; chỉ khi hệ thống xác nhận giữ chỗ thành công, bạn mới chuyển sang đặt vé.
               </p>
+              {!auth.authenticated && <p className="fine-print">Bạn cần đăng nhập hoặc đăng ký trước khi giữ chỗ và đặt vé. Khi quay lại, hệ thống sẽ kiểm tra lại chỗ trống.</p>}
               {selected.length !== availableSelection.length && (
                 <div className="notice warning">
                   Một số ghế đã thay đổi trạng thái. Vui lòng kiểm tra lựa chọn.

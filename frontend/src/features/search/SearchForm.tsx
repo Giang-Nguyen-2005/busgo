@@ -178,9 +178,20 @@ function JourneyForm({ params }: { params: URLSearchParams }) {
     resolver: zodResolver(schema),
     defaultValues: {
       ...readJourney(params),
-      departureDate: params.get("departureDate") || today(),
+      pickupLabel: params.get("pickupLabel") || (params.get("pickupLocationId") ? "Điểm đón đã chọn" : ""),
+      dropoffLabel: params.get("dropoffLabel") || (params.get("dropoffLocationId") ? "Điểm trả đã chọn" : ""),
+      departureDate: params.get("departureDate") || (params.has("routeName") ? "" : today()),
     },
   });
+  // Resolve names only from the existing public autocomplete contract; IDs remain authoritative.
+  const names = useQuery({ queryKey: ["locations", ""], queryFn: ({ signal }) => get<Location[]>("/locations", { q: "" }, signal), enabled: !!params.get("routeName"), staleTime: 60_000 });
+  useEffect(() => {
+    for (const [idKey, labelKey] of [["pickupLocationId", "pickupLabel"], ["dropoffLocationId", "dropoffLabel"]] as const) {
+      const id = Number(params.get(idKey));
+      const name = names.data?.find(item => item.id === id)?.name;
+      if (name && !params.get(labelKey) && form.getValues(idKey) === id && form.getValues(labelKey) === `${idKey === "pickupLocationId" ? "Điểm đón" : "Điểm trả"} đã chọn`) form.setValue(labelKey, name);
+    }
+  }, [names.data, params, form]);
   return (
     <form
       className="search-form card"

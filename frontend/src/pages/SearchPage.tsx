@@ -112,7 +112,7 @@ export function SearchPage() {
   if (!valid)
     return (
       <Empty title="Bạn muốn đi đâu?">
-        <p>Chọn điểm đón, điểm trả và ngày đi để tìm chuyến.</p><SearchForm />
+        {params.get("routeName") && <p><strong>Tuyến: {params.get("routeName")}</strong></p>}<p>Chọn điểm đón, điểm trả và ngày đi để tìm chuyến. Chuyến và chỗ trống phụ thuộc ngày bạn chọn.</p><SearchForm />
         <Link className="button" to="/">
           Tìm chuyến xe
         </Link>
