@@ -9,4 +9,5 @@
 .vscode/
 *.iml
 .tools/
+.busgo-local/
 **/.env.local

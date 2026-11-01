@@ -1,0 +1,5 @@
+# Only the isolated launcher project uses this override. Existing migrations
+# create triggers with the schema-scoped application user on MySQL 8.4.
+services:
+  mysql:
+    command: ["mysqld", "--log-bin-trust-function-creators=1"]

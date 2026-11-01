@@ -3,6 +3,8 @@
 Docker **không bắt buộc**. Dự án cần MySQL; `docker-compose.yml` chỉ chạy
 MySQL 8.4. Backend Java và frontend React chạy trực tiếp trên máy.
 Bạn có thể chọn Docker để dựng database, hoặc cài MySQL riêng.
+Launcher tự động dưới đây dùng Docker Desktop; cách không dùng Docker vẫn được
+giữ ở phần chạy thủ công.
 
 Hướng dẫn dưới đây dùng **Windows + PowerShell**, dành cho chạy thử local.
 
@@ -28,7 +30,105 @@ npm --version
 tại thư mục gốc `busgo` (nơi có `docker-compose.yml`). Không cần sao chép
 `node_modules`, `backend/target` hoặc database từ máy cũ để chạy demo mới.
 
-## 2A. Database bằng Docker
+## 2. Chạy bằng launcher trên Windows
+
+Hỗ trợ Windows PowerShell **5.1** hoặc PowerShell **7** trên Windows. Sau khi cài
+các công cụ ở bước 1, mở Docker Desktop, chọn Linux containers và đợi engine sẵn
+sàng. Launcher ưu tiên `JAVA_HOME` hợp lệ trỏ JDK 17, sau đó tìm JDK 17 trong PATH,
+`.tools/jdk17`, các thư mục cài đặt Windows thông dụng và registry. Nó kiểm tra cả
+`java`, `javac` và Java Maven thực sự dùng; chỉ truyền JAVA_HOME/PATH cho process
+con, không đổi terminal/hệ thống và không tải JDK. Nếu chỉ có Java 8/không tìm thấy
+JDK 17, script báo lỗi để bạn cài hoặc cấu hình JAVA_HOME một lần.
+Mở PowerShell tại thư mục gốc repository:
+
+```powershell
+.\start-busgo.ps1
+```
+
+Đợi dòng `BusGo ready: http://localhost:5173`, rồi mở URL đó. Lần đầu có thể mất
+nhiều phút để tải MySQL image, Maven/npm dependencies, build backend và seed demo.
+Script chờ health, DB locations, chuyến mẫu ngày mai và API qua proxy trước khi
+báo thành công. Backend có thể chờ tối đa 15 phút, frontend tối đa 15 phút;
+thời gian từng lệnh tải/build cũng có giới hạn. Không cần mở riêng các terminal
+backend/frontend. Các worker chạy ẩn và được quản lý cùng process con của chúng.
+
+Dừng hoặc chạy lại:
+
+```powershell
+.\stop-busgo.ps1
+.\start-busgo.ps1
+```
+
+Start lần hai tái sử dụng worker đã xác minh, chỉ tạo phần thiếu; không sinh lại
+password/JWT hoặc tạo backend/frontend trùng. Stop dừng frontend, backend và đúng
+MySQL của launcher, giữ nguyên volume, config và log; không dừng Docker Desktop.
+Nếu Docker không truy cập được, stop vẫn có thể dừng worker đã xác minh và báo
+MySQL chưa được kiểm tra/dừng, thay vì tự đoán.
+
+**Database được cô lập:** project Compose cố định `busgo-local-demo`, named volume
+`busgo-local-demo_mysql_data`, schema `busgo_launcher_demo`, MySQL chỉ bind
+`127.0.0.1:3308`. Không dùng `.env` ở gốc, MySQL cũ trên 3307 hoặc schema test
+M30.4B. Docker context từ xa bị từ chối. Backend/frontend dùng cổng 8080/5173;
+nếu các cổng đang thuộc ứng dụng khác, launcher báo lỗi và không kill ứng dụng đó.
+Hãy dừng phiên chạy thủ công trước khi dùng launcher. Chỉ chạy một checkout của
+launcher trên cùng Docker engine vì project/volume/cổng được cố định.
+Compose v2 trở lên có `up --wait-timeout` được hỗ trợ. Override riêng của launcher
+bật `log_bin_trust_function_creators=1` để user schema tạo được các trigger của
+migration hiện có trên MySQL 8.4; không thay cấu hình MySQL cũ. Nếu schema launcher
+đã có migration failed (ví dụ V18 từ lượt thử trước), launcher dừng trước backend;
+cần kiểm tra và duyệt phục hồi riêng, không tự repair hoặc xóa/reset dữ liệu.
+
+**Cấu hình riêng:** `.busgo-local/config.json`, `compose.env` và
+`compose.override.yml` được tạo một lần; dùng số ngẫu nhiên mật mã cho hai mật
+khẩu MySQL và JWT Base64 32 byte. Toàn bộ `.busgo-local/` bị Git ignore và có
+Windows ACL riêng cho user hiện tại và SYSTEM. Secret nằm dạng plaintext trong
+file local và môi trường process cần dùng; không gửi folder này cho người khác,
+không đưa lên Git và không chỉnh password bằng tay. Mất config khi volume còn
+tồn tại hoặc config/container/volume không khớp sẽ làm launcher từ chối chạy;
+cần phục hồi cấu hình gốc hoặc điều tra có chủ đích, không xóa database để chữa lỗi.
+Docker context và engine ID cũng được lưu, nên đổi sang engine local khác không
+âm thầm tạo database trống thay cho dữ liệu cũ.
+Đổi chỗ/đổi tên thư mục checkout cũng cần kiểm tra lại ownership/config, không
+âm thầm nhận lại tài nguyên của đường dẫn cũ.
+
+**Logs và state:** xem `.busgo-local/logs/launcher.log`, `docker.log`,
+`backend-<run-token>.log`, `frontend-<run-token>.log` và `worker-<run-token>.log`.
+Không in password/JWT vào console hoặc log. State có PID, thời điểm tạo, executable,
+run token và Windows Job Object; PID không khớp hoặc không kiểm tra được command
+line/job sẽ bị từ chối, không kill mù theo PID. Với Flyway/seed lỗi, xem log;
+không tự repair/reset. Launcher chỉ thu hồi các tài nguyên mới khởi động trong
+lượt start thất bại, sau khi xác minh ownership.
+
+**Nếu Execution Policy chặn script:** đọc/kiểm tra mã nguồn trước; có thể mở một
+phiên Windows PowerShell chỉ áp dụng policy cho process đó:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\start-busgo.ps1
+# Dừng bằng phiên tương tự nếu shell hiện tại vẫn chặn script:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\stop-busgo.ps1
+```
+
+Không cần đổi policy toàn máy. Group Policy của máy tổ chức có thể chặn ngay cả
+process policy; khi đó cần quản trị viên cho phép. Launcher không tự cài công cụ,
+khởi động Docker Desktop, sửa PATH/JAVA_HOME hệ thống hoặc vượt Group Policy.
+
+Tài khoản demo vẫn là các tài khoản ở bước 5 bên dưới; khách hàng tự đăng ký.
+Không phải mọi chức năng M30 có sẵn dữ liệu minh họa: campaign voucher, booking,
+vé đã thanh toán và lịch sử cần chuẩn bị qua giao diện. Thanh toán/hoàn tiền vẫn
+là mô phỏng. Nếu ứng dụng chạy liên tục qua nhiều ngày và không còn chuyến mẫu
+ngày mai, stop/start để seeder bổ sung lịch còn thiếu; không xóa dữ liệu.
+
+Kiểm tra launcher không cần database:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\launcher\launcher.tests.ps1
+```
+
+Bộ kiểm tra dùng mocks cho Docker
+và process vô hại cho Windows Job Object; không thay thế kiểm chứng startup thật
+MySQL/backend/frontend trên máy của bạn.
+
+## 2A. Chạy thủ công: database bằng Docker
 
 Mở Docker Desktop và đợi engine chạy. Kiểm tra:
 
@@ -63,7 +163,7 @@ docker compose ps
 MySQL của Docker được truy cập từ máy qua `localhost:3307`.
 Chuyển đến bước 3.
 
-## 2B. Database không dùng Docker
+## 2B. Chạy thủ công: database không dùng Docker
 
 Cài và khởi động MySQL Server 8.4. Giả sử MySQL chạy ở cổng **3306**.
 Đăng nhập bằng tài khoản quản trị qua MySQL Workbench hoặc MySQL CLI,

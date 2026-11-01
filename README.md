@@ -24,8 +24,34 @@ Layout: `frontend/`, `backend/`, `docs/`; `database/` is reserved support storag
 
 ## Quick start (local demo)
 
+On Windows (Windows PowerShell 5.1 or PowerShell 7), install JDK 17, Maven 3.6.3+,
+Node >=22.12/npm and Docker Desktop, then open Docker Desktop and run from the root:
+
+```powershell
+.\start-busgo.ps1
+# When finished:
+.\stop-busgo.ps1
+```
+
+The launcher uses a separate `busgo-local-demo` Compose project, schema
+`busgo_launcher_demo`, MySQL on **127.0.0.1:3308**, and private persistent config
+in ignored `.busgo-local/`. It verifies ownership before using/stopping resources;
+it does not adopt your existing database on 3307. Backend/frontend run directly
+on 8080/5173. Wait for the ready URL; logs are in `.busgo-local/logs/`.
+Stop/start retains MySQL data and the generated passwords/JWT. Local files hold
+plaintext secrets protected by Windows ACLs: do not share or commit them. This is
+local/demo tooling, not production hosting. See the guide for Execution Policy,
+port conflicts, recovery and the manual alternative below.
+The launcher selects an installed/prepared JDK 17 automatically (valid JAVA_HOME,
+PATH, repository tools and standard Windows installation locations). JAVA_HOME/PATH
+are passed only to child processes; no shell/system environment is changed.
+The launcher-only MySQL override enables existing trigger migrations. Failed
+Flyway history is a hard stop requiring reviewed recovery, never automatic repair.
+
 Vietnamese new-machine guide (with or without Docker):
 [Hướng dẫn chạy trên máy mới](docs/huong-dan-chay-may-moi.md).
+
+### Manual alternative
 
 Prerequisites: JDK 17, Maven 3.6.3+, Node >=22.12 and npm. The steps below use
 Docker Compose v2 for MySQL 8.4; an independently installed MySQL is also supported.
