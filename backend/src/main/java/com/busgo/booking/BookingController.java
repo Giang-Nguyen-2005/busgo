@@ -23,6 +23,13 @@ public class BookingController {
         this.service = service;
     }
 
+    @PostMapping("/voucher-options")
+    public ApiResponse<com.busgo.promotion.VoucherDtos.Options> voucherOptions(@AuthenticationPrincipal CurrentUser user,
+            @Valid @RequestBody com.busgo.promotion.VoucherDtos.OptionsRequest request, jakarta.servlet.http.HttpServletResponse response) {
+        response.setHeader("Cache-Control","private, no-store");
+        return ApiResponse.of(service.voucherOptions(user,request));
+    }
+
     @PostMapping("/voucher-quote")
     public ApiResponse<com.busgo.promotion.VoucherDtos.Quote> voucherQuote(@AuthenticationPrincipal CurrentUser user,@Valid @RequestBody com.busgo.promotion.VoucherDtos.QuoteRequest request) { return ApiResponse.of(service.voucherQuote(user,request)); }
 

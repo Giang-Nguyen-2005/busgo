@@ -39,6 +39,7 @@ async function fixture(route) {
  if (p === '/trips/7/seats') return ok({ data: { tripId: 7, pickup, dropoff, price: trip.price, availableSeatCount: 15 - state.unavailable.length, seats: seats.filter(s => !state.oneFloor || s.floor === 1).map(s => ({ ...s, available: s.available && !state.unavailable.includes(s.tripSeatId) })) } });
  if (p === '/seat-holds' && method === 'POST') { if (state.conflict) return fail('SEAT_NOT_AVAILABLE'); state.holdIds = req.postDataJSON().tripSeatIds; return ok({ data: hold() }); }
  if (p.startsWith('/seat-holds/')) return ok({ data: hold() });
+ if (p === '/bookings/voucher-options') return ok({data:{grossAmount:hold().totalPrice,seatCount:state.holdIds.length,options:[],pagination:{page:0,size:5,totalPages:0,totalElements:0}}});
  if (p === '/bookings/voucher-quote') { state.quote = true; return ok({ data: { grossAmount: 700000, discountAmount: 50000, totalAmount: 650000, voucherCode: 'TEST50' } }); }
  if (p === '/bookings' && method === 'POST') { if(state.bookingError) return fail('TEST_ERROR'); state.status = 'PENDING'; return ok({ data: booking() }); }
  if (p === '/bookings/101') return ok({ data: booking() });

@@ -99,6 +99,16 @@ public class VoucherService {
         }
         return view(voucher(op,id,false));
     }
+    public Map<String,Object> visibility(CurrentUser actor,long id,boolean visible) {
+        long op=owner(actor,true); lockOperator(op); var v=voucher(op,id,true);
+        boolean current=Boolean.TRUE.equals(v.get("customer_visible")) || v.get("customer_visible") instanceof Number n && n.intValue()!=0;
+        if (current != visible) {
+            db.update("UPDATE operator_vouchers SET customer_visible=?,updated_by=?,updated_at=? WHERE id=?",
+                    visible,actor.id(),parameter(now()),id);
+            audit(id,actor,visible ? "PUBLIC_ENABLED" : "PUBLIC_DISABLED");
+        }
+        return view(voucher(op,id,false));
+    }
     private void audit(long id,CurrentUser actor,String event) { auditEvents.record(actor,db.queryForObject("SELECT operator_id FROM operator_vouchers WHERE id=?",Long.class,id),"VOUCHER",id,event); db.update("INSERT INTO voucher_management_history(voucher_id,actor_id,event,created_at) VALUES(?,?,?,?)",id,actor.id(),event,parameter(now())); }
     @Transactional(readOnly=true)
     public Map<String,Object> detail(CurrentUser actor,long id) { return view(voucher(owner(actor,false),id,false)); }
@@ -125,6 +135,7 @@ public class VoucherService {
     }
     private Map<String,Object> view(Map<String,Object> v) {
         long id=((Number)v.get("id")).longValue();var usages=usage(id,false);
+        v.put("customer_visible",Boolean.TRUE.equals(v.get("customer_visible")) || v.get("customer_visible") instanceof Number n && n.intValue()!=0);
         v.put("reserved",usages.reserved());
         v.put("redeemed",usages.redeemed());
         v.put("editable",db.queryForObject("SELECT COUNT(*) FROM voucher_usages WHERE voucher_id=?",Long.class,id)==0);
@@ -133,6 +144,32 @@ public class VoucherService {
         return v;
     }
     public record Application(long voucherId,Quote quote) {}
+    /** Advisory and bounded. Never reserve usage or expose the management SELECT * response. */
+    @Transactional(readOnly=true)
+    public Options options(long operator,long route,long customer,BigDecimal gross,int seats,int page,int size) {
+        if(page<0 || page>100000 || size<1 || size>20) throw error("VOUCHER_OPTIONS_INVALID","Trang ưu đãi không hợp lệ.");
+        var instant=parameter(now());
+        String where=" WHERE operator_id=? AND customer_visible=TRUE AND state='ACTIVE' AND starts_at<=? AND ends_at>? AND (operator_route_id IS NULL OR operator_route_id=?)";
+        long total=db.queryForObject("SELECT COUNT(*) FROM operator_vouchers"+where,Long.class,operator,instant,instant,route);
+        var ids=db.queryForList("SELECT id FROM operator_vouchers"+where+" ORDER BY id DESC LIMIT ? OFFSET ?",
+                Long.class,operator,instant,instant,route,size,(long)page*size);
+        var result=ids.stream().map(id -> {
+            var v=voucher(operator,id,false);
+            Quote quote=null; String reason=null; String message=null; OptionStatus status=OptionStatus.AVAILABLE;
+            try { quote=evaluate(operator,route,customer,(String)v.get("code"),gross,seats,false).quote(); }
+            catch(BusinessException ex) {
+                // Only voucher business rejections are safe option-level explanations.
+                if(!ex.getCode().startsWith("VOUCHER_")) throw ex;
+                reason=ex.getCode(); message=ex.getMessage();
+                status="VOUCHER_MINIMUM_SPEND".equals(reason) ? OptionStatus.CONDITION_NOT_MET : OptionStatus.UNAVAILABLE;
+            }
+            return new Option(id,(String)v.get("code"),(String)v.get("name"),(String)v.get("description"),
+                    (String)v.get("discount_type"),(BigDecimal)v.get("discount_value"),(BigDecimal)v.get("max_discount"),
+                    (BigDecimal)v.get("minimum_spend"),api(time(v,"starts_at")),api(time(v,"ends_at")),
+                    (Integer)v.get("customer_limit"),status,reason,message,quote);
+        }).toList();
+        return new Options(gross,seats,result,new PagedResponse.Pagination(page,size,total,(int)((total+size-1)/size)));
+    }
     /** Caller holds trip -> operator -> inventory. No booking/trip locks may be acquired here. */
     public Application evaluate(long operator,long route,long customer,String code,BigDecimal gross,int seats,boolean lock) {
         var ids=db.queryForList("SELECT id FROM operator_vouchers WHERE operator_id=? AND code=?"+(lock?" FOR UPDATE":""),Long.class,operator,normalize(code));

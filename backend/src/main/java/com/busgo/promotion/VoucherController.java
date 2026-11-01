@@ -22,4 +22,9 @@ public class VoucherController {
     @PatchMapping("/{id}") public ApiResponse<Map<String,Object>> edit(@AuthenticationPrincipal CurrentUser user,@PathVariable @Positive long id,@Valid @RequestBody VoucherDtos.Terms terms) { return ApiResponse.of(service.edit(user,id,terms)); }
     @PostMapping("/{id}/activate") public ApiResponse<Map<String,Object>> activate(@AuthenticationPrincipal CurrentUser user,@PathVariable @Positive long id) { return ApiResponse.of(service.state(user,id,true)); }
     @PostMapping("/{id}/pause") public ApiResponse<Map<String,Object>> pause(@AuthenticationPrincipal CurrentUser user,@PathVariable @Positive long id) { return ApiResponse.of(service.state(user,id,false)); }
+    @PatchMapping("/{id}/visibility")
+    public ApiResponse<Map<String,Object>> visibility(@AuthenticationPrincipal CurrentUser user,
+            @PathVariable @Positive long id, @Valid @RequestBody VoucherDtos.Visibility request) {
+        return ApiResponse.of(service.visibility(user,id,request.customerVisible()));
+    }
 }

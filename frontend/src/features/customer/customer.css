@@ -247,3 +247,13 @@ body:has(.customer-shell) { min-width: 0; }
 .customer-shell .prebooking-information li + li { margin-top: 10px; }
 .customer-shell .prebooking-stops { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 760px) { .customer-shell .prebooking-stops { grid-template-columns: minmax(0, 1fr); gap: 0; } }
+
+.customer-shell .checkout-voucher-options { margin-block: 20px; overflow-wrap: anywhere; }
+.customer-shell .checkout-voucher-options summary { font-weight: 700; cursor: pointer; }
+.customer-shell .voucher-option { padding-block: 16px; border-bottom: 1px solid var(--color-border); }
+.customer-shell .voucher-option h3 { font-size: 1rem; }
+.customer-shell .checkout-voucher-options .actions { flex-wrap: wrap; }
+
+/* Expanded panels may exceed the viewport; never let the summary cover confirmation. */
+.customer-shell .booking-checkout > aside:has(details[open]) { position: static; }
+.customer-shell .voucher-options-list { max-height: min(50dvh, 28rem); overflow-y: auto; overscroll-behavior: contain; }

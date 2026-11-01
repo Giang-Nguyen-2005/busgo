@@ -189,16 +189,27 @@ public class BookingService {
     }
     @Transactional(readOnly=true)
     public com.busgo.promotion.VoucherDtos.Quote voucherQuote(CurrentUser user,com.busgo.promotion.VoucherDtos.QuoteRequest request) {
+        var context=voucherContext(user,request.holdToken());
+        return vouchers.evaluate(context.operator(),context.route(),user.id(),request.voucherCode(),context.gross(),context.seats(),false).quote();
+    }
+    @Transactional(readOnly=true)
+    public com.busgo.promotion.VoucherDtos.Options voucherOptions(CurrentUser user,com.busgo.promotion.VoucherDtos.OptionsRequest request) {
+        var context=voucherContext(user,request.holdToken());
+        return vouchers.options(context.operator(),context.route(),user.id(),context.gross(),context.seats(),
+                request.page()==null?0:request.page(),request.size()==null?10:request.size());
+    }
+    private record VoucherContext(long operator,long route,BigDecimal gross,int seats) {}
+    private VoucherContext voucherContext(CurrentUser user,String token) {
         requireCustomer(user);
-        var rows=inventory.readOwnedHold(request.holdToken(),user.id());
-        var hold=validateHold(rows,request.holdToken(),user.id(),utc(clock.instant()));
+        var rows=inventory.readOwnedHold(token,user.id());
+        var hold=validateHold(rows,token,user.id(),utc(clock.instant()));
         var trip=trips.findById(hold.tripId()).orElseThrow(BookingService::holdCorrupt);
         if(trip.getOperatorRoute().getOperator().getStatus()!=OperatorStatus.ACTIVE || trip.getOperatorRoute().getStatus()!=ActiveStatus.ACTIVE) throw tripNotBookable();
         var pickup=stops.findById(hold.pickupTripStopId()).orElseThrow(BookingService::holdCorrupt);
         var dropoff=stops.findById(hold.dropoffTripStopId()).orElseThrow(BookingService::holdCorrupt);
         validateJourney(trip,pickup,dropoff,hold.segmentIds(),utc(clock.instant()));
         BigDecimal gross=currentFare(trip,pickup,dropoff).getPrice().multiply(BigDecimal.valueOf(hold.seats().size()));
-        return vouchers.evaluate(trip.getOperatorRoute().getOperator().getId(),trip.getOperatorRoute().getId(),user.id(),request.voucherCode(),gross,hold.seats().size(),false).quote();
+        return new VoucherContext(trip.getOperatorRoute().getOperator().getId(),trip.getOperatorRoute().getId(),gross,hold.seats().size());
     }
     private HoldShape validateHold(List<LockedHoldRow> rows, String token, Long userId,
             LocalDateTime now) {

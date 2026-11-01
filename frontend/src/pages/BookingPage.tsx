@@ -1,3 +1,4 @@
+import { CheckoutVoucherOptions } from "../features/booking/CheckoutVoucherOptions";
 import { PrebookingDetails } from "../features/trip/PrebookingDetails";
 import { rememberBooking, bookingPaymentNavigation } from "../features/booking/recovery";
 import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
@@ -26,14 +27,19 @@ import type { Booking, Hold } from "../types/customer";
 import { money } from "../utils/format";
 import { tripLink } from "../utils/format";
 export function BookingPage() {
+  const auth = useAuth();
+  return <BookingCheckout key={auth.user?.id ?? "guest"} />;
+}
+function BookingCheckout() {
   const [saved] = useState(readHold);
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedCode, setAppliedCode] = useState("");
+  const [voucherRejected, setVoucherRejected] = useState(false);
   const [now, setNow] = useState(Date.now());
   const navigate = useNavigate();
   const auth = useAuth();
   const cache = useQueryClient();
-  useEffect(() => { setAppliedCode(""); setVoucherCode(""); }, [auth.user?.id, saved?.holdToken]);
+  useEffect(() => { setAppliedCode(""); setVoucherCode(""); setVoucherRejected(false); booking.reset(); }, [auth.user?.id, saved?.holdToken]);
   const hold = useQuery({
     queryKey: ["active-hold", auth.user?.id, saved?.expiresAt],
     queryFn: ({ signal }) =>
@@ -50,9 +56,10 @@ export function BookingPage() {
   const voucher = useQuery({
     queryKey: ["checkout-voucher", auth.user?.id, saved?.holdToken, appliedCode, hold.data?.totalPrice, hold.data?.expiresAt],
     queryFn: () => post<{ grossAmount: number; discountAmount: number; totalAmount: number; voucherCode: string }>("/bookings/voucher-quote", { holdToken: saved!.holdToken, voucherCode: appliedCode }),
-    enabled: !!appliedCode && !!hold.data && hold.data.status !== "EXPIRED",
+    enabled: !!appliedCode && !!hold.data && hold.data.status !== "EXPIRED" && Date.parse(hold.data.expiresAt) > now,
     retry: false, gcTime: 0, staleTime: 0,
   });
+  const quoteReady = !!appliedCode && !!voucher.data && !voucher.isPending && !voucher.isFetching && !voucher.isError && !voucherRejected;
   const form = useForm<z.infer<typeof contactSchema>>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
@@ -64,6 +71,12 @@ export function BookingPage() {
   const booking = useMutation({
     mutationFn: (values: z.infer<typeof contactSchema>) =>
       post<Booking>("/bookings", { holdToken: saved!.holdToken, ...values, ...(appliedCode ? { voucherCode: appliedCode } : {}) }),
+    onError: (error) => {
+      if (errorCode(error)?.startsWith("VOUCHER_")) {
+        setVoucherRejected(true);
+        void cache.invalidateQueries({ queryKey: ["checkout-voucher-options"] });
+      }
+    },
     onSuccess: (data) => {
       if (auth.user) rememberBooking(auth.user.id, data);
       saveHold(null);
@@ -98,6 +111,7 @@ export function BookingPage() {
       });
     }
   }, [expired, booking.isPending, booking.isSuccess, back, navigate]);
+  const submitBlocked = booking.isPending || expired || hold.isFetching || hold.isError || (!!appliedCode && !quoteReady);
   if (!saved)
     return (
       <Empty title="Bạn chưa có chỗ đang giữ">
@@ -152,7 +166,7 @@ export function BookingPage() {
             <form
               className="form-stack"
               id="booking-contact"
-              onSubmit={form.handleSubmit((values) => booking.mutate(values))}
+              onSubmit={form.handleSubmit((values) => { if (!submitBlocked) booking.mutate(values); })}
             >
               <Field
                 label="Họ và tên"
@@ -197,13 +211,18 @@ export function BookingPage() {
               arrival={hold.data!.dropoff.arrivalTime}
             />
             <PrebookingDetails snapshot information={saved.tripInformation?.prebooking} vehicleName={saved.tripInformation?.vehicleName} seats={saved.tripInformation?.seats} pickup={hold.data!.pickup} dropoff={hold.data!.dropoff} />
-            <Field label="Mã ưu đãi nhà xe" maxLength={40} value={voucherCode} disabled={booking.isPending} onChange={e => { setVoucherCode(e.target.value); setAppliedCode(""); }} />
-            <div className="actions"><button type="button" disabled={!voucherCode.trim() || expired || booking.isPending || voucher.isFetching} onClick={() => { const code=voucherCode.trim().toUpperCase(); if(code===appliedCode) void voucher.refetch(); else setAppliedCode(code); }}>Kiểm tra ưu đãi</button>{appliedCode && <button type="button" disabled={booking.isPending} className="secondary" onClick={() => { setAppliedCode(""); setVoucherCode(""); }}>Bỏ ưu đãi</button>}</div>
-            {appliedCode && (voucher.isPending ? <Loading /> : voucher.isError ? <ErrorState error={voucher.error} retry={() => voucher.refetch()} /> : <div role="status"><p>Giá gốc: {money(voucher.data.grossAmount)}</p><p>Ưu đãi {voucher.data.voucherCode}: −{money(voucher.data.discountAmount)}</p><strong>Thanh toán: {money(voucher.data.totalAmount)}</strong></div>)}
+            <CheckoutVoucherOptions userId={auth.user?.id} holdToken={saved.holdToken} context={`${hold.data!.totalPrice}-${hold.data!.expiresAt}`} enabled={!expired && !hold.isError && auth.user?.roles.includes("CUSTOMER") === true} disabled={booking.isPending || voucher.isFetching || hold.isFetching} selectedCode={appliedCode} onSelect={code => {
+              setVoucherCode(code); setVoucherRejected(false); booking.reset();
+              if (code === appliedCode) void voucher.refetch(); else setAppliedCode(code);
+            }} />
+            <Field label="Mã ưu đãi nhà xe" maxLength={40} value={voucherCode} disabled={booking.isPending} onChange={e => { setVoucherCode(e.target.value); setAppliedCode(""); setVoucherRejected(false); booking.reset(); }} />
+            <div className="actions"><button type="button" disabled={!voucherCode.trim() || expired || booking.isPending || voucher.isFetching} onClick={() => { const code=voucherCode.trim().toUpperCase(); setVoucherRejected(false); booking.reset(); if(code===appliedCode) void voucher.refetch(); else setAppliedCode(code); }}>Kiểm tra ưu đãi</button>{appliedCode && <button type="button" disabled={booking.isPending} className="secondary" onClick={() => { setAppliedCode(""); setVoucherCode(""); setVoucherRejected(false); booking.reset(); }}>Bỏ ưu đãi</button>}</div>
+            {voucherRejected && <p className="notice warning" role="status">Mã ưu đãi chưa được xác nhận cho đặt vé. Hãy chọn mã khác, kiểm tra lại hoặc bỏ ưu đãi để tiếp tục theo giá gốc.</p>}
+            {appliedCode && !voucherRejected && (voucher.isPending || voucher.isFetching ? <Loading /> : voucher.isError ? <ErrorState error={voucher.error} retry={() => { setVoucherRejected(false); void voucher.refetch(); }} /> : <div role="status"><p>Giá gốc: {money(voucher.data.grossAmount)}</p><p>Ưu đãi {voucher.data.voucherCode}: −{money(voucher.data.discountAmount)}</p><strong>Thanh toán dự kiến: {money(voucher.data.totalAmount)}</strong><p className="fine-print">Báo giá chưa giữ lượt sử dụng. Hệ thống kiểm tra lại mã và số tiền khi tạo đặt vé.</p></div>)}
             <PriceSummary
               seats={hold.data!.seats.map((s) => s.seatCode)}
               unit={hold.data!.pricePerSeat}
-              total={appliedCode && voucher.data ? voucher.data.totalAmount : hold.data!.totalPrice}
+              total={quoteReady ? voucher.data!.totalAmount : hold.data!.totalPrice}
             />
             <p className="fine-print">
               Giá cuối cùng do hệ thống xác nhận khi tạo đặt vé.
@@ -211,9 +230,9 @@ export function BookingPage() {
 
           </aside>
           <div className="checkout-confirm card">
-            <div><small>Tổng thanh toán</small><strong>{money(appliedCode && voucher.data ? voucher.data.totalAmount : hold.data!.totalPrice)}</strong></div>
+            <div><small>Tổng thanh toán</small><strong>{money(quoteReady ? voucher.data!.totalAmount : hold.data!.totalPrice)}</strong></div>
               <button form="booking-contact"
-                disabled={booking.isPending || expired || hold.isFetching || hold.isError || (!!appliedCode && (voucher.isPending || voucher.isFetching || voucher.isError))}
+                disabled={submitBlocked}
               >
                 {booking.isPending
                   ? "Đang tạo đặt vé…"

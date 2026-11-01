@@ -5,7 +5,7 @@ import com.busgo.booking.*;
 import com.busgo.common.exception.BusinessException;
 import com.busgo.common.security.CurrentUser;
 import com.busgo.promotion.*;
-import com.busgo.promotion.VoucherDtos.Terms;
+import com.busgo.promotion.VoucherDtos.*;
 import com.busgo.user.entity.RoleCode;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -36,6 +36,9 @@ class M24BConcurrencyIT extends M20Support {
         var target=tx.execute(s->targetTrip(f));var ah=hold(a,f,0,2,0);
         var seat=jdbc.queryForObject("SELECT MIN(id) FROM trip_seats WHERE trip_id=?",Long.class,target.getId());
         var bh=holds.create(b.user(),new com.busgo.hold.SeatHoldDtos.CreateSeatHoldRequest(target.getId(),f.locations().get(0).getId(),f.locations().get(2).getId(),List.of(seat)));
+        authenticate(admin);vouchers.visibility(admin,voucher,true);
+        assertThat(bookingService.voucherOptions(a.user(),new OptionsRequest(ah.holdToken(),0,5)).options().get(0).status()).isEqualTo(OptionStatus.AVAILABLE);
+        assertThat(bookingService.voucherOptions(b.user(),new OptionsRequest(bh.holdToken(),0,5)).options().get(0).status()).isEqualTo(OptionStatus.AVAILABLE);
         assertThat(race(()->create(a,ah.holdToken()),()->create(b,bh.holdToken()))).containsExactlyInAnyOrder("OK","VOUCHER_LIMIT_REACHED");
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM voucher_usages WHERE voucher_id=?",Long.class,voucher)).isOne();
         assertThat(jdbc.queryForObject("SELECT COUNT(DISTINCT hold_token) FROM trip_seat_segment_inventory WHERE hold_token IN (?,?)",Long.class,ah.holdToken(),bh.holdToken())).isOne();
