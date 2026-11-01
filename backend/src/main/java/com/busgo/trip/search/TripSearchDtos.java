@@ -31,8 +31,17 @@ public final class TripSearchDtos {
             boolean allowPickup, boolean allowDropoff, OffsetDateTime arrivalTime,
             OffsetDateTime departureTime) {}
 
+    // Explicit public projection. Location.address has no publication/verification metadata.
+    public record LocationContext(String province, String district) {}
+    public record VehicleInformation(Integer seatCount, String description) {}
+    public record PrebookingPolicy(OffsetDateTime customerCutoffAt, String fullCancellation,
+            String partialCancellation, String modification, String refund, String eligibilityNotice) {}
+    public record PrebookingInformation(LocationContext pickup, LocationContext dropoff,
+            VehicleInformation vehicle, PrebookingPolicy policy) {}
+
     public record CustomerTripDetail(Long tripId, OperatorSummary operator, RouteSummary route,
             BusTypeSummary busType, String busImageUrl, PickupSummary pickup, DropoffSummary dropoff,
             long durationMinutes, BigDecimal price, long availableSeats, TripStatus status,
-            List<CustomerTripStop> stops, com.busgo.trip.operations.LiveTripState operations) {}
+            List<CustomerTripStop> stops, com.busgo.trip.operations.LiveTripState operations,
+            PrebookingInformation prebooking) {}
 }

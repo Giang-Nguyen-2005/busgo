@@ -1,3 +1,4 @@
+import { PrebookingDetails } from "../features/trip/PrebookingDetails";
 import { rememberBooking, bookingPaymentNavigation } from "../features/booking/recovery";
 import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
 import { useEffect, useState } from "react";
@@ -195,6 +196,7 @@ export function BookingPage() {
               departure={hold.data!.pickup.departureTime}
               arrival={hold.data!.dropoff.arrivalTime}
             />
+            <PrebookingDetails snapshot information={saved.tripInformation?.prebooking} vehicleName={saved.tripInformation?.vehicleName} seats={saved.tripInformation?.seats} pickup={hold.data!.pickup} dropoff={hold.data!.dropoff} />
             <Field label="Mã ưu đãi nhà xe" maxLength={40} value={voucherCode} disabled={booking.isPending} onChange={e => { setVoucherCode(e.target.value); setAppliedCode(""); }} />
             <div className="actions"><button type="button" disabled={!voucherCode.trim() || expired || booking.isPending || voucher.isFetching} onClick={() => { const code=voucherCode.trim().toUpperCase(); if(code===appliedCode) void voucher.refetch(); else setAppliedCode(code); }}>Kiểm tra ưu đãi</button>{appliedCode && <button type="button" disabled={booking.isPending} className="secondary" onClick={() => { setAppliedCode(""); setVoucherCode(""); }}>Bỏ ưu đãi</button>}</div>
             {appliedCode && (voucher.isPending ? <Loading /> : voucher.isError ? <ErrorState error={voucher.error} retry={() => voucher.refetch()} /> : <div role="status"><p>Giá gốc: {money(voucher.data.grossAmount)}</p><p>Ưu đãi {voucher.data.voucherCode}: −{money(voucher.data.discountAmount)}</p><strong>Thanh toán: {money(voucher.data.totalAmount)}</strong></div>)}

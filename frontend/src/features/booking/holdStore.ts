@@ -1,5 +1,11 @@
-import type { Hold } from "../../types/customer";
-export type SavedHold = Hold & { operatorName?: string; routeName?: string; searchContext?: string };
+import type { Hold, PrebookingInformation, Seat } from "../../types/customer";
+export type SavedHold = Hold & {
+  operatorName?: string;
+  routeName?: string;
+  searchContext?: string;
+  // Presentation snapshot only; never used as input to booking or pricing requests.
+  tripInformation?: { prebooking?: PrebookingInformation; vehicleName: string; seats: Pick<Seat, "floor">[] };
+};
 export function readHold(): SavedHold | null {
   try {
     const value = JSON.parse(sessionStorage.getItem("busgo.hold") || "null");

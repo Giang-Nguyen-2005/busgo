@@ -67,6 +67,51 @@ class M5TripSearchIT extends JwtTestSupport {
     @Autowired EntityManager em;
 
     @Test
+    void prebookingProjectionUsesSelectedIntermediateStopsAndKeepsUnverifiedDataPrivate() throws Exception {
+        Fixture f = fixture(ORIGIN_DEPARTURE, "Prebooking operator");
+        f.locations().get(0).setProvince("ORIGIN_ONLY");
+        f.locations().get(1).setProvince("Selected pickup province");
+        f.locations().get(1).setDistrict("Selected pickup district");
+        f.locations().get(1).setAddress("PRIVATE_UNVERIFIED_ADDRESS");
+        f.locations().get(1).setLatitude(new BigDecimal("10.1234567"));
+        f.locations().get(2).setProvince("Selected dropoff province");
+        f.locations().get(2).setAddress("Khu vực trung tâm demo");
+        f.busType().setDescription("Cấu hình do nhà xe khai báo");
+        em.flush();
+        var before = inventoryState(f.trip().getId());
+        String body = detail(f, 1, 2).andExpect(status().isOk())
+                .andExpect(jsonPath("data.prebooking.pickup.province").value("Selected pickup province"))
+                .andExpect(jsonPath("data.prebooking.dropoff.province").value("Selected dropoff province"))
+                .andExpect(jsonPath("data.prebooking.vehicle.seatCount").value(2))
+                .andExpect(jsonPath("data.prebooking.vehicle.description").value("Cấu hình do nhà xe khai báo"))
+                .andExpect(jsonPath("data.prebooking.policy.customerCutoffAt").value("2030-09-20T11:30:00Z"))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(body).doesNotContain("PRIVATE_UNVERIFIED_ADDRESS", "ORIGIN_ONLY", "Khu vực trung tâm demo",
+                "latitude", "longitude", "licensePlate", "password", "contactEmail", "taxCode");
+        var customer = account(RoleCode.CUSTOMER);
+        mvc.perform(get("/api/v1/trips/{id}", f.trip().getId())
+                .header("Authorization", "Bearer " + jwt.issue(new CurrentUser(customer.getId(), List.of(RoleCode.CUSTOMER)), "access"))
+                .param("pickupLocationId", id(f.locations().get(1)) + "")
+                .param("dropoffLocationId", id(f.locations().get(2)) + ""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("data.prebooking.pickup.district").value("Selected pickup district"));
+        assertThat(inventoryState(f.trip().getId())).isEqualTo(before);
+    }
+
+    @Test
+    void prebookingMissingMetadataIsNullAndDoesNotInferAmenities() throws Exception {
+        Fixture f = fixture(ORIGIN_DEPARTURE, "Missing metadata");
+        f.locations().get(1).setProvince(null); f.locations().get(1).setDistrict("  ");
+        f.busType().setDescription("  "); em.flush();
+        var body = detail(f, 1, 2).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        var info = json.readTree(body).path("data").path("prebooking");
+        assertThat(info.path("pickup").path("province").isNull()).isTrue();
+        assertThat(info.path("pickup").path("district").isNull()).isTrue();
+        assertThat(info.path("vehicle").path("description").isNull()).isTrue();
+        assertThat(body).doesNotContain("Wi-Fi", "USB", "boardingInstructions");
+    }
+
+    @Test
     void fourStopSegmentReuseProducesJourneySpecificAvailability() throws Exception {
         Fixture f = fixture(ORIGIN_DEPARTURE, "Segment operator");
 

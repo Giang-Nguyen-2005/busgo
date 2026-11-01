@@ -48,6 +48,7 @@ export interface Trip {
   status: string;
 }
 export interface TripDetail extends Trip {
+  prebooking?: PrebookingInformation;
   operations?: import("../features/trip/liveTripModel").LiveTripState;
   stops: {
     tripStopId: number;
@@ -59,6 +60,20 @@ export interface TripDetail extends Trip {
     arrivalTime: string | null;
     departureTime: string | null;
   }[];
+}
+export interface LocationContext { province: string | null; district: string | null }
+export interface PrebookingInformation {
+  pickup: LocationContext;
+  dropoff: LocationContext;
+  vehicle: { seatCount: number | null; description: string | null };
+  policy: {
+    customerCutoffAt: string | null;
+    fullCancellation: string | null;
+    partialCancellation: string | null;
+    modification: string | null;
+    refund: string | null;
+    eligibilityNotice: string | null;
+  } | null;
 }
 export interface Seat {
   tripSeatId: number;

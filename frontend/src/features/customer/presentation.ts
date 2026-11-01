@@ -12,7 +12,7 @@ export function journeyParams(values: SearchJourney, previous = new URLSearchPar
   next.delete("page");
   return next;
 }
-export const journeyTitle = (v: SearchJourney) => `${v.pickupLabel || (v.pickupLocationId ? `Điểm đón #${v.pickupLocationId}` : "Điểm đón")} → ${v.dropoffLabel || (v.dropoffLocationId ? `Điểm trả #${v.dropoffLocationId}` : "Điểm trả")}`;
+export const journeyTitle = (v: SearchJourney) => `${v.pickupLabel || (v.pickupLocationId ? "Điểm đón đã chọn" : "Điểm đón")} → ${v.dropoffLabel || (v.dropoffLocationId ? "Điểm trả đã chọn" : "Điểm trả")}`;
 export function searchReturn(value: string | null) {
   return value?.startsWith("/search?") ? value : "/search";
 }

@@ -17,6 +17,7 @@ import { errorCode } from "../api/errors";
 import { useAuth } from "../features/auth/AuthProvider";
 import { saveHold } from "../features/booking/holdStore";
 import { Rating } from "../features/marketplace/Rating";
+import { PrebookingDetails } from "../features/trip/PrebookingDetails";
 import { SeatMap } from "../features/trip/SeatMap";
 import {
   readSelection,
@@ -130,6 +131,11 @@ function TripSelection() {
         searchContext: searchReturn(params.get("search")),
         operatorName: detail.data?.operator.name,
         routeName: detail.data?.route.name,
+        tripInformation: detail.data ? {
+          prebooking: detail.data.prebooking,
+          vehicleName: detail.data.busType.name,
+          seats: seats.data?.seats.map(s => ({ floor: s.floor })) || [],
+        } : undefined,
       });
       navigate("/booking", { replace: true });
     },
@@ -231,6 +237,7 @@ function TripSelection() {
                 />
               )}
               <Journey pickup={detail.data!.pickup.name} dropoff={detail.data!.dropoff.name} departure={detail.data!.pickup.departureTime} arrival={detail.data!.dropoff.arrivalTime} />
+              <PrebookingDetails information={detail.data!.prebooking} pickup={detail.data!.pickup} dropoff={detail.data!.dropoff} vehicleName={detail.data!.busType.name} seats={seats.data!.seats} />
               <details className="itinerary"><summary>Xem lịch trình chuyến xe</summary><ol>{detail.data!.stops.map(stop => <li key={stop.tripStopId}><strong>{stop.name}</strong><small>{stop.arrivalTime ? `Đến ${dateTime(stop.arrivalTime)}` : ""}{stop.departureTime ? ` · Đi ${dateTime(stop.departureTime)}` : ""}</small></li>)}</ol></details>
               {seats.data!.availableSeatCount === 0 && (
                 <div className="notice warning">

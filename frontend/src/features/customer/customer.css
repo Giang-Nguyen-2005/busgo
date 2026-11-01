@@ -239,3 +239,11 @@ body:has(.customer-shell) { min-width: 0; }
 
 .customer-shell .booking-action-section { scroll-margin-top: 90px; }
 .customer-shell .booking-navigation .market-actions { gap: 12px 24px; }
+
+.customer-shell .prebooking-information { margin-block: 20px; border-top: 1px solid var(--color-border); padding-top: 16px; overflow-wrap: anywhere; }
+.customer-shell .prebooking-information summary { cursor: pointer; font-weight: 700; }
+.customer-shell .prebooking-information section { margin-top: 16px; }
+.customer-shell .prebooking-information h3 { font-size: 1rem; margin-bottom: 8px; }
+.customer-shell .prebooking-information li + li { margin-top: 10px; }
+.customer-shell .prebooking-stops { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .customer-shell .prebooking-stops { grid-template-columns: minmax(0, 1fr); gap: 0; } }
