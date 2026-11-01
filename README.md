@@ -2,13 +2,14 @@
 
 Vietnamese bus operation management and ticket booking application. Customer
 commerce supplies reservation data for operator dispatch, crew, reporting and fleet
-workflows. V1.5 business scope is feature-complete through M18C; M19 covers final
-hardening and release readiness. **All payments/refunds are simulated.**
+workflows. The V1.5 baseline covers M18C/M19; the current source also includes
+M30.2A/B customer journey and prebooking information, and M30.4A/B checkout voucher
+discovery and public promotions. **All payments/refunds are simulated.**
 
 ## Architecture and modules
 
 React 19 / TypeScript / Vite / React Router / TanStack Query frontend; Java 17 /
-Spring Boot 3.5 modular monolith; MySQL / Flyway V1–V16. JPA and scoped JDBC persist
+Spring Boot 3.5 modular monolith; MySQL / Flyway V1–V27. JPA and scoped JDBC persist
 UTC instants; UI/business dates use Vietnam time. See [architecture](docs/architecture.md).
 
 - Customer: search, seats/holds, booking, mock payment, tickets, owned history,
@@ -23,7 +24,11 @@ Layout: `frontend/`, `backend/`, `docs/`; `database/` is reserved support storag
 
 ## Quick start (local demo)
 
-Prerequisites: JDK 17, Maven 3.6.3+, Node >=22.12, npm and Docker Compose v2.
+Vietnamese new-machine guide (with or without Docker):
+[Hướng dẫn chạy trên máy mới](docs/huong-dan-chay-may-moi.md).
+
+Prerequisites: JDK 17, Maven 3.6.3+, Node >=22.12 and npm. The steps below use
+Docker Compose v2 for MySQL 8.4; an independently installed MySQL is also supported.
 Check `java -version`, `mvn -version`, `node --version`. Set JAVA_HOME to your JDK
 17 and prepend its `bin` to PATH if another Java version is selected.
 
@@ -58,6 +63,10 @@ resetting user data/passwords. `production` excludes demo and requires all DB
 settings. Bootstrap SYSTEM_ADMIN once through environment settings, then disable
 it. See [deployment and recovery](docs/deployment.md) for exact variables, JVM time,
 Flyway validation, same-origin proxy/CORS, TLS, safe logs and backup requirements.
+Startup automatically applies pending migrations through V27, including voucher
+visibility defaulting to private. Use a dedicated local demo database; back up an
+existing database before upgrading. Demo seeding preserves existing records but
+can add missing fixtures/trips or fail on identity conflicts.
 
 Compose runs MySQL only. Production-like frontend hosting needs SPA fallback and a
 same-origin `/api/v1` proxy. `npm run preview` has no development API proxy.
