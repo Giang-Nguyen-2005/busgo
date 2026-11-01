@@ -85,7 +85,7 @@ export function SearchPage() {
           signal,
         })
       ).data,
-    enabled: valid,
+    enabled: valid, refetchInterval: 30_000,
   });
   const operators = useQuery({ queryKey: ["marketplace", "search-operators"], queryFn: async ({signal}) => (await apiClient.get<PagedResponse<PublicOperator>>("/public/operators", {params:{size:100},signal})).data });
   const types = useQuery({ queryKey: ["marketplace", "search-types"], queryFn: ({signal}) => get<Named[]>("/public/discovery/bus-types",undefined,signal) });

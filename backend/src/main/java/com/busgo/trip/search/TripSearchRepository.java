@@ -22,7 +22,8 @@ public class TripSearchRepository {
         dropoff.id dropoff_stop_id,dropoff.location_id dropoff_location_id,dl.name dropoff_name,dropoff.planned_arrival_time,
         fare.price,t.status,t.delay_minutes,ratings.average_rating,COALESCE(ratings.review_count,0) review_count,
         ROW_NUMBER() OVER(PARTITION BY t.id ORDER BY fare.price,pickup.stop_order,dropoff.stop_order) choice,
-        %s available_seats
+        %s available_seats,
+        %s has_public_promotions
         FROM trips t JOIN operator_routes opr ON opr.id=t.operator_route_id
         JOIN transport_operators op ON op.id=opr.operator_id JOIN routes r ON r.id=opr.route_id
         JOIN buses b ON b.id=t.bus_id JOIN bus_types bt ON bt.id=b.bus_type_id
@@ -44,7 +45,7 @@ public class TripSearchRepository {
         AND (:departureFrom IS NULL OR pickup.planned_departure_time>=:departureFrom)
         AND (:departureTo IS NULL OR pickup.planned_departure_time<=:departureTo)
         AND (:minRating IS NULL OR ratings.average_rating>=:minRating)
-        """.formatted(SeatAvailabilityQueryRepository.availableSeatCount("t.id","pickup.stop_order","dropoff.stop_order"),MarketplaceRepository.RATING_JOIN);
+        """.formatted(SeatAvailabilityQueryRepository.availableSeatCount("t.id","pickup.stop_order","dropoff.stop_order"),com.busgo.promotion.PublicPromotionService.SEARCH_EXISTS,MarketplaceRepository.RATING_JOIN);
     public Page<SearchResult> search(Criteria c,Pageable page) {
         var p=new MapSqlParameterSource().addValue("pickupId",c.pickupLocationId()).addValue("dropoffId",c.dropoffLocationId())
             .addValue("dateStart",sqlTime(c.dateStart())).addValue("dateEnd",sqlTime(c.dateEnd())).addValue("now",sqlTime(c.nowUtc()))
@@ -70,7 +71,7 @@ public class TripSearchRepository {
                 new DropoffSummary(rs.getLong("dropoff_stop_id"),rs.getLong("dropoff_location_id"),rs.getString("dropoff_name"),api(arrival)),
                 ChronoUnit.MINUTES.between(departure,arrival),rs.getBigDecimal("price"),rs.getLong("available_seats"),TripStatus.valueOf(rs.getString("status")),rs.getInt("delay_minutes"),
                 com.busgo.trip.operations.LiveTripState.label(TripStatus.valueOf(rs.getString("status")),rs.getInt("delay_minutes")),
-                api(departure.plusMinutes(rs.getInt("delay_minutes"))),api(arrival.plusMinutes(rs.getInt("delay_minutes"))));
+                api(departure.plusMinutes(rs.getInt("delay_minutes"))),api(arrival.plusMinutes(rs.getInt("delay_minutes"))),rs.getBoolean("has_public_promotions"));
         });
         return new PageImpl<>(rows,page,total);
     }

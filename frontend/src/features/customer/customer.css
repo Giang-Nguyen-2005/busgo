@@ -257,3 +257,11 @@ body:has(.customer-shell) { min-width: 0; }
 /* Expanded panels may exceed the viewport; never let the summary cover confirmation. */
 .customer-shell .booking-checkout > aside:has(details[open]) { position: static; }
 .customer-shell .voucher-options-list { max-height: min(50dvh, 28rem); overflow-y: auto; overscroll-behavior: contain; }
+
+.customer-shell .public-promotions { margin-block: 20px; scroll-margin-top: 90px; }
+.customer-shell .public-promotions summary { font-weight: 700; cursor: pointer; }
+.customer-shell .public-promotion { overflow-wrap: anywhere; min-width: 0; }
+.customer-shell .public-promotion h3 { font-size: 1.1rem; }
+.customer-shell .public-promotion .market-actions { align-items: center; }
+.customer-shell .promotion-link { display: inline-block; margin-top: 8px; font-weight: 600; }
+.customer-shell #trip-seats { scroll-margin-top: 90px; }

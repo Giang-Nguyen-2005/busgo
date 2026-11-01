@@ -33,7 +33,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/operator-invitations/*/context").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/payments/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/public/payments/*/mock-confirm").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/public/operators/**", "/api/v1/public/discovery/**", "/api/v1/public/reviews/recent").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/public/promotions", "/api/v1/trips/*/promotions", "/api/v1/public/operators/**", "/api/v1/public/discovery/**", "/api/v1/public/reviews/recent").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/locations").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/trips/search", "/api/v1/trips/*").permitAll()

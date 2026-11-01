@@ -25,7 +25,7 @@ public final class TripSearchDtos {
     public record SearchResult(Long tripId, OperatorSummary operator, RouteSummary route,
             BusTypeSummary busType, String busImageUrl, PickupSummary pickup, DropoffSummary dropoff,
             long durationMinutes, BigDecimal price, long availableSeats, TripStatus status,
-            int delayMinutes, String operationalLabel, OffsetDateTime expectedPickupAt, OffsetDateTime expectedDropoffAt) {}
+            int delayMinutes, String operationalLabel, OffsetDateTime expectedPickupAt, OffsetDateTime expectedDropoffAt, boolean hasPublicPromotions) {}
 
     public record CustomerTripStop(Long tripStopId, Long locationId, String name, Integer stopOrder,
             boolean allowPickup, boolean allowDropoff, OffsetDateTime arrivalTime,

@@ -23,6 +23,7 @@ async function fixture(route) {
  state.calls.push({ p, method, query: Object.fromEntries(url.searchParams), body: req.postDataJSON() });
  const ok = data => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
  const fail = code => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code, message: 'Tình huống lỗi thử nghiệm' }, code, message: 'Tình huống lỗi thử nghiệm' }) });
+ if (p === '/public/promotions' || /^\/trips\/\d+\/promotions$/.test(p)) return ok(paged([]));
  if (p === '/users/me') return ok({ data: user });
  if (p.endsWith('/unread-count')) return ok({ data: 0 });
  if (p.endsWith('/notifications')) return ok(paged([]));

@@ -34,6 +34,7 @@ export interface Dropoff {
   arrivalTime: string;
 }
 export interface Trip {
+  hasPublicPromotions?: boolean;
   delayMinutes?: number; operationalLabel?: string; expectedPickupAt?: string; expectedDropoffAt?: string;
   tripId: number;
   operator: Named & { averageRating?: number | null; reviewCount?: number };

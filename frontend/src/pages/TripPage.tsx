@@ -16,6 +16,7 @@ import { get, post } from "../api/client";
 import { errorCode } from "../api/errors";
 import { useAuth } from "../features/auth/AuthProvider";
 import { saveHold } from "../features/booking/holdStore";
+import { PublicPromotions } from "../features/marketplace/PublicPromotions";
 import { Rating } from "../features/marketplace/Rating";
 import { PrebookingDetails } from "../features/trip/PrebookingDetails";
 import { SeatMap } from "../features/trip/SeatMap";
@@ -208,7 +209,7 @@ function TripSelection() {
           </div>
           <div className="trip-operation"><LiveTripBlock state={detail.data!.operations} /></div>
           <div className="checkout-layout seat-checkout">
-            <section className="card seat-workspace">
+            <section id="trip-seats" className="card seat-workspace">
               <div className="section-title">
                 <BusFront size={22} />
                 <div>
@@ -237,6 +238,7 @@ function TripSelection() {
                 />
               )}
               <Journey pickup={detail.data!.pickup.name} dropoff={detail.data!.dropoff.name} departure={detail.data!.pickup.departureTime} arrival={detail.data!.dropoff.arrivalTime} />
+              <PublicPromotions key={`${tripId}-${journey.pickupLocationId}-${journey.dropoffLocationId}`} trip={{ id: Number(tripId), pickup: journey.pickupLocationId, dropoff: journey.dropoffLocationId }} />
               <PrebookingDetails information={detail.data!.prebooking} pickup={detail.data!.pickup} dropoff={detail.data!.dropoff} vehicleName={detail.data!.busType.name} seats={seats.data!.seats} />
               <details className="itinerary"><summary>Xem lịch trình chuyến xe</summary><ol>{detail.data!.stops.map(stop => <li key={stop.tripStopId}><strong>{stop.name}</strong><small>{stop.arrivalTime ? `Đến ${dateTime(stop.arrivalTime)}` : ""}{stop.departureTime ? ` · Đi ${dateTime(stop.departureTime)}` : ""}</small></li>)}</ol></details>
               {seats.data!.availableSeatCount === 0 && (
