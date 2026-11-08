@@ -47,7 +47,7 @@ const extra = `
  await p.getByRole('button',{name:/^Chỗ A01,/}).click();
  await p.getByRole('link',{name:'Thông tin và đánh giá nhà xe'}).click(); await p.waitForURL('**/operators/1?**'); await ready(p);
  const profileURL = p.url();
- await p.getByRole('link',{name:'Chọn ngày tìm chuyến',exact:true}).click(); await p.waitForURL('**/search?**'); await p.getByRole('heading',{name:'Bạn muốn đi đâu?',exact:true}).waitFor(); await ready(p);
+ await p.getByRole('link',{name:'Chọn ngày khởi hành',exact:true}).click(); await p.waitForURL('**/search?**'); await p.getByRole('heading',{name:'Bạn muốn đi đâu?',exact:true}).waitFor(); await ready(p);
  assert.equal(new URL(p.url()).searchParams.get('operatorId'),'1');
  assert.equal(await p.getByLabel('Ngày đi',{exact:true}).inputValue(),'');
  await p.goto(profileURL); await ready(p);
@@ -55,14 +55,14 @@ const extra = `
  assert.equal(new URL(p.url()).pathname+new URL(p.url()).search,tripReturn);
  assert.equal(await p.locator('.seat.selected').count(),1);
  assert.equal(state.calls.filter(c=>c.p==='/seat-holds').length,holdsBefore);
- await p.getByText(/Ghế đang chọn chưa được giữ chỗ/).waitFor();
- await p.getByText(/Bạn cần đăng nhập hoặc đăng ký/).waitFor();
+ await p.getByText(/Chỗ đang chọn chưa được giữ/).waitFor();
+ await p.getByText(/Đăng nhập để tiếp tục giữ chỗ/).waitFor();
  check('Trip profile return revalidates draft; profile route CTA scoped to operator; selection never creates hold');
  for (const width of [1440,834,390,360]) {
   await p.setViewportSize({width,height:844}); await p.goto(origin+tripReturn); await ready(p);
   const cta = p.getByRole('button',{name:'Tiếp tục',exact:true});
   await cta.scrollIntoViewIfNeeded();
-  await p.getByText(/Bạn cần đăng nhập hoặc đăng ký/).waitFor();
+  await p.getByText(/Đăng nhập để tiếp tục giữ chỗ/).waitFor();
   await capture(p,'m30-guest-seats-'+width);
   await p.getByRole('link',{name:'Thông tin và đánh giá nhà xe'}).click(); await p.waitForURL('**/operators/1?**');
   await p.getByRole('heading',{name:'Tuyến vận hành',exact:true}).waitFor();

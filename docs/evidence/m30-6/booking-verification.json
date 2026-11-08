@@ -1,0 +1,16 @@
+{
+  "schema": "busgo_m306_live\t28\toperator media\t1",
+  "blob": "mediumblob",
+  "bookingId": "1",
+  "bookingState": "CONFIRMED",
+  "gross": 250000,
+  "discount": 25000,
+  "net": 225000,
+  "payment": "PAID",
+  "voucherUsage": "REDEEMED",
+  "customerBookings": 1,
+  "payments": 1,
+  "validTickets": 1,
+  "remainingHeldRows": 0,
+  "bookedSegments": 1
+}

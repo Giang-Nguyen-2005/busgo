@@ -10,6 +10,8 @@ const ticket={id:2,subject:'Kiểm tra thông tin đặt vé · Dữ liệu th�
 const page=data=>({data,pagination:{page:0,size:20,totalElements:data.length,totalPages:1}});
 const totals=Object.fromEntries(['collections','refunds','netCollections','commissionAccrual','commissionReversal','netCommission','operatorPayable','platformReceivable','unknownAmount','unpricedAmount','grossContext','discountContext','eventCount','sourceCount','missingCount','sourceCollections','sourceRefunds','unknownCount','unpricedCount'].map(k=>[k,0]));
 const dataFor=(path,role)=>{
+ if(/^\/public\/operators\/\d+\/media$/.test(path))return {data:{logoUrl:null,photos:[]}};
+ if(path==='/public/promotions'||/^\/trips\/\d+\/promotions$/.test(path))return page([]);
  if(path==='/users/me')return {data:{id:1,fullName:'Nguyễn Minh Anh · Thử nghiệm',email:'fixture@example.invalid',phone:'0900000000',roles:[role]}};
  if(path.endsWith('/unread-count'))return {data:0};
  if(path.endsWith('/notifications'))return page([]);

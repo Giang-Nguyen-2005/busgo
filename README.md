@@ -9,7 +9,7 @@ discovery and public promotions. **All payments/refunds are simulated.**
 ## Architecture and modules
 
 React 19 / TypeScript / Vite / React Router / TanStack Query frontend; Java 17 /
-Spring Boot 3.5 modular monolith; MySQL / Flyway V1–V27. JPA and scoped JDBC persist
+Spring Boot 3.5 modular monolith; MySQL / Flyway V1–V28. JPA and scoped JDBC persist
 UTC instants; UI/business dates use Vietnam time. See [architecture](docs/architecture.md).
 
 - Customer: search, seats/holds, booking, mock payment, tickets, owned history,
@@ -89,8 +89,8 @@ resetting user data/passwords. `production` excludes demo and requires all DB
 settings. Bootstrap SYSTEM_ADMIN once through environment settings, then disable
 it. See [deployment and recovery](docs/deployment.md) for exact variables, JVM time,
 Flyway validation, same-origin proxy/CORS, TLS, safe logs and backup requirements.
-Startup automatically applies pending migrations through V27, including voucher
-visibility defaulting to private. Use a dedicated local demo database; back up an
+Startup automatically applies pending migrations through V28, including private-by-default voucher
+visibility and transactional operator image storage. See [M30.5 operator media](docs/m30-5-operator-media-management.md). Use a dedicated local demo database; back up an
 existing database before upgrading. Demo seeding preserves existing records but
 can add missing fixtures/trips or fail on identity conflicts.
 

@@ -12,7 +12,7 @@ try {
  for (const width of [390,820,1440]) {
   const page=await browser.newPage({viewport:{width,height:1000}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('http://127.0.0.1:5173/tests/fixtures/m15-browser.html');
+  await page.goto((process.env.BUSGO_TEST_ORIGIN || 'http://127.0.0.1:5173')+'/tests/fixtures/m15-browser.html');
   const control=name=>page.locator('[data-fixture-controls]').getByRole('button',{name,exact:true});
   const shot=async name=>{await page.waitForTimeout(350);const controls=page.locator('[data-fixture-controls]');if(await controls.count()) await controls.evaluate(e=>e.open=false);await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));await page.mouse.move(0,0);await page.waitForTimeout(100);const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);assert.equal(overflow,false,'Page overflow at '+width+' '+name);await page.screenshot({path:new URL(`${width}-${name}.png`,directory).pathname.replace(/^\/([A-Z]:)/,'$1'),fullPage:!name.startsWith('drawer') && name!=='lifecycle-dialog'});if(await controls.count()) await controls.evaluate(e=>e.open=true);};
   await control('Home').click();await page.locator('.hero').waitFor();await shot('home');
@@ -26,17 +26,17 @@ try {
   await page.getByRole('button',{name:'Tiếp tục',exact:true}).click();
   await page.getByRole('button',{name:'Tiếp tục đến thanh toán',exact:true}).waitFor();await shot('booking');
   await page.getByRole('button',{name:'Tiếp tục đến thanh toán',exact:true}).click();
-  await page.getByRole('heading',{name:'Thanh toán đặt vé',exact:true}).waitFor();
+  await page.getByRole('heading',{name:'Thanh toán mô phỏng',exact:true}).waitFor();
   await shot('payment');
   await page.goBack();await page.getByRole('link',{name:'Chọn chỗ',exact:true}).first().waitFor();
   assert.equal(new URL(page.url()).pathname,'/search');
-  await page.goForward();await page.getByRole('heading',{name:'Thanh toán đặt vé',exact:true}).waitFor();
+  await page.goForward();await page.getByRole('heading',{name:'Thanh toán mô phỏng',exact:true}).waitFor();
   await page.getByRole('link',{name:'← Quay lại chi tiết đặt vé',exact:true}).click();
   await page.getByRole('link',{name:'Xem thanh toán',exact:true}).click();
   await control('Seats').click();await page.getByText(/Ghế A01, A02 đã thuộc đặt vé/).waitFor();
   await page.waitForFunction(()=>document.querySelector('[aria-label^="Chỗ A01,"]')?.disabled === true);
   await page.getByRole('link',{name:'Tiếp tục thanh toán',exact:true}).click();
-  await page.getByRole('button',{name:'Xác nhận thanh toán giả lập',exact:true}).click();
+  await page.getByRole('button',{name:'Xác nhận thanh toán mô phỏng',exact:true}).click();
   await page.waitForURL('**/booking-success?bookingId=101');
   await page.getByText('VE-FIXTURE-1',{exact:true}).waitFor();await page.getByText('VE-FIXTURE-2',{exact:true}).waitFor();
   await shot('tickets');
@@ -77,7 +77,7 @@ try {
   await page.getByRole('button',{name:'Xóa bộ lọc',exact:true}).click();assert.equal(new URL(page.url()).search,'');
   await page.locator('.operator-booking-code').click();await page.getByRole('heading',{name:'BG-FIXTURE-101',exact:true}).waitFor();await shot('booking-detail');
   await control('Operator occupancy').click();await page.locator('.operator-cell-BOOKED').first().waitFor();assert.equal(await page.locator('.operator-cell-BOOKED').count(),2);assert.equal(await page.locator('.operator-cell-MISSING').count(),1);await shot('occupancy');
-  await control('Operator passengers').click();await page.locator('.operator-passenger').first().waitFor();assert.equal(await page.locator('.operator-passenger').count(),2);await shot('manifest');
+  await control('Operator passengers').click();await page.getByText('Danh sách vé và liên hệ đặt vé',{exact:true}).click();await page.locator('.operator-passenger').first().waitFor();assert.equal(await page.locator('.operator-passenger').count(),2);await shot('manifest');
   await control('Operator trips').click();await page.getByLabel('Ngày vận hành (Việt Nam)',{exact:true}).fill('2027-01-15');
   await page.getByLabel('Mã tuyến',{exact:true}).fill('1');await page.getByLabel('Mã xe',{exact:true}).fill('2');
   await page.getByRole('combobox',{name:/^Trạng thái/}).selectOption('SCHEDULED');
@@ -92,7 +92,7 @@ try {
   await control('Admin').click();await page.locator('.admin-stat strong').first().waitFor();await shot('admin-dashboard');if(width<=1050){await page.locator('.admin-menu').click();assert.equal(await page.locator('.admin-nav').isVisible(),true);await page.locator('.admin-menu').click();}
   await control('Directory').click();await page.locator('.admin-table tbody tr').first().waitFor();await shot('admin-operators');
   await control('Operator detail').click();await page.locator('.admin-counts').waitFor();await page.locator('.admin-table tbody tr').first().waitFor();await shot('admin-detail');
-  await page.goto('http://127.0.0.1:5173/tests/fixtures/m15-matrix-browser.html');
+  await page.goto((process.env.BUSGO_TEST_ORIGIN || 'http://127.0.0.1:5173')+'/tests/fixtures/m15-matrix-browser.html');
   await page.locator('.operator-occupancy tbody tr').last().waitFor();
   const matrix=page.locator('.operator-occupancy');
   const geometry=await matrix.evaluate(e=>({width:e.clientWidth,scrollWidth:e.scrollWidth,height:e.clientHeight,scrollHeight:e.scrollHeight}));

@@ -127,6 +127,9 @@ public class SupportService {
         var bookings=db.queryForList("SELECT r.operator_id FROM bookings b JOIN trips t ON t.id=b.trip_id JOIN operator_routes r ON r.id=t.operator_route_id WHERE b.id=? AND b.customer_id=? AND b.source='WEB'",c.bookingId(),u.id());
         if(bookings.isEmpty()) throw missing();
         long oid=((Number)bookings.get(0).get("operator_id")).longValue();
+        // Cancellation takes the operator lock before the booking lock. Take the same
+        // parent lock first so the ticket insert's booking/operator FK checks cannot invert that order.
+        db.queryForObject("SELECT id FROM transport_operators WHERE id=? FOR SHARE",Long.class,oid);
         try {
             // The unique customer/request-key index serializes racing inserts without
             // taking a user X lock ahead of commerce's booking/notification FK locks.

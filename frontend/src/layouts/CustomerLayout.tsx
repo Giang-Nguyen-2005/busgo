@@ -10,6 +10,7 @@ import { IconButton } from "../components/foundations/IconButton";
 import { PageContent } from "../components/foundations/PageContent";
 import { customerIcons } from "../components/foundations/navigationIcons";
 import "./shells.css";
+import "../features/customer/customer-typography.css";
 export function CustomerLayout() {
   const auth = useAuth();
   const [open, setOpen] = useState(false);
@@ -20,6 +21,12 @@ export function CustomerLayout() {
     window.scrollTo(0, 0);
   }, [location.pathname]);
   useEffect(() => { setOpen(false); }, [location.key]);
+  useEffect(() => {
+    const path = location.pathname;
+    const titles: Record<string, string> = { "/": "Tìm chuyến xe liên tỉnh", "/search": "Kết quả tìm chuyến", "/login": "Đăng nhập", "/register": "Đăng ký", "/profile": "Thông tin tài khoản", "/my-bookings": "Vé của tôi", "/booking": "Thông tin đặt vé", "/payment": "Thanh toán mô phỏng", "/booking-success": "Vé điện tử", "/support": "Hỗ trợ đặt vé", "/notifications": "Thông báo", "/notification-preferences": "Cài đặt thông báo", "/operator-application": "Đăng ký nhà xe" };
+    const title = titles[path] || (path.startsWith("/trips/") ? "Chi tiết chuyến & chọn chỗ" : path.startsWith("/operators/") ? "Hồ sơ nhà xe" : path.endsWith("/modify") ? "Thay đổi đặt vé" : path.startsWith("/my-bookings/") ? "Chi tiết đặt vé" : path.startsWith("/support/") ? "Yêu cầu hỗ trợ" : "Không tìm thấy trang");
+    document.title = title + " | BusGo";
+  }, [location.pathname]);
   const navigation = <>
     <NavLink to="/" end><customerIcons.home aria-hidden="true" />Trang chủ</NavLink>
     <NavLink to="/operator-application"><customerIcons.application aria-hidden="true" />Đăng ký nhà xe</NavLink>
@@ -87,7 +94,7 @@ export function CustomerLayout() {
               <BusFront size={24} />
               BusGo<span className="brand-dot">.</span>
             </Link>
-            <p>Mỗi chuyến đi, một khởi đầu.</p>
+            <p>Tìm chuyến xe liên tỉnh, chọn chỗ và theo dõi đặt vé trong cùng một tài khoản.</p>
           </div>
           <div>
             <strong>Đặt vé xe khách trực tuyến</strong>
@@ -95,7 +102,11 @@ export function CustomerLayout() {
             <small>Giờ hiển thị theo Việt Nam (UTC+7).</small>
           </div>
           <div>
+            <strong>Thông tin cho chuyến đi</strong>
             <Link to="/">Tìm chuyến xe</Link>
+            <a href="/#booking-guide">Hướng dẫn đặt vé</a>
+            <a href="/#customer-faq">Câu hỏi thường gặp</a>
+            {customer && <Link to="/support">Yêu cầu hỗ trợ</Link>}
             {customer ? (
               <>
                 <Link to="/my-bookings">Vé của tôi</Link>

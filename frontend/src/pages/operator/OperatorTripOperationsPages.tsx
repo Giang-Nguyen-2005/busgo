@@ -7,7 +7,7 @@ import { RefreshState } from "../../features/operator/RefreshState";
 import { CompletenessWarning } from "./OperatorSeatsPage";
 import { Link, useParams } from "react-router-dom";
 import { Empty } from "../../components/ui";
-import { useOccupancy } from "../../features/operator/queries";
+import { useOccupancy, usePassengers } from "../../features/operator/queries";
 import { OperationsBadge, OperationsQueryState } from "../../features/operator/OperationsShared";
 import { manifestEmptyText, occupancyMatrix, seatPassenger } from "../../features/operator/operations";
 import { OperatorStatusBadge } from "../../features/operator/shared";
@@ -35,7 +35,16 @@ export function ManifestContent({ manifest }: { manifest: PassengerManifest }) {
 export function OperatorPassengersPage() {
   const id = Number(useParams().tripId);
   const trip = useTripWorkspace();
-  return <><h2>Hành khách</h2><BoardingManifest tripId={id} tripStatus={trip.status} /></>;
+  const [showManifest,setShowManifest]=useState(false);
+  return <><h2>Hành khách</h2><BoardingManifest tripId={id} tripStatus={trip.status} />
+    <details className="card" onToggle={e=>setShowManifest(e.currentTarget.open)}>
+      <summary>Danh sách vé và liên hệ đặt vé</summary>
+      {showManifest && <TripManifest id={id}/>}
+    </details></>;
+}
+function TripManifest({id}:{id:number}) {
+  const query=usePassengers(id);
+  return <OperationsQueryState query={query}>{data=><ManifestContent manifest={data}/>}</OperationsQueryState>;
 }
 export function OccupancyContent({ occupancy: data }: { occupancy: TripOccupancy }) {
   const matrix = occupancyMatrix(data);

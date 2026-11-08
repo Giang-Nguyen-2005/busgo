@@ -7,6 +7,10 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class SeatAvailabilityQueryRepository {
+    // Matches SeatHoldService.reclaimable. A malformed HELD row stays unavailable.
+    private static final String UNAVAILABLE = "(inventory.id IS NULL OR (inventory.status <> 'AVAILABLE' "
+            + "AND (inventory.status <> 'HELD' OR inventory.hold_expires_at IS NULL OR inventory.hold_expires_at > UTC_TIMESTAMP(6))))";
+
     // Same fail-closed segment predicate as availableCounts and seatMap.
     static String availableSeatCount(String trip, String pickup, String dropoff) {
         return "(SELECT COUNT(*) FROM trip_seats seat WHERE seat.trip_id=" + trip
@@ -16,7 +20,7 @@ public class SeatAvailabilityQueryRepository {
             + " AND NOT EXISTS (SELECT 1 FROM trip_segments segment LEFT JOIN trip_seat_segment_inventory inventory"
             + " ON inventory.trip_segment_id=segment.id AND inventory.trip_seat_id=seat.id WHERE segment.trip_id=" + trip
             + " AND segment.segment_order >= " + pickup + " AND segment.segment_order < " + dropoff
-            + " AND (inventory.id IS NULL OR inventory.status <> 'AVAILABLE')))";
+            + " AND " + UNAVAILABLE + "))";
     }
     private static final String AVAILABLE_COUNTS = """
             SELECT t.id trip_id, %s available_seats
@@ -42,12 +46,12 @@ public class SeatAvailabilityQueryRepository {
                        WHERE segment.trip_id = :tripId
                          AND segment.segment_order >= :pickupOrder
                          AND segment.segment_order < :dropoffOrder
-                         AND (inventory.id IS NULL OR inventory.status <> 'AVAILABLE')
+                         AND %s
                      ) THEN TRUE ELSE FALSE END AS available
             FROM trip_seats seat
             WHERE seat.trip_id = :tripId
             ORDER BY seat.floor_no, seat.row_no, seat.column_no, seat.seat_code
-            """;
+            """.formatted(UNAVAILABLE);
 
     private final NamedParameterJdbcTemplate jdbc;
 

@@ -6,6 +6,8 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 const require=createRequire(import.meta.url);
 const { chromium }=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const origin=process.env.BUSGO_BROWSER_ORIGIN || 'http://127.0.0.1:5178';
+const isolated=require('./helpers/m306-environment.cjs');
+const m306=origin===isolated.origin ? await isolated.verifyM306(origin) : null;
 const directory=new URL(process.env.BUSGO_BROWSER_OUTPUT || '../../.tools/m17-browser/',import.meta.url);
 mkdirSync(directory,{recursive:true});
 async function call(method,path,token,body) {
@@ -50,6 +52,7 @@ async function assertAvailable(trip,start,end,seatId) {
 }
 function timeoutBooking(id) {
   assert.match(String(id),/^\d+$/);
+  if(m306)return m306.sql(`UPDATE bookings SET payment_due_at=created_at-INTERVAL 1 SECOND WHERE id=${id} AND status='PENDING' AND payment_method<>'PAY_ON_BOARD';`);
   execFileSync(process.env.MYSQL_CLIENT || 'C:/Program Files/MySQL/MySQL Server 9.2/bin/mysql.exe',
     ['--no-defaults','-h','127.0.0.1','-P',process.env.M17_MYSQL_PORT || '13317','-u','root',process.env.M17_BROWSER_SCHEMA || 'busgo_m17_browser','-e',`UPDATE bookings SET payment_due_at=created_at-INTERVAL 1 SECOND WHERE id=${id} AND status='PENDING' AND payment_method<>'PAY_ON_BOARD';`],{env:{...process.env,MYSQL_PWD:''}});
 }
@@ -74,7 +77,7 @@ try {
     const recovery=(await call('GET',`/bookings/${b.bookingId}/recovery`,customer)).data;
     assert.equal(recovery.status,'CANCELLED');assert.equal(recovery.refunds.length,paid?1:0);assert.equal(recovery.tickets.length,paid?1:0);
     const detail=(await call('GET',`/operator/bookings/${b.bookingId}`,admin)).data;assert.equal(detail.payments.length,paid?1:0);
-    if(paid) {await page.goto(origin+`/booking-success?bookingId=${b.bookingId}`);await page.getByText('Đã vô hiệu (VOID) · Không dùng để lên xe',{exact:true}).waitFor();assert.equal(await page.locator('.ticket-stub svg').count(),0);await screenshot(page,`${width}-void-web-ticket`);}
+    if(paid) {await page.goto(origin+`/booking-success?bookingId=${b.bookingId}`);await page.getByText('Đã vô hiệu · Không dùng để lên xe',{exact:true}).waitFor();assert.equal(await page.locator('.ticket-stub svg').count(),0);await screenshot(page,`${width}-void-web-ticket`);}
   }
   await uiLogin(page,adminEmail,adminPassword);
   for(const [n,method] of ['PAY_ON_BOARD','QR_TRANSFER'].entries()) {

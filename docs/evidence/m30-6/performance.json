@@ -1,0 +1,104 @@
+{
+  "mode": "production build, loopback API, real Edge, fresh context per sample",
+  "samples": [
+    {
+      "page": "home",
+      "readyMs": 500,
+      "apiRequests": 9,
+      "apiBodyBytes": 6946,
+      "transferBytes": 1612346,
+      "mediaLists": 3,
+      "mediaFilesBeforeOpen": 0
+    },
+    {
+      "page": "home",
+      "readyMs": 387,
+      "apiRequests": 9,
+      "apiBodyBytes": 6946,
+      "transferBytes": 1612046,
+      "mediaLists": 3,
+      "mediaFilesBeforeOpen": 0
+    },
+    {
+      "page": "home",
+      "readyMs": 332,
+      "apiRequests": 9,
+      "apiBodyBytes": 6946,
+      "transferBytes": 1612046,
+      "mediaLists": 3,
+      "mediaFilesBeforeOpen": 0
+    },
+    {
+      "page": "search",
+      "readyMs": 285,
+      "apiRequests": 6,
+      "apiBodyBytes": 240887,
+      "transferBytes": 464818,
+      "mediaLists": 1,
+      "mediaFilesBeforeOpen": 2
+    },
+    {
+      "page": "search",
+      "readyMs": 270,
+      "apiRequests": 6,
+      "apiBodyBytes": 240887,
+      "transferBytes": 464818,
+      "mediaLists": 1,
+      "mediaFilesBeforeOpen": 2
+    },
+    {
+      "page": "search",
+      "readyMs": 263,
+      "apiRequests": 6,
+      "apiBodyBytes": 240887,
+      "transferBytes": 464818,
+      "mediaLists": 1,
+      "mediaFilesBeforeOpen": 2
+    },
+    {
+      "page": "trip",
+      "readyMs": 372,
+      "apiRequests": 4,
+      "apiBodyBytes": 7550,
+      "transferBytes": 194587,
+      "mediaLists": 1,
+      "mediaFilesBeforeOpen": 0,
+      "galleryDecodeMs": 75,
+      "galleryFileBytes": 184050
+    },
+    {
+      "page": "trip",
+      "readyMs": 359,
+      "apiRequests": 4,
+      "apiBodyBytes": 7550,
+      "transferBytes": 194587,
+      "mediaLists": 1,
+      "mediaFilesBeforeOpen": 0,
+      "galleryDecodeMs": 60,
+      "galleryFileBytes": 184050
+    },
+    {
+      "page": "trip",
+      "readyMs": 225,
+      "apiRequests": 4,
+      "apiBodyBytes": 7550,
+      "transferBytes": 194587,
+      "mediaLists": 1,
+      "mediaFilesBeforeOpen": 0,
+      "galleryDecodeMs": 61,
+      "galleryFileBytes": 184050
+    }
+  ],
+  "widths": [
+    1440,
+    1100,
+    834,
+    390,
+    360
+  ],
+  "engines": {
+    "firefox": "not installed",
+    "webkit": "not installed"
+  },
+  "cssZoom200": "Trip overflow and modal focus checked (CSS zoom)"
+}

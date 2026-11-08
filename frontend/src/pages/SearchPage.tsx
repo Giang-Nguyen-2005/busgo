@@ -184,7 +184,7 @@ export function SearchPage() {
             <div className="filter-actions"><button>Áp dụng bộ lọc</button><button type="button" className="secondary" onClick={() => form.reset(emptyFilters)}>Đặt lại</button></div>
           </form>
         </FilterPanel>
-        <section className="results">
+        <section className="results" aria-label="Kết quả tìm chuyến"><p className="search-comparison-note muted">So sánh giờ đón, điểm trả và giá mỗi chỗ. Mở chuyến để xem sơ đồ ghế và điều kiện trước khi đặt.</p>
           <div className="results-toolbar">
             <span>
               {result.data

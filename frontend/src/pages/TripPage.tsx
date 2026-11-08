@@ -1,3 +1,5 @@
+import { LoadingSkeleton } from "../components/foundations/Loading";
+import { OperatorVehicleImage } from "../features/customer/OperatorTripMedia";
 import { bookingRecovery } from "../features/booking/recovery";
 import { searchReturn } from "../features/customer/presentation";
 import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
@@ -31,7 +33,6 @@ import {
   Empty,
   ErrorState,
   Journey,
-  Loading,
   PriceSummary,
   Steps,
 } from "../components/ui";
@@ -177,7 +178,7 @@ function TripSelection() {
         </div>
       )}
       {detail.isPending || seats.isPending ? (
-        <Loading />
+        <LoadingSkeleton label="Đang tải thông tin chuyến và sơ đồ ghế…" variant="panel" />
       ) : blockingQueryError(detail) || blockingQueryError(seats) ? (
         <ErrorState
           error={detail.error || seats.error}
@@ -198,10 +199,13 @@ function TripSelection() {
                 {detail.data!.operator.name} · {detail.data!.busType.name}
               </p>
               <div><Rating {...detail.data!.operator} /></div>
+              <div className="trip-heading-links">
               <Link to={`/operators/${detail.data!.operator.id}?returnTo=${encodeURIComponent(location.pathname + location.search)}`} onClick={() => {
                 if (availableSelection.length) saveSelection({ tripId: Number(tripId), ...journey, tripSeatIds: availableSelection, returnTo: location.pathname + location.search });
                 else clearSelection();
               }}>Thông tin và đánh giá nhà xe</Link>
+              <OperatorVehicleImage operatorId={detail.data!.operator.id} busType={detail.data!.busType} compact />
+              </div>
             </div>
             <Link className="text-button" to={searchReturn(params.get("search"))}>
               Đổi hành trình
@@ -237,6 +241,7 @@ function TripSelection() {
                   }
                 />
               )}
+
               <Journey pickup={detail.data!.pickup.name} dropoff={detail.data!.dropoff.name} departure={detail.data!.pickup.departureTime} arrival={detail.data!.dropoff.arrivalTime} />
               <PublicPromotions key={`${tripId}-${journey.pickupLocationId}-${journey.dropoffLocationId}`} trip={{ id: Number(tripId), pickup: journey.pickupLocationId, dropoff: journey.dropoffLocationId }} />
               <PrebookingDetails information={detail.data!.prebooking} pickup={detail.data!.pickup} dropoff={detail.data!.dropoff} vehicleName={detail.data!.busType.name} seats={seats.data!.seats} />
@@ -265,9 +270,9 @@ function TripSelection() {
                 total={availableSelection.length * seats.data!.price}
               />
               <p className="fine-print">
-                Ghế đang chọn chưa được giữ chỗ. Giá tạm tính; chỉ khi hệ thống xác nhận giữ chỗ thành công, bạn mới chuyển sang đặt vé.
+                Chỗ đang chọn chưa được giữ. Giá tạm tính sẽ được xác nhận khi giữ chỗ thành công.
               </p>
-              {!auth.authenticated && <p className="fine-print">Bạn cần đăng nhập hoặc đăng ký trước khi giữ chỗ và đặt vé. Khi quay lại, hệ thống sẽ kiểm tra lại chỗ trống.</p>}
+              {!auth.authenticated && <p className="fine-print">Đăng nhập để tiếp tục giữ chỗ. Chỗ trống sẽ được kiểm tra lại khi bạn quay lại.</p>}
               {selected.length !== availableSelection.length && (
                 <div className="notice warning">
                   Một số ghế đã thay đổi trạng thái. Vui lòng kiểm tra lựa chọn.

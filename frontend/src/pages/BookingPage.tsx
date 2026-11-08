@@ -95,6 +95,7 @@ function BookingCheckout() {
   const expired =
     hold.data?.status === "EXPIRED" ||
     (!!hold.data && seconds === 0) ||
+    (errorCode(hold.error) === "SEAT_HOLD_NOT_FOUND" && !!saved && Date.parse(saved.expiresAt) <= now) ||
     [errorCode(hold.error), errorCode(booking.error)].includes(
       "SEAT_HOLD_EXPIRED",
     );
@@ -161,7 +162,7 @@ function BookingCheckout() {
             </div>
             <span className="eyebrow">THÔNG TIN KHÁCH HÀNG</span><h2>Thông tin liên hệ đặt vé</h2>
             <p className="muted">
-              Thông tin dùng để liên hệ về đặt vé. Bạn chưa cung cấp tên riêng cho từng khách trên chỗ.
+              Nhập thông tin người liên hệ cho đặt vé này. Bước này chưa thu thập tên riêng của từng hành khách.
             </p>
             <form
               className="form-stack"

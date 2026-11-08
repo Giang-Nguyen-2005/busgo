@@ -8,6 +8,30 @@
 .review-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .marketplace textarea { width: 100%; min-height: 110px; border: 1px solid #cbd5d1; border-radius: 8px; padding: .75rem; font: inherit; resize: vertical; }
 .market-profile-heading { display: flex; align-items: center; gap: 1rem; }
-.market-profile-heading img { width: 72px; height: 72px; object-fit: contain; }
+.market-profile-heading > div { min-width: 0; overflow-wrap: anywhere; }
+.operator-description { overflow-wrap: anywhere; white-space: pre-wrap; font-size: .9rem; color: var(--color-text-secondary); }
+.destination-image { display: inline-grid; place-items: center; position: relative; width: 80px; height: 60px; flex: 0 0 80px; background: var(--color-bg-subtle); color: var(--color-primary); border-radius: var(--radius-sm); overflow: hidden; }
+.destination-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.discovery-route strong { min-width: 0; overflow-wrap: anywhere; }
+.customer-shell .hero-art img { object-position: var(--hero-position, 62% center); }
+.customer-faq { margin-block: 32px; }
+.customer-faq details + details { border-top: 1px solid var(--color-border); }
+.customer-faq summary { padding-block: 14px; cursor: pointer; font-weight: 600; }
+.customer-faq p { margin-top: 0; overflow-wrap: anywhere; }
+@media(max-width: 760px) { .customer-shell .hero-art img { object-position: var(--hero-mobile-position, 62% center); } }
 .market-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
 @media(max-width: 760px) { .marketplace-review .split { flex-wrap: wrap; gap: .5rem; } }
+
+.home-promo-cards { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; margin-block: 20px 28px; }
+.home-promo-card { display: block; min-width: 0; padding: 0; overflow: hidden; color: inherit; text-decoration: none; }
+.home-promo-art { position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 18px; aspect-ratio: 1; background: var(--color-bg-subtle); color: var(--color-primary); text-align: center; overflow: hidden; }
+.home-promo-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.home-promo-art > strong { font-size: clamp(20px,2.5vw,32px); }
+.home-promo-copy { display: grid; gap: 8px; padding: 16px; }
+.home-promo-copy > span { color: var(--color-text-secondary); font-size: 14px; }
+#public-promotions, #public-operators, #journey-search { scroll-margin-top: 100px; }
+@media(max-width:760px) {
+ .home-promo-cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 14px; padding-bottom: 12px; max-width: 100%; }
+ .home-promo-card { flex: 0 0 82%; scroll-snap-align: start; }
+ .home-promo-art > strong { font-size: 26px; }
+}

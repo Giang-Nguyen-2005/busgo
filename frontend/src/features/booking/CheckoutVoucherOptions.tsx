@@ -39,7 +39,7 @@ export function CheckoutVoucherOptions({ userId, holdToken, context, enabled, di
     enabled: enabled && !!userId, staleTime: 0, gcTime: 0, retry: false, refetchInterval: enabled ? 30_000 : false,
   });
   return <details className="checkout-voucher-options"><summary>Ưu đãi dành cho chuyến đi</summary>
-    <p className="fine-print">Chỉ hiển thị mã nhà xe cho phép công khai cho lượt giữ chỗ này. Chọn một mã để kiểm tra lại giá; danh sách và báo giá chưa giữ lượt ưu đãi. Booking thành công mới xác nhận số tiền.</p>
+    <p className="fine-print">Các mã dưới đây do nhà xe giới thiệu cho chỗ bạn đang giữ. Chọn mã để kiểm tra giá; số tiền và lượt ưu đãi chỉ được xác nhận khi đặt vé thành công.</p>
     {!enabled ? <p>Chưa thể kiểm tra ưu đãi cho lượt giữ chỗ này.</p> : query.isPending ? <Loading /> : query.isError ? <ErrorState error={query.error} retry={() => query.refetch()} /> : <>
       {!query.data.options.length && <p>Không có ưu đãi công khai phù hợp cho lượt giữ chỗ này. Bạn vẫn có thể nhập mã riêng hoặc đặt vé theo giá gốc.</p>}
       <div className="voucher-options-list">{query.data.options.map(option => <VoucherOptionCard key={option.id} option={option} selected={selectedCode === option.code} disabled={disabled || query.isFetching} onSelect={onSelect} />)}</div>

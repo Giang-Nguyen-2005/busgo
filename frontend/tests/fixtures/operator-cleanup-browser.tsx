@@ -27,6 +27,11 @@ apiClient.defaults.adapter=async config=>{
  const body=config.data ? JSON.parse(config.data) : {};
  const response=(data:unknown,pagination?:unknown)=>({config,status:200,statusText:'OK',headers:{},data:pagination ? {data,pagination} : {data}});
  const page=(data:unknown[],total=data.length)=>response(data,{page:0,size:config.params?.size||10,totalElements:total,totalPages:Math.ceil(total/(config.params?.size||10))});
+ if(path.endsWith('/operational-history')||path.endsWith('/history')||path.endsWith('/modifications')||path.endsWith('/partial-cancellations')||path.endsWith('/attendance'))return response([]);
+ if(path.endsWith('/crew'))return response({assignments:[]});
+ if(path.endsWith('/partial-cancellation-eligibility'))return response({eligibility:{allowed:false,message:'Fixture'},items:[]});
+ if(path.endsWith('/modification-eligibility'))return response({seatChange:{allowed:false,message:'Fixture'},tripChange:{allowed:false,message:'Fixture'},items:[]});
+ if(path.endsWith('/recovery'))return response({eligible:false,refunds:[],tickets:[],history:[]});
  if(path.startsWith('/operator/')) {
    const opTrip={id:7,status:'SCHEDULED',route:trip.route,bus:{id:2,licensePlate:'51B-FIXTURE',busTypeName:trip.busType.name},departureTime:departure,estimatedArrivalTime:arrival,seats:seats.map(s=>({...s,id:s.tripSeatId})),stops:[{id:11,stopOrder:1,locationName:pickup.name},{id:12,stopOrder:2,locationName:dropoff.name}],segments:[{id:90,segmentOrder:1,fromTripStopId:11,toTripStopId:12}]};
    const items=booking.seats.map((s,i)=>({...s,bookingItemId:i+1,ticket:booking.status==='CONFIRMED'?{ticketCode:'VE-FIXTURE-'+(i+1),passengerName:booking.contact.name,seatCode:s.seatCode,paymentId:1,createdAt:departure}:null}));

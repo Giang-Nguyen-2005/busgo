@@ -1,6 +1,9 @@
 import axios from "axios";
 import type { ApiError } from "../types/api";
 const messages: Record<string, string> = {
+  MEDIA_TYPE_NOT_OPERATED: "Nhà xe chưa vận hành loại xe này.",
+  MEDIA_NOT_FOUND: "Hình ảnh không còn khả dụng. Hãy tải lại danh sách.",
+  PAYLOAD_TOO_LARGE: "Ảnh vượt quá dung lượng cho phép. Mỗi ảnh tối đa 5 MiB.",
   VOUCHER_CODE_INVALID: "Mã ưu đãi cần 3–40 chữ, số, dấu gạch ngang hoặc gạch dưới.",
   VOUCHER_NOT_FOUND: "Không tìm thấy ưu đãi của nhà xe.",
   VOUCHER_NOT_ELIGIBLE: "Mã ưu đãi không áp dụng cho chuyến này.",
@@ -99,6 +102,8 @@ export const domainErrorMessage = (code?: string) => messages[code || ""] || "Kh
 export const errorCode = (error: unknown) =>
   axios.isAxiosError<ApiError>(error) ? error.response?.data?.code : undefined;
 export function errorMessage(error: unknown) {
+  if (axios.isAxiosError(error) && error.response?.data?.code === "INVALID_MEDIA" && typeof error.response.data.message === "string")
+    return error.response.data.message;
   if (axios.isAxiosError(error) && !error.response)
     return "Không thể kết nối máy chủ. Vui lòng kiểm tra mạng rồi thử lại.";
   return domainErrorMessage(errorCode(error));

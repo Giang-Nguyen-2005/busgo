@@ -265,3 +265,121 @@ body:has(.customer-shell) { min-width: 0; }
 .customer-shell .public-promotion .market-actions { align-items: center; }
 .customer-shell .promotion-link { display: inline-block; margin-top: 8px; font-weight: 600; }
 .customer-shell #trip-seats { scroll-margin-top: 90px; }
+
+/* M30.3: compact interior previews remain available at every breakpoint. */
+.customer-shell .trip-card-content { grid-template-columns: 136px minmax(0,1fr); }
+.customer-shell .trip-thumbnail-wrap { display: block; width: 136px; height: auto; aspect-ratio: auto; overflow: visible; border: 0; background: transparent; }
+.vehicle-media { min-width: 0; }
+.vehicle-image-button { position: relative; display: block; width: 100%; padding: 0; border: 0; border-radius: var(--radius-sm); overflow: hidden; background: var(--color-bg-subtle); cursor: zoom-in; }
+.vehicle-image-button img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+.vehicle-image-button > span { position: absolute; right: 4px; bottom: 4px; padding: 2px 6px; border-radius: 4px; background: #142d27e6; color: white; font-size: 11px; }
+.vehicle-image-caption { display: block; margin-top: 5px; color: var(--color-text-secondary); font-size: 11px; line-height: 1.4; }
+.vehicle-image-placeholder { display: grid; justify-items: center; align-content: center; gap: 5px; padding: 10px; min-height: 84px; border-radius: var(--radius-sm); background: var(--color-bg-subtle); color: var(--color-text-secondary); text-align: center; font-size: 11px; }
+.vehicle-media-detail { margin-block: 16px; }
+.vehicle-media-detail .vehicle-image-button { max-width: 260px; }
+.vehicle-media-detail .vehicle-image-placeholder { min-height: 64px; }
+.vehicle-image-modal { margin: auto; width: min(900px, calc(100vw - 32px)); max-height: 90dvh; padding: 20px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); overflow: auto; }
+.vehicle-image-modal::backdrop { background: #102c26bd; }
+.vehicle-image-modal .split { flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.vehicle-image-modal h2 { margin: 0; font-size: 20px; }
+.vehicle-image-modal img { display: block; width: 100%; height: auto; max-height: 65dvh; object-fit: contain; }
+@media (max-width: 1100px) { .customer-shell .trip-card-content { grid-template-columns: 112px minmax(0,1fr); } .customer-shell .trip-thumbnail-wrap { width: 112px; } }
+@media (max-width: 600px) {
+ .customer-shell .trip-card-content { grid-template-columns: minmax(0,1fr); gap: 12px; }
+ .customer-shell .trip-thumbnail-wrap { width: 100%; }
+ .trip-thumbnail-wrap .vehicle-media { display: flex; align-items: center; gap: 10px; }
+ .trip-thumbnail-wrap .vehicle-image-button { flex: 0 0 112px; width: 112px; }
+ .trip-thumbnail-wrap .vehicle-image-placeholder { min-height: 44px; display: flex; width: 100%; justify-content: center; }
+ .trip-thumbnail-wrap .vehicle-image-caption { max-width: 130px; margin: 0; }
+}
+/* Customer completeness: scoped additions preserve M29 hero and commerce layouts. */
+.customer-shell .destination-track {
+  --destination-width: calc((100% - 40px) / 3);
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 20px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+}
+.customer-shell .destination-track > .destination-card {
+  flex: 0 0 var(--destination-width);
+  min-width: 0;
+  scroll-snap-align: start;
+}
+.customer-shell .destination-track:focus-visible,
+.customer-shell .destination-controls button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.customer-shell .destination-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.customer-shell .destination-controls button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+}
+.customer-shell .active-route-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.customer-shell .active-route-grid .discovery-route {
+  display: grid;
+  grid-template-columns: clamp(82px, 9vw, 120px) minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+}
+.customer-shell .active-route-grid .destination-image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+}
+@media (max-width: 1000px) {
+  .customer-shell .destination-track { --destination-width: calc((100% - 20px) / 2); }
+}
+@media (max-width: 600px) {
+  .customer-shell .destination-track { --destination-width: 86%; gap: 12px; }
+  .customer-shell .active-route-grid { grid-template-columns: minmax(0, 1fr); }
+  .customer-shell .active-route-grid .discovery-route { grid-template-columns: 72px minmax(0, 1fr) auto; gap: 12px; padding: 12px; }
+}
+.customer-shell .destination-card { display: block; padding: 0; overflow: hidden; margin: 0; }
+.customer-shell .destination-card .destination-image { display: block; width: 100%; height: auto; aspect-ratio: 4/3; border-radius: 0; }
+.customer-shell .destination-card .destination-image > svg { position: absolute; top: 40%; left: 45%; }
+.customer-shell .destination-card > div { padding: 18px; }
+.customer-shell .destination-card h3 { margin: 0; font-size: 20px; }
+.customer-shell .destination-card p { font-size: 14px; }
+.customer-shell .destination-card a { display: inline-flex; gap: 6px; align-items: center; min-height: 44px; font-weight: 600; }
+.customer-shell .benefits-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 24px; }
+.customer-shell .customer-benefits { margin-block: 48px; padding-block: 28px; border-block: 1px solid var(--color-border); }
+.customer-shell .benefits-grid svg { color: var(--color-primary); }
+.customer-shell .benefits-grid h3 { font-size: 17px; }
+.customer-shell .benefits-grid p { color: var(--color-text-secondary); font-size: 14px; }
+.customer-shell .booking-guide-steps { padding-left: 24px; }
+.customer-shell .booking-guide-steps li { padding-left: 8px; margin-block: 20px; }
+.customer-shell .booking-guide-steps p { margin-block: 6px; }
+.customer-shell .promo-preview-label { color: var(--color-accent); font-weight: 700; }
+.customer-shell #booking-guide, .customer-shell #customer-faq { scroll-margin-top: 100px; }
+@media(max-width:900px) { .customer-shell .benefits-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:480px) { .customer-shell .benefits-grid { gap: 20px 16px; } }
+.customer-shell .trip-meta > a { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.customer-shell .trip-meta .operator-logo { width: 32px; height: 32px; flex-basis: 32px; }
+.customer-shell .trip-meta .operator-logo img { padding: 2px; }
+.customer-shell .operator-vehicles { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,180px),1fr)); gap: 20px; }
+.customer-shell .operator-vehicles article { max-width: 300px; }
+.customer-shell .search-comparison-note { font-size: 14px; margin-top: 0; }
+.customer-shell .customer-footer-inner > div { min-width: 0; }
+.customer-shell .customer-footer-inner p { max-width: 34ch; }
+
+.customer-shell .home-promotions .home-promo-card { padding: 0; margin: 0; }
+.customer-shell .home-promo-copy > strong svg { display: inline; vertical-align: middle; }
+.customer-shell .home-guide .booking-guide-steps li { display: grid; grid-template-columns: 44px minmax(0,1fr); gap: 4px 16px; align-items: start; }
+.customer-shell .home-guide .booking-guide-steps li::before { grid-row: 1 / 3; text-align: center; }
+.customer-shell .booking-guide-steps li p { grid-column: 2; }

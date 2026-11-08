@@ -44,6 +44,10 @@ public class MarketplaceController {
     public ApiResponse<Operator> own(@AuthenticationPrincipal CurrentUser user) { return ApiResponse.of(service.ownProfile(user)); }
     @PutMapping("/operator/marketplace-profile")
     public ApiResponse<Operator> update(@AuthenticationPrincipal CurrentUser user,@Valid @RequestBody ProfileInput input) { return ApiResponse.of(service.updateProfile(user,input)); }
+    @PatchMapping("/operator/marketplace-profile")
+    public ApiResponse<Operator> description(@AuthenticationPrincipal CurrentUser user,@Valid @RequestBody DescriptionInput input) {
+        return ApiResponse.of(service.updateDescription(user,input));
+    }
     @GetMapping("/operator/reviews")
     public PagedResponse<Review> ownReviews(@AuthenticationPrincipal CurrentUser user,@RequestParam(defaultValue="0") @Min(0) int page,@RequestParam(defaultValue="10") @Min(1) @Max(100) int size) { return service.ownReviews(user,page,size); }
     @PutMapping("/operator/reviews/{id}/response")

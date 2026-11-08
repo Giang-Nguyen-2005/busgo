@@ -21,7 +21,10 @@ class M30VoucherVisibilityMigrationIT extends M20Support {
     @Autowired Environment env;
     @Autowired VoucherService vouchers;
     @Test void populatedV26DefaultsPrivateAndPreservesExistingTerms() {
-        assertThat(jdbc.queryForObject("SELECT DATABASE()",String.class)).isEqualTo("busgo_m30_4a_test");
+        String sourceSchema=jdbc.queryForObject("SELECT DATABASE()",String.class);
+        if ("busgo_m306_verify".equals(sourceSchema))
+            assertThat(env.getRequiredProperty("spring.datasource.url")).startsWith("jdbc:mysql://127.0.0.1:3346/busgo_m306_verify?");
+        else assertThat(sourceSchema).isEqualTo("busgo_m30_4a_test");
         tx.executeWithoutResult(s->{
             var f=fixture();var admin=actor(f,RoleCode.OPERATOR_ADMIN);authenticate(admin);
             vouchers.create(admin,new Terms("LEGACY","Legacy private voucher",null,"FIXED_AMOUNT",new BigDecimal("10"),null,BigDecimal.ZERO,OffsetDateTime.now().minusDays(1),OffsetDateTime.now().plusDays(1),null,null,null));
@@ -32,7 +35,7 @@ class M30VoucherVisibilityMigrationIT extends M20Support {
         String user=env.getRequiredProperty("spring.datasource.username"),password=env.getRequiredProperty("spring.datasource.password");
         Flyway.configure().dataSource(url,user,password).target("26").load().migrate();
         String voucherColumns="";
-        for(String table:List.of("users","transport_operators","operator_vouchers")) {
+        for(String table:List.of("users","transport_operators","locations","routes","operator_routes","operator_vouchers")) {
             var columns=jdbc.queryForList("SELECT column_name FROM information_schema.columns WHERE table_schema=? AND table_name=? ORDER BY ordinal_position",String.class,schema,table);
             String names=String.join(",",columns.stream().map(c->"`"+c+"`").toList());
             jdbc.update("INSERT INTO "+schema+"."+table+" ("+names+") SELECT "+names+" FROM "+table);

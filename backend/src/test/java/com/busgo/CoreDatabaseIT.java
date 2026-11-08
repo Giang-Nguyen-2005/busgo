@@ -57,7 +57,7 @@ class CoreDatabaseIT extends JwtTestSupport {
         assertThat(environment.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
         flyway.validate();
         assertThat(flyway.info().pending()).isEmpty();
-        assertThat(flyway.info().applied()).hasSize(27);
+        assertThat(flyway.info().applied()).hasSize(28);
         assertThat(roles.findAll()).extracting(Role::getCode).containsExactlyInAnyOrder(RoleCode.values());
         assertThat(jdbc.queryForList("""
                 SELECT table_name FROM information_schema.tables
@@ -69,7 +69,7 @@ class CoreDatabaseIT extends JwtTestSupport {
                 "operator_vouchers", "voucher_management_history", "voucher_usages",
                 "support_tickets", "support_activity", "support_disputes", "support_requests", "support_notifications", "audit_events",
                 "finance_mutex", "commission_policies", "financial_events", "financial_runs", "financial_exceptions", "financial_statements",
-                "marketplace_reviews", "notifications", "notification_deliveries", "notification_preferences",
+                "marketplace_reviews", "operator_media", "notifications", "notification_deliveries", "notification_preferences",
                 "bus_maintenance_records", "bus_status_history",
                 "operator_route_fares", "bus_types", "seat_templates", "buses", "refresh_tokens",
                 "trips", "trip_operational_updates", "trip_stops", "trip_segments", "trip_seats",

@@ -72,10 +72,10 @@ try {
   await page.getByRole('button',{name:'Chỉnh sửa '+code,exact:true}).click(); await page.getByLabel('Họ tên',{exact:true}).fill('Edited Driver '+width);
   await mutation(page,'PATCH',`/operator/employees/${employee.id}`,()=>page.getByRole('button',{name:'Lưu nhân sự',exact:true}).click()); await screenshot(page,width+'-employees');
   await page.goto(origin+`/operator/trips/${trip.id}`); await lifecycle(page,trip.id,'Bắt đầu đón khách',409);
-  await page.getByLabel('Nhân sự',{exact:true}).selectOption(String(employee.id));
+  await page.locator('.crew-assignment > summary').click();await page.getByLabel('Nhân sự',{exact:true}).selectOption(String(employee.id));
   await mutation(page,'PUT',`/operator/trips/${trip.id}/crew`,()=>page.getByRole('button',{name:'Phân công',exact:true}).click()); await screenshot(page,width+'-crew');
   assert.equal(await page.getByText('Chưa sẵn sàng đón khách. Kiểm tra xe và phân công ít nhất một tài xế hợp lệ.',{exact:true}).count(),0);
-  await page.goto(origin+`/operator/trips/${overlap.id}`); await page.getByLabel('Nhân sự',{exact:true}).selectOption(String(employee.id));
+  await page.goto(origin+`/operator/trips/${overlap.id}`); await page.locator('.crew-assignment > summary').click();await page.getByLabel('Nhân sự',{exact:true}).selectOption(String(employee.id));
   await mutation(page,'PUT',`/operator/trips/${overlap.id}/crew`,()=>page.getByRole('button',{name:'Phân công',exact:true}).click(),409);
   await page.goto(origin+`/operator/trips/${trip.id}`); await lifecycle(page,trip.id,'Bắt đầu đón khách');
   await page.goto(origin+`/operator/trips/${trip.id}/passengers`);
@@ -86,13 +86,13 @@ try {
   await page.getByRole('button',{name:`Đóng điểm đón ${start.locationName}`,exact:true}).click();
   await mutation(page,'POST',`/operator/trips/${trip.id}/stops/${start.id}/close-pickup`,()=>page.getByRole('button',{name:'Xác nhận đóng điểm đón',exact:true}).click(),409);
   await row(absent).getByRole('button',{name:'Vắng mặt',exact:true}).click();
-  await page.getByRole('region',{name:'Xác nhận hành khách'}).getByRole('button',{name:'Xác nhận',exact:true}).click(); await row(absent).locator('strong').filter({hasText:'Vắng mặt'}).waitFor();
+  await page.getByRole('region',{name:'Xác nhận hành khách'}).getByRole('button',{name:'Xác nhận',exact:true}).click(); await row(absent).locator('.boarding-state').getByText('Vắng mặt',{exact:true}).waitFor();
   assert.ok(await row(unpaidAbsent).getByRole('button',{name:'Check-in',exact:true}).isDisabled());
   // Click waits for the previous mutation's query refresh to finish and enable actions.
   await row(unpaidAbsent).getByRole('button',{name:'Vắng mặt',exact:true}).click();
   assert.ok(await row(unpaidAbsent).getByRole('button',{name:'Vắng mặt',exact:true}).isEnabled());
   await mutation(page,'POST',`/operator/trips/${trip.id}/booking-items/${(await call('GET',`/operator/trips/${trip.id}/attendance`,token)).data.find(p=>p.bookingId===unpaidAbsent.bookingId).bookingItemId}/no-show`,()=>page.getByRole('region',{name:'Xác nhận hành khách'}).getByRole('button',{name:'Xác nhận',exact:true}).click());
-  await row(unpaidAbsent).locator('strong').filter({hasText:'Vắng mặt'}).waitFor();
+  await row(unpaidAbsent).locator('.boarding-state').getByText('Vắng mặt',{exact:true}).waitFor();
   assert.equal(await row(unpaidAbsent).getByRole('button',{name:'Ghi nhận thu tiền mô phỏng',exact:true}).count(),0);
   const absentState=(await call('GET',`/operator/trips/${trip.id}/attendance`,token)).data.find(p=>p.bookingId===unpaidAbsent.bookingId);
   assert.equal(absentState.ticketId,null); assert.equal(absentState.paymentStatus,'PENDING'); assert.equal(absentState.paymentBlocked,true);

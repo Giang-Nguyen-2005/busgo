@@ -21,10 +21,10 @@ const checks=`
  await p.setViewportSize({width:360,height:900});
  state.publicMode=true;state.quote=false;state.publicActorId=1;
  await p.goto(origin+'/');await p.evaluate(()=>{sessionStorage.removeItem('busgo.auth');sessionStorage.removeItem('busgo.hold');});await p.reload();await ready(p);
- state.promoEmpty=true;await p.getByRole('button',{name:'Làm mới ưu đãi công khai'}).click();await p.getByText(/Chưa có ưu đãi công khai trong phạm vi này/).waitFor();assert.equal(await p.locator('.public-promotion').count(),0);await capture(p,'public-empty-360');
- state.promoEmpty=false;await p.getByRole('button',{name:'Làm mới ưu đãi công khai'}).click();await p.locator('.public-promotion').first().waitFor();
+ state.promoEmpty=true;await p.getByRole('button',{name:'Cập nhật ưu đãi'}).click();await p.getByText(/Hiện chưa có chương trình phù hợp để giới thiệu/).waitFor();assert.equal(await p.locator('.public-promotion').count(),0);await capture(p,'public-empty-360');
+ state.promoEmpty=false;await p.getByRole('button',{name:'Cập nhật ưu đãi'}).click();await p.locator('.public-promotion').first().waitFor();
  for(const width of [1440,834,390,360]){await p.setViewportSize({width,height:900});await capture(p,'public-home-'+width);assert(!(await p.locator('body').innerText()).includes('PRIVATE-CODE-DO-NOT-LEAK'));}
- await p.locator('.public-promotions').getByRole('button',{name:'Sau',exact:true}).click();await p.locator('.public-promotion').getByText('PUBLIC7',{exact:true}).waitFor();await p.getByRole('button',{name:'Làm mới ưu đãi công khai'}).click();await p.locator('.public-promotion').filter({hasText:'PUBLIC1'}).waitFor();
+ await p.locator('.public-promotions').getByRole('button',{name:'Sau',exact:true}).click();await p.locator('.public-promotion').getByText('PUBLIC7',{exact:true}).waitFor();await p.getByRole('button',{name:'Cập nhật ưu đãi'}).click();await p.locator('.public-promotion').filter({hasText:'PUBLIC1'}).waitFor();
  check('M30.4B Home zero/many public promotions, pagination and four widths, no private code or invented net price');
  const first=p.locator('.public-promotion').filter({has:p.getByText('PUBLIC1',{exact:true})});await first.getByRole('link',{name:'Tìm chuyến phù hợp'}).click();await p.waitForURL('**/search?**');await p.getByRole('heading',{name:'Bạn muốn đi đâu?',exact:true}).waitFor();assert.equal(await p.getByLabel('Ngày đi',{exact:true}).inputValue(),'');
  await p.getByLabel('Ngày đi',{exact:true}).fill('2027-01-15');await p.getByRole('button',{name:'Tìm chuyến',exact:true}).click();await p.getByRole('link',{name:'Có ưu đãi — xem điều kiện',exact:true}).waitFor();
@@ -43,9 +43,9 @@ const checks=`
  await p.locator('.checkout-voucher-options summary').click();await p.getByRole('button',{name:'Chọn mã PUBLIC1',exact:true}).click();await p.getByText(/Ưu đãi PUBLIC1:/).waitFor();assert.equal(state.calls.filter(c=>c.p==='/bookings/voucher-quote').length,quotesBefore+1);await capture(p,'public-checkout-360');
  state.publicActorId=2;await p.reload();await ready(p);await p.getByRole('alert').waitFor();assert.equal(await p.locator('.voucher-option').count(),0);
  check('M30.4B login return restores seats, checkout never auto-applies copied code; explicit select uses options/quote; account replacement cannot reuse old hold/voucher');
- state.publicActorId=1;await p.goto(origin+'/');await ready(p);state.promoHidden=true;await p.getByRole('button',{name:'Làm mới ưu đãi công khai'}).click();await p.getByText(/Chưa có ưu đãi công khai/).waitFor();assert.equal(await p.locator('.public-promotion').count(),0);
- state.promoHidden=false;state.promoExpired=true;await p.getByRole('button',{name:'Làm mới ưu đãi công khai'}).click();await ready(p);assert.equal(await p.locator('.public-promotion').count(),0);
- state.promoExpired=false;state.promoError=true;await p.getByRole('button',{name:'Làm mới ưu đãi công khai'}).click();await p.locator('.public-promotions').getByRole('alert').waitFor();state.promoError=false;await p.locator('.public-promotions').getByRole('button',{name:'Thử lại',exact:true}).click();await p.locator('.public-promotion').first().waitFor();
+ state.publicActorId=1;await p.goto(origin+'/');await ready(p);state.promoHidden=true;await p.getByRole('button',{name:'Cập nhật ưu đãi'}).click();await p.getByText(/Hiện chưa có chương trình phù hợp để giới thiệu/).waitFor();assert.equal(await p.locator('.public-promotion').count(),0);
+ state.promoHidden=false;state.promoExpired=true;await p.getByRole('button',{name:'Cập nhật ưu đãi'}).click();await ready(p);assert.equal(await p.locator('.public-promotion').count(),0);
+ state.promoExpired=false;state.promoError=true;await p.getByRole('button',{name:'Cập nhật ưu đãi'}).click();await p.locator('.public-promotions').getByRole('alert').waitFor();state.promoError=false;await p.locator('.public-promotions').getByRole('button',{name:'Thử lại',exact:true}).click();await p.locator('.public-promotion').first().waitFor();
  check('M30.4B refresh removes hidden/paused response and expired public cache; public error/retry leaves booking journey intact');
 `;
 if(process.argv.includes('--public-only'))source=source.slice(0,source.indexOf(' for (const width of (process.argv'))+source.slice(source.indexOf(' assert.equal(report.consoleErrors.length,0);'));

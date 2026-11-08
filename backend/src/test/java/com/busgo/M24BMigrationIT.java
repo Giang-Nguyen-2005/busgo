@@ -27,7 +27,10 @@ class M24BMigrationIT extends M20Support {
             var unpaid=web(f,owner,2);cancellation.customerCancel(owner.user(),unpaid.bookingId(),new CancellationDtos.Request(null));
             // Every copied table is from this isolated integration schema, never the development database.
             try(var connection=source.getConnection()) {
-                String from=connection.getCatalog();assertThat(from).matches("busgo_m(?:24b|28)_test");
+                String from=connection.getCatalog();
+                if ("busgo_m306_verify".equals(from))
+                    assertThat(connection.getMetaData().getURL()).startsWith("jdbc:mysql://127.0.0.1:3346/busgo_m306_verify?");
+                else assertThat(from).matches("busgo_m(?:24b|28)_test");
                 String schema="busgo_m24b_upgrade_"+UUID.randomUUID().toString().replace("-","");
                 try(var statement=connection.createStatement()) { statement.execute("CREATE DATABASE `"+schema+"`"); }
                 String url=connection.getMetaData().getURL().replace("/"+from,"/"+schema);
@@ -41,9 +44,12 @@ class M24BMigrationIT extends M20Support {
                         for(String table:tables) {
                             var columns=jdbc.queryForList("SELECT column_name FROM information_schema.columns WHERE table_schema=? AND table_name=? AND generation_expression='' ORDER BY ordinal_position",String.class,schema,table);
                             String names=columns.stream().map(x->"`"+x+"`").collect(java.util.stream.Collectors.joining(","));
+                            if ("refunds".equals(table))
+                                statement.executeUpdate("UPDATE "+schema+".payments SET status='PAID' WHERE status='REFUNDED'");
                             // V2 has already seeded role rows in the new V23 schema.
                             statement.execute("INSERT "+("roles".equals(table)?"IGNORE ":"")+"INTO `"+schema+"`.`"+table+"` ("+names+") SELECT "+names+" FROM `"+from+"`.`"+table+"`");
                         }
+                        statement.executeUpdate("UPDATE "+schema+".payments p JOIN "+from+".payments original ON original.id=p.id SET p.status=original.status");
                     } finally {statement.execute("SET FOREIGN_KEY_CHECKS=1");}
                 }
                 var flyway=Flyway.configure().dataSource(url,user,password).target("24").load();assertThat(flyway.migrate().migrationsExecuted).isOne();flyway.validate();

@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 const require=createRequire(import.meta.url);
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const origin=process.env.BUSGO_BROWSER_ORIGIN || 'http://127.0.0.1:5187';
+const isolated=require('./helpers/m306-environment.cjs');
+const m306=[isolated.origin,isolated.financeOrigin].includes(origin) ? await isolated.verifyM306(origin) : null;
 const out=process.env.BUSGO_BROWSER_OUTPUT || '.tools/m27a-browser';mkdirSync(out,{recursive:true});
 const evidence=[];const stamp=Date.now();
 async function api(path,token,body,method=body===undefined?'GET':'POST') {
@@ -17,7 +19,7 @@ async function uiLogin(page,email,password) {
   await page.getByRole('button',{name:'Đăng nhập',exact:true}).click();await page.waitForURL(u=>u.pathname!='/login');
 }
 const admin=await login('operator.admin@anphu-demo.example','DemoOperator!2026');
-const system=await login('system.m27a@example.test','M27Acceptance!2026');
+const system=await login(m306?'system.m306@example.test':'system.m27a@example.test',m306?process.env.M306_ADMIN_PASSWORD:'M27Acceptance!2026');
 const own=await api('/operator/finance/overview?from=2026-10-01&to=2026-10-31',admin);
 const operatorId=own.operatorId;
 const browser=await chromium.launch({channel:'msedge',headless:true});
@@ -25,8 +27,8 @@ const errors=[];
 try {
   const systemContext=await browser.newContext({viewport:{width:1440,height:1000},timezoneId:'America/New_York'});
   const page=await systemContext.newPage();page.on('pageerror',e=>errors.push(e.message));
-  await uiLogin(page,'system.m27a@example.test','M27Acceptance!2026');await page.goto(origin+'/admin/finance');
-  await page.getByRole('heading',{name:'Tài chính / Doanh thu & Hoa hồng'}).waitFor();
+  await uiLogin(page,m306?'system.m306@example.test':'system.m27a@example.test',m306?process.env.M306_ADMIN_PASSWORD:'M27Acceptance!2026');await page.goto(origin+'/admin/finance');
+  await page.getByRole('heading',{name:'Tài chính / Sổ nội bộ & Hoa hồng'}).waitFor();
   await page.getByLabel('Nhà xe',{exact:true}).selectOption(String(operatorId));
   await page.getByRole('button',{name:'Chính sách hoa hồng',exact:true}).click();
   // Future minute in Vietnam: enough time to submit and explicitly activate, no retroactive SQL changes.
@@ -110,7 +112,7 @@ try {
   }
   evidence.push('Platform and operator tabs work at 1440px and 390px without document overflow; operator policy is read-only');
   const staffContext=await browser.newContext();const sp=await staffContext.newPage();await uiLogin(sp,'operator.staff@anphu-demo.example','DemoStaff!2026');await sp.goto(origin+'/operator/finance');await sp.waitForLoadState('networkidle');
-  assert.equal(await sp.getByRole('heading',{name:'Tài chính / Doanh thu & Hoa hồng'}).count(),0);evidence.push('Staff direct finance URL denied');
+  assert.equal(await sp.getByRole('heading',{name:'Tài chính / Sổ nội bộ & Hoa hồng'}).count(),0);evidence.push('Staff direct finance URL denied');
   assert.deepEqual(errors,[]);writeFileSync(out+'/results.json',JSON.stringify({passed:true,evidence,policyId:policy.id,bookingId:booking.bookingId,runId:clean.id},null,2));
   console.log(JSON.stringify({passed:true,evidence},null,2));
 } finally {await browser.close();}

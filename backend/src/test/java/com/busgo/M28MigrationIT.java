@@ -44,7 +44,9 @@ class M28MigrationIT extends M20Support {
             var expected=new LinkedHashMap<String,List<Map<String,Object>>>();
             for(String table:tables) {
                 assertThat(table).matches("[a-z_]+");
-                expected.put(table,jdbc.queryForList("SELECT * FROM "+table));
+                // Compare every column that exists in the historical schema, including generated columns.
+            String legacy=String.join(",",jdbc.queryForList("SELECT column_name FROM information_schema.columns WHERE table_schema=? AND table_name=? ORDER BY ordinal_position",String.class,schema,table).stream().map(c->"`"+c+"`").toList());
+            expected.put(table,jdbc.queryForList("SELECT "+legacy+" FROM "+table));
             }
             // Dedicated connection; FK checks are restored even on failure. All copied data is test-only.
             jdbc.execute((org.springframework.jdbc.core.ConnectionCallback<Void>)connection->{

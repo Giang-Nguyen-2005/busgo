@@ -6,13 +6,15 @@ import assert from 'node:assert/strict';
 const require=createRequire(import.meta.url);
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const origin=process.env.BUSGO_BROWSER_ORIGIN || 'http://127.0.0.1:5179';
+const isolated=require('./helpers/m306-environment.cjs');
+const m306=origin===isolated.origin ? await isolated.verifyM306(origin) : null;
 const output=new URL('../../.tools/m18b-browser/',import.meta.url);mkdirSync(output,{recursive:true});
 const stamp=Date.now();
 async function call(method,path,token,body) { const r=await fetch(origin+'/api/v1'+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,...await r.json()}; }
 async function ok(method,path,token,body,status=200) { const r=await call(method,path,token,body);assert.equal(r.status,status,JSON.stringify(r));return r.data; }
 async function login(email,password) { return (await ok('POST','/auth/login',null,{email,password})).accessToken; }
 async function uiLogin(page,email,password) {await page.goto(origin+'/login');await page.getByLabel('Email',{exact:true}).fill(email);await page.getByLabel('Mật khẩu',{exact:true}).fill(password);await page.getByRole('button',{name:'Đăng nhập',exact:true}).click();await page.waitForURL(u=>u.pathname!='/login');}
-function sql(statement) {return execFileSync(process.env.MYSQL_CLIENT || 'C:/Program Files/MySQL/MySQL Server 9.2/bin/mysql.exe',['--no-defaults','-h','127.0.0.1','-P','13318','-u','root','busgo_m18b_browser','-e',statement],{env:{...process.env,MYSQL_PWD:''},encoding:'utf8'});}
+function sql(statement) {if(m306)return m306.sql(statement); return execFileSync(process.env.MYSQL_CLIENT || 'C:/Program Files/MySQL/MySQL Server 9.2/bin/mysql.exe',['--no-defaults','-h','127.0.0.1','-P','13318','-u','root','busgo_m18b_browser','-e',statement],{env:{...process.env,MYSQL_PWD:''},encoding:'utf8'});}
 const admin=await login('operator.admin@anphu-demo.example','DemoOperator!2026');
 const staff=await login('operator.staff@anphu-demo.example','DemoStaff!2026');
 const initial=await ok('GET','/operator/customers?q=empty-m18b-'+stamp,admin);assert.equal(initial.pagination.totalElements,0);
@@ -80,9 +82,9 @@ try {
     for(const [key,label] of [[accountKey,'account'],[refundKey,'refund'],[mixedKey,'mixed'],[absentKey,'ticketless']]) {
       await page.goto(origin+'/operator/customers/'+encodeURIComponent(key));await page.getByRole('heading',{name:'Lịch sử đặt vé',exact:true}).waitFor();
       if(label==='account') {await page.getByText('Khách có tài khoản',{exact:true}).waitFor();assert.ok((await page.locator('body').innerText()).includes('M18B Web Contact'));assert.equal(await page.getByText('Global Account Profile',{exact:true}).count(),0);}
-      if(label==='mixed') await page.getByText('1 đã lên xe / 1 vắng mặt',{exact:true}).waitFor();
-      if(label==='refund') {await page.getByText(/Hủy: Nhà xe hủy/).waitFor();await page.getByText('Giao dịch mô phỏng',{exact:true}).click();await page.getByText(/Hoàn tiền mô phỏng:/).waitFor();}
-      if(label==='ticketless') await page.getByText('1 vắng mặt',{exact:true}).waitFor();
+      if(label==='mixed') await page.locator('.customer-history').getByText('1 đã lên xe / 1 vắng mặt',{exact:true}).waitFor();
+      if(label==='refund') {await page.locator('.customer-cancellation').filter({hasText:'Nhà xe hủy'}).waitFor();await page.getByText('Giao dịch mô phỏng',{exact:true}).click();await page.getByText(/Hoàn tiền mô phỏng:/).waitFor();}
+      if(label==='ticketless') await page.locator('.customer-history').getByText('1 vắng mặt',{exact:true}).waitFor();
       assert.ok(await page.locator('a[href^="/operator/bookings/"]').count());await shot(label);
     }
     await page.goto(origin+'/operator/customers/'+encodeURIComponent(accountKey)+'?size=10');await page.getByRole('button',{name:'Sau',exact:true}).click();await page.waitForURL(u=>u.searchParams.get('page')==='1');await page.getByText('M18B Web Contact',{exact:false}).first().waitFor();await shot('history-page2');

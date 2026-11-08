@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="UTF-8"><title>Customer media test fixture</title></head>
+<body><div id="root"></div><script type="module">
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { VehicleImage, OperatorLogo, DestinationImage } from '../../src/features/customer/CustomerMedia.tsx';
+const root = createRoot(document.getElementById('root'));
+window.draw = name => root.render(React.createElement(VehicleImage, { busType: { name }, detail: true }));
+window.compact = name => root.render(React.createElement(VehicleImage, { busType: { name }, compact: true }));
+window.logo = (name, logoUrl) => root.render(React.createElement(OperatorLogo, { name, logoUrl }));
+window.destination = imageUrl => root.render(React.createElement(DestinationImage, { asset: { imageUrl } }));
+window.draw('Giường nằm 34 chỗ');
+</script></body></html>

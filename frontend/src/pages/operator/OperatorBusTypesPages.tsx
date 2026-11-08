@@ -9,6 +9,7 @@ import {
   QueryState,
 } from "../../features/operator/shared";
 import { SeatLayoutPreview } from "../../features/operator/SeatLayoutPreview";
+import { VehicleMediaEditor } from "../../features/operator/OperatorMediaEditor";
 export function OperatorBusTypesPage() {
   const query = useBusTypes();
   return (
@@ -59,6 +60,7 @@ export function OperatorBusTypeDetailPage() {
             </p>
             <h2>Mẫu sơ đồ ghế (chỉ đọc)</h2>
             <SeatLayoutPreview seats={b.seats} />
+            <VehicleMediaEditor key={b.id} type={b.id} />
           </section>
         )}
       </QueryState>

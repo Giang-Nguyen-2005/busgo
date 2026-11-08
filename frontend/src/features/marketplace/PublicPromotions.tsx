@@ -26,11 +26,11 @@ export function PublicPromotionCard({ promotion: p, inTrip = false }: { promotio
     <p>Giá gốc tối thiểu {money(p.minimumSpend)}{p.customerLimit != null && ` · Tối đa ${p.customerLimit} lượt/khách`}</p>
     <p>Tuyến: {p.route?.name || "Các tuyến đủ điều kiện của nhà xe"}</p>
     <p className="fine-print">{dateTime(p.startsAt)} – {dateTime(p.endsAt)} · Giờ Việt Nam</p>
-    <p className="fine-print">{inTrip ? "Chương trình có thể phù hợp với chuyến; còn phụ thuộc số ghế, giá trị đặt vé và giới hạn của bạn." : "Chương trình đang được công khai; chưa xác nhận áp dụng cho hành trình hoặc tài khoản của bạn."} Chỉ checkout mới kiểm tra theo chỗ đang giữ. Xem hoặc sao chép mã không giữ lượt ưu đãi.</p>
-    <div className="market-actions">{inTrip ? <a href="#trip-seats">Chọn chỗ và kiểm tra tại checkout</a> : <Link to={promotionSearch(p)}>Tìm chuyến phù hợp</Link>}
+    <p className="fine-print">{inTrip ? "Chương trình có thể phù hợp với chuyến; còn phụ thuộc số ghế, giá trị đặt vé và giới hạn của bạn." : "Cần kiểm tra hành trình và tài khoản của bạn để xác nhận điều kiện áp dụng."} Điều kiện được kiểm tra theo chỗ bạn đang giữ. Xem hoặc sao chép mã không giữ lượt ưu đãi.</p>
+    <div className="market-actions">{inTrip ? <a href="#trip-seats">Chọn chỗ để kiểm tra ưu đãi</a> : <Link to={promotionSearch(p)}>Tìm chuyến phù hợp</Link>}
       <button type="button" className="secondary" onClick={async () => {
-        try { await navigator.clipboard.writeText(p.code); setNotice(`Đã sao chép ${p.code}. Kiểm tra mã tại checkout trước khi đặt vé.`); }
-        catch { setNotice("Chưa sao chép được. Bạn có thể ghi lại mã và nhập tại checkout."); }
+        try { await navigator.clipboard.writeText(p.code); setNotice(`Đã sao chép ${p.code}. Kiểm tra mã ở bước thông tin đặt vé.`); }
+        catch { setNotice("Chưa sao chép được. Bạn có thể ghi lại mã và nhập ở bước thông tin đặt vé."); }
       }}>Sao chép mã {p.code}</button>
     </div>{notice && <p role="status">{notice}</p>}
   </article>;
@@ -55,13 +55,13 @@ export function PublicPromotions({ trip }: { trip?: { id: number; pickup: number
   }, [trip, location.hash, query.data]);
   const promotions = query.data?.data.filter(p => Date.parse(p.startsAt) <= now && Date.parse(p.endsAt) > now) || [];
   const content = <>
-    <p className="muted">Ưu đãi do nhà xe tài trợ, có điều kiện. Giá chuyến vẫn là giá gốc; số tiền giảm chỉ được kiểm tra tại checkout.</p>
+    <p className="muted">Mỗi ưu đãi có điều kiện riêng. Giá chuyến chưa trừ ưu đãi; mức giảm được kiểm tra ở bước thông tin đặt vé.</p>
     {query.isPending ? <Loading /> : query.isError ? <ErrorState error={query.error} retry={() => query.refetch()} /> : <>
-      {promotions.length ? <div className="market-grid">{promotions.map(p => <PublicPromotionCard key={p.id} promotion={p} inTrip={!!trip} />)}</div> : <p className="muted">Chưa có ưu đãi công khai trong phạm vi này. Bạn vẫn có thể tìm chuyến và nhập mã riêng tại checkout.</p>}
+      {promotions.length ? <div className="market-grid">{promotions.map(p => <PublicPromotionCard key={p.id} promotion={p} inTrip={!!trip} />)}</div> : <p className="muted">Hiện chưa có chương trình phù hợp để giới thiệu. Bạn vẫn có thể chọn chuyến hoặc nhập mã riêng ở bước thông tin đặt vé.</p>}
       <Pagination pagination={query.data.pagination} onPage={setPage} />
-      <button type="button" className="secondary" disabled={query.isFetching} onClick={() => { if(page) setPage(0); else void query.refetch(); }}>Làm mới ưu đãi công khai</button>
+      <button type="button" className="secondary" disabled={query.isFetching} onClick={() => { if(page) setPage(0); else void query.refetch(); }}>Cập nhật ưu đãi</button>
     </>}
   </>;
-  return trip ? <details id="trip-promotions" className="public-promotions" ref={element} open={open} onToggle={e => setOpen(e.currentTarget.open)}><summary>Ưu đãi công khai cho chuyến — xem điều kiện</summary>{content}</details>
-    : <section className="public-promotions"><span className="eyebrow">CHƯƠNG TRÌNH CÓ ĐIỀU KIỆN</span><h2>Ưu đãi từ nhà xe</h2>{content}</section>;
+  return trip ? <details id="trip-promotions" className="public-promotions" ref={element} open={open} onToggle={e => setOpen(e.currentTarget.open)}><summary>Ưu đãi cho chuyến — xem điều kiện</summary>{content}</details>
+    : <section id="public-promotions" className="public-promotions"><span className="eyebrow">CHƯƠNG TRÌNH CÓ ĐIỀU KIỆN</span><h2>Ưu đãi từ nhà xe</h2>{content}</section>;
 }

@@ -104,6 +104,7 @@
 }
 .operator-status-ACTIVE,
 .operator-status-AVAILABLE,
+.db-seat.operator-status-AVAILABLE,
 .operator-status-COMPLETED {
   background: #dcf2e8;
   color: #116041;

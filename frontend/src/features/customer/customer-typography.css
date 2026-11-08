@@ -1,0 +1,83 @@
+/* Customer typography: presentation tokens are scoped; M29 hero, navigation and seat geometry keep their own styles. */
+.customer-shell {
+  --customer-text-page: clamp(26px, 2.5vw, 34px);
+  --customer-text-section: clamp(26px, 2.4vw, 32px);
+  --customer-text-card: 20px;
+  --customer-text-body: 15px;
+  --customer-text-meta: 14px;
+  --customer-text-note: 13px;
+  --customer-text-price: 24px;
+  --customer-text-time: 28px;
+  --customer-leading-body: 1.6;
+  --customer-leading-heading: 1.25;
+}
+.customer-shell main :is(.page-heading,.success-heading,.market-profile-heading,.auth-form,.support-workspace) h1 {
+  font-size: var(--customer-text-page); line-height: var(--customer-leading-heading); font-weight: 750; letter-spacing: -.5px; overflow-wrap: break-word;
+}
+.customer-shell :is(.page-heading,.success-heading) p { max-width: 68ch; margin-top: 10px; }
+.customer-shell :is(.home-discovery > section,.customer-benefits,.home-guide > div,.customer-faq) > h2 {
+  font-size: var(--customer-text-section); line-height: var(--customer-leading-heading); font-weight: 750; letter-spacing: -.45px; margin: 8px 0 14px;
+}
+.customer-shell :is(.marketplace:not(.home-discovery) > section,.profile-layout > section,.checkout-contact,.summary,.ticket-journey,.support-workspace) > h2,
+.customer-shell :is(.section-title,.booking-card) h2 { font-size: var(--customer-text-card); line-height: 1.35; font-weight: 700; }
+.customer-shell :is(.destination-card,.market-operator,.benefits-grid article,.public-promotion,.operator-vehicles article) h3 {
+  font-size: var(--customer-text-card); line-height: 1.35; font-weight: 700; text-wrap: pretty; overflow-wrap: break-word;
+}
+.customer-shell :is(.home-discovery,.customer-benefits,.home-guide,.customer-faq,.auth-form,.profile-layout,.checkout-layout,.booking-list,.ticket-layout,.support-workspace) p {
+  font-size: var(--customer-text-body); line-height: var(--customer-leading-body); overflow-wrap: break-word;
+}
+.customer-shell :is(.home-discovery > section,.customer-benefits,.customer-faq) > p { max-width: 70ch; margin: 0 0 22px; }
+.customer-shell .eyebrow:not(.hero .eyebrow):not(.auth-story .eyebrow) { font-size: var(--customer-text-note); letter-spacing: .08em; font-weight: 650; }
+.customer-shell :is(.operator-description,.home-promo-copy > span,.benefits-grid p,.search-comparison-note) { font-size: var(--customer-text-body); line-height: var(--customer-leading-body); color: var(--color-text-secondary); }
+.customer-shell .market-operator h3 { margin: 14px 0 8px; }
+.customer-shell .market-operator { display: flex; flex-direction: column; align-items: flex-start; }
+.customer-shell .operator-profile-cta { margin-top: auto; padding-top: 18px; color: var(--color-primary); font-size: var(--customer-text-meta); font-weight: 650; }
+.customer-shell .market-rating { color: var(--color-text-secondary); font-size: var(--customer-text-meta); line-height: 1.5; }
+.customer-shell .route-card-copy { display: grid; gap: 8px; min-width: 0; }
+.customer-shell .route-card-copy strong { font-size: var(--customer-text-card); line-height: 1.4; overflow-wrap: break-word; }
+.customer-shell .route-card-cta { font-size: var(--customer-text-meta); font-weight: 600; color: var(--color-primary); }
+.customer-shell .discovery-empty { padding: 18px 20px; }
+.customer-shell .review-empty { padding-block: 12px; color: var(--color-text-secondary); max-width: 70ch; }
+.customer-shell .review-empty p { margin: 0 0 8px; }
+.customer-shell .booking-guide-steps li > strong { font-size: var(--customer-text-card); line-height: 1.35; }
+.customer-shell .booking-guide-steps p { max-width: 52ch; }
+.customer-shell .customer-faq summary { font-size: 16px; line-height: 1.5; padding-block: 18px; }
+.customer-shell .customer-faq details p { max-width: 76ch; color: var(--color-text-secondary); padding-bottom: 8px; }
+.customer-shell .home-guide > .card { align-self: start; border-top: 3px solid var(--color-primary); }
+.customer-shell .trip-meta { font-size: var(--customer-text-meta); line-height: 1.5; }
+.customer-shell .trip-meta strong { font-size: 18px; line-height: 1.35; overflow-wrap: break-word; }
+.customer-shell .trip-times strong { font-size: var(--customer-text-time); line-height: 1.25; }
+.customer-shell .trip-times small { font-size: var(--customer-text-note); line-height: 1.5; }
+.customer-shell .trip-times > div > span { font-size: var(--customer-text-body); line-height: 1.5; }
+.customer-shell .trip-route { font-size: var(--customer-text-meta); line-height: 1.5; }
+.customer-shell .trip-price strong { font-size: var(--customer-text-price); font-variant-numeric: tabular-nums; line-height: 1.25; }
+.customer-shell .trip-price small, .customer-shell .trip-bottom > .muted { font-size: var(--customer-text-meta); }
+.customer-shell :is(.trip-bottom .button,.home-promo-copy > strong,.destination-card a) { font-size: var(--customer-text-meta); font-weight: 650; }
+.customer-shell .journey small { font-size: var(--customer-text-meta); line-height: 1.5; }
+.customer-shell :is(.fine-print,p.fine-print,.vehicle-image-caption,.search-note) { font-size: var(--customer-text-note); line-height: 1.55; color: var(--color-text-secondary); }
+.customer-shell :is(.notice,.empty) { line-height: var(--customer-leading-body); overflow-wrap: break-word; }
+.customer-shell .notice { font-size: var(--customer-text-meta); }
+.customer-shell .empty h2 { font-size: var(--customer-text-card); line-height: 1.35; }
+.customer-shell .field > span:first-child { color: var(--color-text-secondary); }
+.customer-shell input::placeholder, .customer-shell textarea::placeholder { color: var(--color-text-muted); opacity: 1; }
+.customer-shell .auth-story h2 { font-size: var(--text-page); line-height: 1.25; color: inherit; }
+.customer-shell .customer-footer-inner { font-size: var(--customer-text-body); line-height: var(--customer-leading-body); }
+.customer-shell .customer-footer-inner small { font-size: var(--customer-text-note); }
+.customer-shell .customer-footer-inner > div > strong { color: var(--color-structural); font-size: 16px; }
+@media (max-width: 760px) {
+  .customer-shell { --customer-text-card: 18px; --customer-text-price: 22px; --customer-text-time: 26px; }
+  .customer-shell .trip-heading h1 { font-size: 24px; }
+  .customer-shell .trip-bottom { gap: 10px 12px; }
+}
+
+/* Keep the first seat rows near the top despite larger customer text. */
+.customer-shell .trip-heading p { margin-block: 6px; }
+.customer-shell .trip-heading { margin-bottom: 16px; }
+.customer-shell .seat-workspace .section-title p { margin-block: 4px; }
+
+.customer-shell .route-name-part { display: inline-block; max-width: 100%; vertical-align: top; overflow-wrap: break-word; }
+.customer-shell .public-operator-profile > section > h2 { margin-block: 24px 12px; font-size: var(--customer-text-section); }
+.customer-shell .operator-route-list { list-style: none; padding: 0; margin-block: 16px 24px; display: grid; gap: 16px; }
+.customer-shell .operator-route-list li { display: grid; gap: 6px; line-height: 1.5; }
+.customer-shell .operator-route-list strong { font-size: var(--customer-text-card); overflow-wrap: break-word; }
+.customer-shell .operator-route-list a { font-size: var(--customer-text-meta); font-weight: 600; }

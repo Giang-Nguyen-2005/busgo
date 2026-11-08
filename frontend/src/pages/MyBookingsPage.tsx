@@ -37,7 +37,7 @@ export function MyBookingsPage() {
         <div>
           <span className="eyebrow">HÀNH TRÌNH CỦA BẠN</span>
           <h1>Vé của tôi</h1>
-          <p className="muted">Theo dõi đặt vé và xem lại những chuyến đi.</p>
+          <p className="muted">Theo dõi chuyến đi và vé điện tử của bạn. Mở chi tiết để xem thanh toán, yêu cầu hỗ trợ hoặc kiểm tra điều kiện đổi, hủy.</p>
         </div>
         <Link className="button secondary" to="/">
           Đặt chuyến mới <ArrowRight size={16} />

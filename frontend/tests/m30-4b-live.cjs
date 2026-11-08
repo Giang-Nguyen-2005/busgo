@@ -23,12 +23,16 @@ function verifyLiveEnvironment(args=process.argv.slice(2),env=process.env) {
 }
 const origin=process.env.BUSGO_TEST_ORIGIN||'http://127.0.0.1:5190';
 const phase=process.argv.includes('--baseline')?'m304a-baseline':'m304b-live';
-const out=path.resolve('.tools/m30-4b/'+phase);
+const out=path.resolve(origin==='http://127.0.0.1:5196'?'.tools/m30-6/customer':'.tools/m30-4b/'+phase);
 const report={mode:'Live acceptance; no API interception; target requires independent verification',checks:[],pageErrors:[],captures:[]};
 const stamp=Date.now(),code='LIVE'+stamp;
 async function api(p,method,url,body,token){const r=await p.request.fetch(origin+'/api/v1'+url,{method,data:body,headers:token?{Authorization:'Bearer '+token}:{}});const data=await r.json();assert(r.ok(),method+' '+url+' '+r.status()+' '+JSON.stringify(data));return data;}
 async function capture(p,name){const metrics=await p.evaluate(()=>({w:innerWidth,d:document.documentElement.scrollWidth}));assert(metrics.d<=metrics.w,name+' overflow');await p.screenshot({path:path.join(out,name+'.png'),fullPage:true});report.captures.push(name);}
-async function main(){verifyLiveEnvironment();const {chromium}=loadPlaywright();fs.mkdirSync(out,{recursive:true});const browser=await chromium.launch({channel:'msedge',headless:true});const context=await browser.newContext({viewport:{width:1440,height:900},locale:'vi-VN',timezoneId:'Asia/Ho_Chi_Minh'});const p=await context.newPage();p.setDefaultTimeout(20000);p.on('pageerror',e=>report.pageErrors.push(e.message));try{
+async function main(){
+ const isolated=require('./helpers/m306-environment.cjs');
+ if(origin===isolated.origin && process.argv.includes('--allow-live-mutations')) await isolated.verifyM306(origin);
+ else verifyLiveEnvironment();
+ const {chromium}=loadPlaywright();fs.mkdirSync(out,{recursive:true});const browser=await chromium.launch({channel:'msedge',headless:true});const context=await browser.newContext({viewport:{width:1440,height:900},locale:'vi-VN',timezoneId:'Asia/Ho_Chi_Minh'});const p=await context.newPage();p.setDefaultTimeout(20000);p.on('pageerror',e=>report.pageErrors.push(e.message));try{
  const login=(await api(p,'POST','/auth/login',{email:'operator.admin@anphu-demo.example',password:'DemoOperator!2026'})).data;
  const owned=(await api(p,'GET','/operator/trips',undefined,login.accessToken)).data;
  const ids=new Set(owned.map(t=>t.id??t.tripId));const trips=(await api(p,'GET','/public/discovery/trips')).data;
@@ -80,7 +84,7 @@ async function main(){verifyLiveEnvironment();const {chromium}=loadPlaywright();
   await api(p,'PATCH','/operator/vouchers/'+campaign.id+'/visibility',{customerVisible:true},login.accessToken);
   await p.goto(origin+'/');await p.locator('.public-promotion').filter({hasText:code}).waitFor();
   await api(p,'POST','/operator/vouchers/'+campaign.id+'/pause',{},login.accessToken);
-  await p.getByRole('button',{name:'Làm mới ưu đãi công khai',exact:true}).click();await p.locator('.public-promotion').filter({hasText:code}).waitFor({state:'hidden'});
+  await p.getByRole('button',{name:'Cập nhật ưu đãi',exact:true}).click();await p.locator('.public-promotion').filter({hasText:code}).waitFor({state:'hidden'});
   const committed=(await api(p,'GET','/bookings/'+bookingId,undefined,tokens.accessToken)).data;assert.equal(committed.totalAmount,quote.totalAmount);
   report.checks.push('Live private default, public search badge, visibility off and pause refresh hide campaign without repricing committed booking');
  }

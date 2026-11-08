@@ -64,7 +64,7 @@ test('five-seat limit remains distinct from unavailable inventory and preserves 
  const html=render(h(SeatMap,{seats,selected:[1,2,3,4,5],disabled:false,onToggle(){}}));assert.match(html,/Bạn có thể chọn tối đa 5 chỗ/);assert.match(html,/seat  limit-disabled/);assert.match(html,/seat  unavailable/);assert.match(html,/grid-column:3/);assert.match(html,/Chỗ tiêu chuẩn/);assert.doesNotMatch(html,/STANDARD/);
  assert.equal(model.seatLimitDisabled(true,false,5),true);assert.equal(model.seatLimitDisabled(false,false,5),false);assert.equal(model.seatLimitDisabled(true,true,5),false);
 });
-test('generic bus image has truthful alt text and overnight arrival date',()=>{const html=render(h(TripCard,{trip,searchContext:'/search?pickupLocationId=1'}));assert.match(html,/Ảnh xe khách minh họa/);assert.doesNotMatch(html,/alt="Xe Giường nằm của Nhà xe"/);assert.match(html,/16\/01\/2027/);assert.match(html,/search=%2Fsearch/);assert.match(html,/Chọn chỗ/);});
+test('unknown interior uses neutral fallback and keeps overnight arrival date',()=>{const html=render(h(TripCard,{trip,searchContext:'/search?pickupLocationId=1'}));assert.match(html,/Chưa có ảnh nội thất phù hợp/);assert.doesNotMatch(html,/<img/);assert.doesNotMatch(html,/alt="Xe Giường nằm của Nhà xe"/);assert.match(html,/16\/01\/2027/);assert.match(html,/search=%2Fsearch/);assert.match(html,/Chọn chỗ/);});
 test('booking summary and countdown remain available alongside the contact form',()=>{
  const hold={...trip,holdToken:'fixture',expiresAt:new Date(Date.now()+600000).toISOString(),status:'ACTIVE',seats:booking.seats,pricePerSeat:350000,totalPrice:1750000};
  globalThis.sessionStorage={getItem:()=>JSON.stringify(hold)};

@@ -188,6 +188,8 @@ class M7SeatHoldIT extends JwtTestSupport {
         first.setHeldByUser(authUser(owner.id())); first.setHoldExpiresAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1));
         inventory.saveAndFlush(first);
 
+        seatMap(f,0,1).andExpect(status().isOk())
+                .andExpect(jsonPath("data.seats[0].available").value(true));
         mvc.perform(get("/api/v1/seat-holds/expired")
                         .header("Authorization", "Bearer " + owner.token()))
                 .andExpect(status().isOk()).andExpect(jsonPath("data.status").value("EXPIRED"));

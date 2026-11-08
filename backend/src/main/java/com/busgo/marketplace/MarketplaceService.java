@@ -93,7 +93,20 @@ public class MarketplaceService {
     @Transactional
     public Operator updateProfile(CurrentUser user,ProfileInput input) {
         long id=context.requireAdminOperator(user).getId();
-        jdbc.update("UPDATE transport_operators SET public_description=?,logo_url=?,updated_at=UTC_TIMESTAMP(6) WHERE id=?",input.description(),input.logoUrl(),id);
+        String current=jdbc.queryForObject("SELECT logo_url FROM transport_operators WHERE id=? FOR UPDATE",String.class,id);
+        String logo=input.logoUrl();
+        if (logo!=null && logo.startsWith("/api/v1/public/operators/") && !logo.equals(current))
+            throw new BusinessException("INVALID_MEDIA","Hãy dùng chức năng tải logo.",HttpStatus.BAD_REQUEST,null);
+        if (!java.util.Objects.equals(current,logo))
+            jdbc.update("DELETE FROM operator_media WHERE operator_id=? AND category='LOGO'",id);
+        jdbc.update("UPDATE transport_operators SET public_description=?,logo_url=?,updated_at=UTC_TIMESTAMP(6) WHERE id=?",input.description(),logo,id);
+        return repository.operator(id,false).orElseThrow();
+    }
+    @PreAuthorize("hasRole('OPERATOR_ADMIN')")
+    @Transactional
+    public Operator updateDescription(CurrentUser user,DescriptionInput input) {
+        long id=context.requireAdminOperator(user).getId();
+        jdbc.update("UPDATE transport_operators SET public_description=?,updated_at=UTC_TIMESTAMP(6) WHERE id=?",input.description(),id);
         return repository.operator(id,false).orElseThrow();
     }
     @PreAuthorize("hasAnyRole('OPERATOR_ADMIN','OPERATOR_STAFF')")

@@ -34,11 +34,11 @@ export function AuthPage({ register = false }: { register?: boolean }) {
     <div className="auth-layout">
       <aside className="auth-story">
         <span className="eyebrow">CÙNG BUSGO, ĐI MUÔN NƠI</span>
-        <h1>
+        <h2>
           Hành trình mới.
           <br />
           Bắt đầu thật dễ dàng.
-        </h1>
+        </h2>
         <p>
           Tìm chuyến phù hợp, chọn chỗ yêu thích và quản lý vé trong một nơi.
         </p>
@@ -57,8 +57,8 @@ export function AuthPage({ register = false }: { register?: boolean }) {
         <h1>{register ? "Tạo tài khoản" : "Đăng nhập"}</h1>
         <p className="muted">
           {register
-            ? "Sẵn sàng cho chuyến đi tiếp theo của bạn."
-            : "Tiếp tục hành trình và xem vé của bạn."}
+            ? "Tạo tài khoản để giữ chỗ, đặt vé và theo dõi chuyến đi."
+            : "Đăng nhập để tiếp tục đặt vé hoặc xem các chuyến đã đặt."}
         </p>
         {register ? <RegisterForm /> : <LoginForm />}
       </section>

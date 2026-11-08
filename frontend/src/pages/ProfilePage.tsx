@@ -59,7 +59,7 @@ export function ProfilePage() {
         <div>
           <span className="eyebrow">TÀI KHOẢN BUSGO</span>
           <h1>Thông tin cá nhân</h1>
-          <p className="muted">Cập nhật thông tin để đặt vé nhanh hơn.</p>
+          <p className="muted">Quản lý thông tin liên hệ và mật khẩu. Khi đặt vé, hãy kiểm tra lại tên và số điện thoại trước khi xác nhận.</p>
         </div>
       </div>
       <div className="profile-layout">

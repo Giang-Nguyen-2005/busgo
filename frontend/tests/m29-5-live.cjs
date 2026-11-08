@@ -1,14 +1,17 @@
 // Requires the dedicated M29.5 local server; never use against a shared database.
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'C:/Users/Giang/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
-const origin='http://127.0.0.1:5195',base='http://127.0.0.1:8099/api/v1';
-const out=path.resolve('.tools/m29-browser/m29-5');
-const result={mode:'LIVE React/Vite -> Spring Boot -> dedicated MySQL 3329; no API interception',checks:[],pages:[],errors:[],api:[]};
+const isolated=require('./helpers/m306-environment.cjs');
+const m306=process.env.BUSGO_TEST_ORIGIN===isolated.origin;
+const origin=m306?isolated.origin:'http://127.0.0.1:5195',base=m306?origin+'/api/v1':'http://127.0.0.1:8099/api/v1';
+const out=path.resolve(m306?'.tools/m30-6/roles':'.tools/m29-browser/m29-5');fs.mkdirSync(out,{recursive:true});
+const result={mode:m306?'M30.6 live FE/BE/MySQL 3346':'LIVE React/Vite -> Spring Boot -> dedicated MySQL 3329; no API interception',checks:[],pages:[],errors:[],api:[]};
 async function api(url,body,token,expected=200){const r=await fetch(base+url,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined});result.api.push({url,status:r.status});assert.equal(r.status,expected,url);const j=await r.json();return j.data??j;}
 async function ready(p){await p.waitForLoadState('networkidle');}
 async function login(p,email,password){await p.goto(origin+'/login');await p.getByLabel('Email',{exact:true}).fill(email);await p.getByLabel('Mật khẩu',{exact:true}).fill(password);await p.getByRole('button',{name:'Đăng nhập',exact:true}).click();await p.waitForURL(u=>u.pathname!='/login');await ready(p);}
 async function shot(p,name,width){await p.setViewportSize({width,height:900});await ready(p);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),name+' overflow');await p.screenshot({path:path.join(out,name+'-'+width+'.png'),fullPage:true});result.pages.push({name,width,url:p.url()});}
 (async()=>{
+if(m306){assert(process.argv.includes('--allow-live-mutations'));await isolated.verifyM306(origin);}
 const browser=await chromium.launch({channel:'msedge',headless:true});const context=await browser.newContext({viewport:{width:1440,height:900},locale:'vi-VN',timezoneId:'Asia/Ho_Chi_Minh'});const p=await context.newPage();p.on('pageerror',e=>result.errors.push(e.message));
 try{
  const admin=await api('/auth/login',{email:'operator.admin@anphu-demo.example',password:'DemoOperator!2026'});
@@ -35,7 +38,7 @@ try{
  for(const [role,email,password,routes] of [
  ['OPERATOR_ADMIN','operator.admin@anphu-demo.example','DemoOperator!2026',['/operator','/operator/dispatch?trip='+trip.id,'/operator/bookings','/operator/finance','/operator/support','/operator/buses','/operator/routes','/operator/staff','/operator/reports']],
  ['OPERATOR_STAFF','operator.staff@anphu-demo.example','DemoStaff!2026',['/operator','/operator/dispatch?trip='+trip.id,'/operator/bookings','/operator/support']],
- ['SYSTEM_ADMIN','system.m29@example.test','M29Acceptance!2026',['/admin','/admin/operator-applications','/admin/operators','/admin/finance','/admin/disputes','/admin/audit-events']]]){
+ ['SYSTEM_ADMIN',m306?'system.m306@example.test':'system.m29@example.test',m306?process.env.M306_ADMIN_PASSWORD:'M29Acceptance!2026',['/admin','/admin/operator-applications','/admin/operators','/admin/finance','/admin/disputes','/admin/audit-events']]]){
   const c=await browser.newContext({viewport:{width:1440,height:900},locale:'vi-VN',timezoneId:'Asia/Ho_Chi_Minh'}),page=await c.newPage();page.on('pageerror',e=>result.errors.push(e.message));await login(page,email,password);
   for(const url of routes){await page.setViewportSize({width:1440,height:900});await page.goto(origin+url);await ready(page);assert.equal(await page.getByRole('alert').count(),0,role+url+' alert: '+await page.locator('body').innerText());
    if(url.includes('dispatch')){await page.locator('.db-context-controls select').nth(0).selectOption('journey');await page.locator('.db-context-controls select').nth(1).selectOption(String(detail.stops[0].id));await page.locator('.db-context-controls select').nth(2).selectOption(String(detail.stops.at(-1).id));await page.locator('.db-seat').filter({hasText:'Đã đặt'}).first().click();await page.locator('.db-inspector').waitFor();}

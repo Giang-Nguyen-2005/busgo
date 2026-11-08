@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { register } from 'node:module';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 register('./helpers/tsx-loader.mjs', import.meta.url);
 const { SeatMap } = await import('../src/features/trip/SeatMap.tsx');
@@ -19,7 +20,7 @@ test('customer floor navigation retains physical geometry and does not change sh
 });
 test('delayed trips preserve next-day estimates and tolerate absent estimated timestamps', () => {
  const trip = { tripId:7, operator:{id:1,name:'Fixture'},route:{id:1,name:'A → B'},busType:{id:1,name:'Sleeper'},busImageUrl:null,pickup:{locationId:1,name:'A',departureTime:'2027-01-15T16:30:00Z'},dropoff:{locationId:2,name:'B',arrivalTime:'2027-01-15T22:00:00Z'},durationMinutes:330,price:100000,availableSeats:3,delayMinutes:120,operationalLabel:'Chậm 120 phút' };
- const render = t => renderToStaticMarkup(h(MemoryRouter,null,h(TripCard,{trip:t})));
+ const render = t => renderToStaticMarkup(h(QueryClientProvider,{client:new QueryClient()},h(MemoryRouter,null,h(TripCard,{trip:t}))));
  const missing=render(trip); assert.match(missing,/Đang cập nhật/); assert.match(missing,/Chậm 120 phút/);
  const nextDay=render({...trip,expectedPickupAt:'2027-01-15T18:30:00Z',expectedDropoffAt:'2027-01-16T00:00:00Z'});
  assert.match(nextDay,/16\/01\/2027 01:30/); assert.match(nextDay,/theo lịch/); assert.match(nextDay,/23:30/);

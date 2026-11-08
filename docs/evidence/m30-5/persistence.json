@@ -1,0 +1,25 @@
+{
+  "container": "busgo-m305-volume-test-mysql-1",
+  "volume": "busgo-m305-volume-test_mysql_data",
+  "startBefore": "2026-11-07T08:48:53.314335799Z",
+  "startAfter": "2026-11-07T09:03:52.289899279Z",
+  "assets": [
+    {
+      "url": "/api/v1/public/operators/31/media/be4eab36-4e58-4e48-b924-f348b69dd2fa",
+      "bytes": 54158,
+      "sha256": "2cf4442bf8fcc974c8191a5823da1a152de42645ca7e29340331ce2c5b95af9a"
+    },
+    {
+      "url": "/api/v1/public/operators/31/media/217f16b4-3589-4a4a-8378-8a28f356bd08",
+      "bytes": 184050,
+      "sha256": "08c779569fe19b734dc91e6ebdfce6c7d0151e01059ad8ac67b60c3fe03c9bee"
+    },
+    {
+      "url": "/api/v1/public/operators/31/media/0ba4ef84-093f-48ca-8301-dc610db07301",
+      "bytes": 168034,
+      "sha256": "dbaf7bcbc250901eb1fbcbd0e00bc1086a57ceb865a1cd878dbbdd449f502572"
+    }
+  ],
+  "metadataEqual": true,
+  "apiMatchesDatabase": true
+}

@@ -6,6 +6,8 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 const require=createRequire(import.meta.url);
 const { chromium }=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const origin=process.env.BUSGO_BROWSER_ORIGIN || 'http://127.0.0.1:5178';
+const isolated=require('./helpers/m306-environment.cjs');
+const m306=origin===isolated.origin ? await isolated.verifyM306(origin) : null;
 const directory=new URL(process.env.BUSGO_BROWSER_OUTPUT || '../../.tools/m18a-browser/',import.meta.url);mkdirSync(directory,{recursive:true});
 async function call(method,path,token,body) {
   const response=await fetch(origin+'/api/v1'+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(body?{body:JSON.stringify(body)}:{})});
@@ -15,7 +17,7 @@ async function login(email,password) { const r=await call('POST','/auth/login',n
 async function ok(method,path,token,body,status=200) { const r=await call(method,path,token,body);assert.equal(r.status,status,JSON.stringify(r));return r.data; }
 async function uiLogin(page,email,password) { await page.goto(origin+'/login');await page.getByLabel('Email',{exact:true}).fill(email);await page.getByLabel('Mật khẩu',{exact:true}).fill(password);await page.getByRole('button',{name:'Đăng nhập',exact:true}).click();await page.waitForURL(u=>u.pathname!='/login'); }
 function businessDate(time) { return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(time)); }
-function sql(statement) { execFileSync(process.env.MYSQL_CLIENT || 'C:/Program Files/MySQL/MySQL Server 9.2/bin/mysql.exe',['--no-defaults','-h','127.0.0.1','-P',process.env.M18_MYSQL_PORT || '13317','-u','root',process.env.M18_BROWSER_SCHEMA || 'busgo_m18a_browser','-e',statement],{env:{...process.env,MYSQL_PWD:''}}); }
+function sql(statement) {if(m306)return m306.sql(statement);  execFileSync(process.env.MYSQL_CLIENT || 'C:/Program Files/MySQL/MySQL Server 9.2/bin/mysql.exe',['--no-defaults','-h','127.0.0.1','-P',process.env.M18_MYSQL_PORT || '13317','-u','root',process.env.M18_BROWSER_SCHEMA || 'busgo_m18a_browser','-e',statement],{env:{...process.env,MYSQL_PWD:''}}); }
 const admin=await login('operator.admin@anphu-demo.example','DemoOperator!2026');const staff=await login('operator.staff@anphu-demo.example','DemoStaff!2026');
 const list=await ok('GET','/operator/trips?size=100',admin);const template=await ok('GET',`/operator/trips/${list[0].id}`,admin);
 const start=Math.max(Date.now(),...list.map(t=>Date.parse(t.estimatedArrivalTime)))+7*86400000;
@@ -62,13 +64,13 @@ try {
     const shown=await page.locator('.report-metrics div').filter({has:page.getByText(label,{exact:true})}).first().locator('dd').innerText();assert.equal(shown,new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND'}).format(value));
   }
   await screenshot(width+'-overview');
-  await page.getByRole('button',{name:'Thu tiền',exact:true}).click();for(const method of ['MOCK_ONLINE','QR_TRANSFER','PAY_ON_BOARD'])await page.getByRole('rowheader',{name:new RegExp(method)}).waitFor();await screenshot(width+'-collections');
+  await page.getByRole('button',{name:'Thu tiền',exact:true}).click();for(const label of ['Thanh toán trực tuyến mô phỏng','QR / link thanh toán mô phỏng','Thu tiền khi khách lên xe'])await page.getByRole('rowheader',{name:label,exact:true}).waitFor();await screenshot(width+'-collections');
   const webOnly=await apply(today,departure,'WEB');assert.deepEqual(webOnly.data.bookings.bySource,{WEB:1,PHONE:0});assert.equal(webOnly.data.collections.totals.grossMockCollections,web.totalAmount);
   const empty=await apply('2020-01-01','2020-01-01');assert.equal(empty.data.collections.totals.grossMockCollections,0);await page.getByText(/Không có hoạt động trong kỳ/).waitFor();await screenshot(width+'-empty');await apply(today,departure);
   await page.getByRole('button',{name:'Đặt vé & vé',exact:true}).click();await page.getByRole('heading',{name:'WEB / PHONE · booking mới',exact:true}).waitFor();await screenshot(width+'-bookings');
   await page.getByRole('button',{name:'Chuyến / Tuyến',exact:true}).click();await page.locator('.report-table-wrap').getByRole('link',{name:new RegExp('#'+trip.id)}).count();await page.getByRole('button',{name:'Chuyến',exact:true}).click();await page.getByRole('link',{name:new RegExp('#'+trip.id)}).waitFor();await screenshot(width+'-trips');
   await page.getByRole('button',{name:'Hành khách',exact:true}).click();await page.getByText('Chưa ghi nhận',{exact:true}).waitFor();await screenshot(width+'-attendance');
-  await page.goto(origin+'/operator');await page.getByRole('heading',{name:'Tổng quan quản lý hôm nay',exact:true}).waitFor();await screenshot(width+'-dashboard');
+  await page.goto(origin+'/operator');await page.getByRole('heading',{name:'Kết quả kinh doanh hôm nay',exact:true}).waitFor();await screenshot(width+'-dashboard');
   const staffPage=await context.newPage();await uiLogin(staffPage,'operator.staff@anphu-demo.example','DemoStaff!2026');await staffPage.goto(origin+'/operator/reports');assert.equal(await staffPage.getByRole('heading',{name:'Thu tiền mô phỏng · ngày giao dịch'}).count(),0);assert.equal(await staffPage.getByRole('link',{name:'Báo cáo',exact:true}).count(),0);
   assert.deepEqual(errors,[]);results.push({width,admin:true,dateFilter:true,moneyMatchesFixture:true,sources:true,methods:true,load:true,attendance:true,staffDenied:true,overflow:false,pageErrors:errors});await context.close();
  }
@@ -76,6 +78,6 @@ try {
  assert.match(String(trip.id),/^\d+$/);assert.match(String(seats[7].tripSeatId),/^\d+$/);
  sql(`DELETE v FROM trip_seat_segment_inventory v JOIN trip_segments g ON g.id=v.trip_segment_id WHERE g.trip_id=${trip.id} AND v.trip_seat_id=${seats[7].tripSeatId} AND g.segment_order=1 AND v.status='AVAILABLE'`);
  const incomplete=await ok('GET','/operator/reports/summary?'+params,admin);assert.equal(incomplete.load.complete,false);assert.equal(incomplete.load.missingCells,1);assert.equal(incomplete.load.paidSegmentLoad,null);
- for(const width of [390,820,1440]) {const context=await browser.newContext({viewport:{width,height:1000}});page=await context.newPage();await uiLogin(page,'operator.admin@anphu-demo.example','DemoOperator!2026');await page.goto(origin+'/operator/reports');await apply(today,departure);await page.getByText(/Inventory chưa đầy đủ · thiếu 1/).waitFor();await screenshot(width+'-incomplete');results.find(r=>r.width===width).incompleteWarning=true;await context.close();}
+ for(const width of [390,820,1440]) {const context=await browser.newContext({viewport:{width,height:1000}});page=await context.newPage();await uiLogin(page,'operator.admin@anphu-demo.example','DemoOperator!2026');await page.goto(origin+'/operator/reports');await apply(today,departure);await page.getByText(/Dữ liệu ghế chưa đầy đủ · thiếu 1/).waitFor();await screenshot(width+'-incomplete');results.find(r=>r.width===width).incompleteWarning=true;await context.close();}
 } catch(error) {if(page&&!page.isClosed()){console.log((await page.locator('body').innerText()).slice(0,5000));await screenshot('failure');}throw error;}finally{await browser.close();writeFileSync(new URL('results.json',directory),JSON.stringify({tripId:trip.id,report,results},null,2));}
 console.log(JSON.stringify(results,null,2));

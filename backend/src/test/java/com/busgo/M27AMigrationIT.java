@@ -41,7 +41,9 @@ class M27AMigrationIT extends M20Support {
         var ordered=new ArrayList<>(tables);ordered.sort(Comparator.comparingInt(t->t.equals("refunds")?1:0));
         var expected=new LinkedHashMap<String,List<Map<String,Object>>>();var columns=new LinkedHashMap<String,String>();
         for(String table:tables) {
-            assertThat(table).matches("[a-z_]+");expected.put(table,jdbc.queryForList("SELECT * FROM "+table));
+            assertThat(table).matches("[a-z_]+");// Compare every column that exists in the historical schema, including generated columns.
+            String legacy=String.join(",",jdbc.queryForList("SELECT column_name FROM information_schema.columns WHERE table_schema=? AND table_name=? ORDER BY ordinal_position",String.class,schema,table).stream().map(c->"`"+c+"`").toList());
+            expected.put(table,jdbc.queryForList("SELECT "+legacy+" FROM "+table));
             columns.put(table,String.join(",",jdbc.queryForList("SELECT column_name FROM information_schema.columns WHERE table_schema=? AND table_name=? AND generation_expression='' ORDER BY ordinal_position",String.class,schema,table).stream().map(c->"`"+c+"`").toList()));
         }
         jdbc.execute((org.springframework.jdbc.core.ConnectionCallback<Void>)connection->{
