@@ -1,7 +1,7 @@
 import { LoadingSkeleton } from "../components/foundations/Loading";
 import { OperatorVehicleImage } from "../features/customer/OperatorTripMedia";
 import { bookingRecovery } from "../features/booking/recovery";
-import { searchReturn } from "../features/customer/presentation";
+import { searchReturn, placeLabel, routeLabel } from "../features/customer/presentation";
 import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
 import { dateTime } from "../utils/format";
 import { useEffect, useRef, useState } from "react";
@@ -193,7 +193,7 @@ function TripSelection() {
             <div>
               <span className="eyebrow">CHỌN CHỖ CHO HÀNH TRÌNH</span>
               <h1>
-                {detail.data!.pickup.name} → {detail.data!.dropoff.name}
+                {placeLabel(detail.data!.pickup.name)} → {placeLabel(detail.data!.dropoff.name)}
               </h1>
               <p className="muted">
                 {detail.data!.operator.name} · {detail.data!.busType.name}
@@ -242,7 +242,7 @@ function TripSelection() {
                 />
               )}
 
-              <Journey pickup={detail.data!.pickup.name} dropoff={detail.data!.dropoff.name} departure={detail.data!.pickup.departureTime} arrival={detail.data!.dropoff.arrivalTime} />
+              <Journey pickup={placeLabel(detail.data!.pickup.name)} dropoff={placeLabel(detail.data!.dropoff.name)} departure={detail.data!.pickup.departureTime} arrival={detail.data!.dropoff.arrivalTime} />
               <PublicPromotions key={`${tripId}-${journey.pickupLocationId}-${journey.dropoffLocationId}`} trip={{ id: Number(tripId), pickup: journey.pickupLocationId, dropoff: journey.dropoffLocationId }} />
               <PrebookingDetails information={detail.data!.prebooking} pickup={detail.data!.pickup} dropoff={detail.data!.dropoff} vehicleName={detail.data!.busType.name} seats={seats.data!.seats} />
               <details className="itinerary"><summary>Xem lịch trình chuyến xe</summary><ol>{detail.data!.stops.map(stop => <li key={stop.tripStopId}><strong>{stop.name}</strong><small>{stop.arrivalTime ? `Đến ${dateTime(stop.arrivalTime)}` : ""}{stop.departureTime ? ` · Đi ${dateTime(stop.departureTime)}` : ""}</small></li>)}</ol></details>
@@ -255,10 +255,10 @@ function TripSelection() {
             <aside className="card summary sticky selection-summary">
               <span className="eyebrow">THÔNG TIN CHUYẾN</span>
               <h2>{detail.data!.operator.name}</h2>
-              <p className="muted">{detail.data!.route.name}</p>
+              <p className="muted">{routeLabel(detail.data!.route.name)}</p>
               <Journey
-                pickup={detail.data!.pickup.name}
-                dropoff={detail.data!.dropoff.name}
+                pickup={placeLabel(detail.data!.pickup.name)}
+                dropoff={placeLabel(detail.data!.dropoff.name)}
                 departure={detail.data!.pickup.departureTime}
                 arrival={detail.data!.dropoff.arrivalTime}
               />

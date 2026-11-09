@@ -1,3 +1,4 @@
+import { placeLabel } from "../customer/presentation";
 import type { Dropoff, Pickup, PrebookingInformation, Seat } from "../../types/customer";
 import { dateTime } from "../../utils/format";
 
@@ -20,7 +21,7 @@ export function PrebookingDetails({ information, pickup, dropoff, vehicleName, s
         ["Điểm đón đã chọn", pickup.name, pickup.departureTime, information?.pickup],
         ["Điểm trả đã chọn", dropoff.name, dropoff.arrivalTime, information?.dropoff],
       ] as const).map(([label, name, time, context]) => <section key={label}>
-        <h3>{label}</h3><strong>{name}</strong><p>{time ? `${dateTime(time)} · Giờ theo lịch, Việt Nam` : "Chưa có giờ theo lịch."}</p>
+        <h3>{label}</h3><strong>{placeLabel(name)}</strong><p>{time ? `${dateTime(time)} · Giờ theo lịch, Việt Nam` : "Chưa có giờ theo lịch."}</p>
         <p>Khu vực: {[context?.district, context?.province].filter(Boolean).join(", ") || "Chưa cập nhật."}</p>
         <p className="muted">Chưa có địa chỉ và hướng dẫn lên/xuống xe được xác nhận công khai. Tên bến, thành phố hoặc khu vực không xác nhận vị trí đón/trả chính xác.</p>
       </section>)}

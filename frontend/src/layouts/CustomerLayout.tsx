@@ -98,7 +98,7 @@ export function CustomerLayout() {
           </div>
           <div>
             <strong>Đặt vé xe khách trực tuyến</strong>
-            <p>Dự án học tập · Thanh toán mô phỏng</p>
+            <p>BusGo là phiên bản giới thiệu với nhà xe và lịch chạy minh họa. Vé và thanh toán trên trang không dùng cho chuyến đi thực tế.</p>
             <small>Giờ hiển thị theo Việt Nam (UTC+7).</small>
           </div>
           <div>

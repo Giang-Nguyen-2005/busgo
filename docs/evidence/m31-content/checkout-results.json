@@ -1,0 +1,15 @@
+{
+  "quote": {
+    "grossAmount": 180000,
+    "voucherCode": "M31-AP-FIX20",
+    "voucherName": "DEMO · M31-AP-FIX20",
+    "discountType": "FIXED_AMOUNT",
+    "discountValue": 20000,
+    "discountAmount": 20000,
+    "totalAmount": 160000,
+    "eligible": true,
+    "reasonCode": null
+  },
+  "historyViewed": true,
+  "holdReleased": true
+}

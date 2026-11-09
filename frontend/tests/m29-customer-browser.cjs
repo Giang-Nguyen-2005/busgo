@@ -28,7 +28,7 @@ async function fixture(route) {
  if (p.endsWith('/unread-count')) return ok({ data: 0 });
  if (p.endsWith('/notifications')) return ok(paged([]));
  if (p === '/auth/login') return ok({ data: { ...tokens, user } });
- if (p === '/locations') return ok({ data: [{ id: 1, name: pickup.name, province: 'TP. Hồ Chí Minh' }, { id: 2, name: dropoff.name, province: 'Lâm Đồng' }].filter(l => !url.searchParams.get('q') || l.name.toLowerCase().includes(url.searchParams.get('q').toLowerCase())) });
+ if (p === '/locations' || p === '/locations/lookup') return ok({ data: [{ id: 1, name: pickup.name, province: 'TP. Hồ Chí Minh' }, { id: 2, name: dropoff.name, province: 'Lâm Đồng' }].filter(l => p === '/locations/lookup' ? (url.searchParams.get('ids') || '').split(',').includes(String(l.id)) : !url.searchParams.get('q') || l.name.toLowerCase().includes(url.searchParams.get('q').toLowerCase())) });
  if(state.discoveryError && p.startsWith('/public/discovery/')) return fail('TEST_ERROR');
  if (/^\/public\/operators\/\d+\/media$/.test(p)) return ok({data:{logoUrl:null,photos:[]}});
  if (p === '/public/operators' || p === '/public/discovery/operators') return ok(paged(state.discoveryEmpty ? [] : [operator]));

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { DestinationImage } from "../customer/CustomerMedia";
 import { destinationAssets, destinationForLocation } from "../customer/visualAssets";
-import { routeSearch } from "../customer/presentation";
+import { routeSearch, routeLabel } from "../customer/presentation";
 import { ErrorState } from "../../components/ui";
 import { LoadingSkeleton } from "../../components/foundations/Loading";
 import type { Named } from "../../types/customer";
@@ -64,7 +64,7 @@ export function DestinationDiscovery({ routes = [], locations = [], pending, err
       const route = !pending && !error ? routes.find(r => destinationForLocation(r.dropoffLocationId, locations)?.key === asset.key) : undefined;
       return <article className="card destination-card" key={asset.key}>
         <DestinationImage asset={asset} />
-        <div><h3>{asset.name}</h3>{route ? <><p>{route.name}</p><Link to={routeSearch(route)}>Chọn ngày khởi hành <ArrowUpRight size={16} aria-hidden="true" /></Link></> : <p className="muted">{pending ? "Đang kiểm tra tuyến được giới thiệu…" : error ? "Chưa tải được thông tin tuyến." : "Điểm đến này chưa có tuyến được giới thiệu."}</p>}</div>
+        <div><h3>{asset.name}</h3>{route ? <><p>{routeLabel(route.name)}</p><Link to={routeSearch(route)}>Chọn ngày khởi hành <ArrowUpRight size={16} aria-hidden="true" /></Link></> : <p className="muted">{pending ? "Đang kiểm tra tuyến được giới thiệu…" : error ? "Chưa tải được thông tin tuyến." : "Điểm đến này chưa có tuyến được giới thiệu."}</p>}</div>
       </article>;
     })}</div>
     <div className="destination-controls">

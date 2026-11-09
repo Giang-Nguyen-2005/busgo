@@ -1,3 +1,4 @@
+import { photoDescription } from "../customer/displayCopy";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient, get } from "../../api/client";
@@ -98,14 +99,14 @@ export function VehicleMediaEditor({type}:{type:number}) {
   </section>;
 }
 function PhotoEditor({photo,base,first,last,busy,move,remove}:{photo:VehiclePhoto;base:string;first:boolean;last:boolean;busy:boolean;move:(step:number)=>void;remove:()=>void}) {
-  const [alt,setAlt]=useState(photo.alt), [category,setCategory]=useState(photo.category), save=useSave();
+  const [alt,setAlt]=useState(photoDescription(photo.alt, "")), [category,setCategory]=useState(photo.category), save=useSave();
   const dialog=useRef<HTMLDialogElement>(null);
   const path=base+"/"+photo.id;
   const {result:image,src}=usePreview(path,photo.id);
-  const update=(featured:boolean)=>save.mutate(()=>apiClient.patch(path,{alt,category,featured}));
+  const update=(featured:boolean)=>save.mutate(()=>apiClient.patch(path,{alt: alt === photoDescription(photo.alt, "") ? photo.alt : alt,category,featured}));
   return <article><fieldset disabled={busy || save.isPending}>
-    {image.isError ? <ErrorState error={image.error} retry={()=>image.refetch()}/> : <button type="button" disabled={!src} className="media-preview-button" onClick={()=>dialog.current?.showModal()}>{src && <img src={src} alt={photo.alt || "Ảnh xe"} width={240} height={150}/>}Xem ảnh lớn</button>}
-    <dialog className="vehicle-image-modal" ref={dialog} aria-label="Xem ảnh lớn"><button onClick={()=>dialog.current?.close()}>Đóng ảnh</button>{src && <img src={src} alt={photo.alt || "Ảnh xe"}/>}</dialog>
+    {image.isError ? <ErrorState error={image.error} retry={()=>image.refetch()}/> : <button type="button" disabled={!src} className="media-preview-button" onClick={()=>dialog.current?.showModal()}>{src && <img src={src} alt={photoDescription(photo.alt, "")} width={240} height={150}/>}Xem ảnh lớn</button>}
+    <dialog className="vehicle-image-modal" ref={dialog} aria-label="Xem ảnh lớn"><button onClick={()=>dialog.current?.close()}>Đóng ảnh</button>{src && <img src={src} alt={photoDescription(photo.alt, "")}/>}</dialog>
     <CategoryField value={category} change={setCategory}/><label className="field">Mô tả ảnh<input maxLength={180} value={alt} onChange={e=>setAlt(e.target.value)}/></label>
     <div className="media-actions"><button onClick={()=>update(false)}>Lưu thay đổi</button><button className="secondary" disabled={photo.featured} onClick={()=>update(true)}>{photo.featured ? "Ảnh đại diện" : "Đặt làm đại diện"}</button>
     <button className="secondary" disabled={first} onClick={()=>move(-1)}>Đưa lên</button><button className="secondary" disabled={last} onClick={()=>move(1)}>Đưa xuống</button>

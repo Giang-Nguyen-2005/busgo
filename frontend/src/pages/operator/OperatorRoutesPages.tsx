@@ -1,3 +1,4 @@
+import { routeLabel } from "../../features/customer/presentation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -43,7 +44,7 @@ export function OperatorRoutesPage() {
               {result.data.map((r) => (
                 <tr key={r.id}>
                   <td>
-                    <Link to={`/operator/routes/${r.id}`}>{r.route.name}</Link>
+                    <Link to={`/operator/routes/${r.id}`}>{routeLabel(r.route.name)}</Link>
                   </td>
                   <td>
                     {r.route.origin.name} → {r.route.destination.name}
@@ -104,7 +105,7 @@ export function OperatorRouteCatalogPage() {
               {result.data.map((r) => (
                 <tr key={r.id}>
                   <td>
-                    <strong>{r.name}</strong>
+                    <strong>{routeLabel(r.name)}</strong>
                     <p>
                       {r.origin.name} → {r.destination.name}
                     </p>
@@ -204,7 +205,7 @@ export function OperatorRouteDetailPage() {
         {(r) => (
           <>
             <section className="card">
-              <h2>{r.route.name}</h2>
+              <h2>{routeLabel(r.route.name)}</h2>
               <p>
                 {r.route.origin.name} → {r.route.destination.name}
               </p>

@@ -1,3 +1,4 @@
+import { offerTitle, offerDescription } from "../customer/displayCopy";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { apiClient } from "../../api/client";
@@ -19,8 +20,8 @@ export function VoucherOptionCard({ option: v, selected, disabled, onSelect }: {
   option: VoucherOption; selected: boolean; disabled: boolean; onSelect: (code: string) => void;
 }) {
   return <article className="voucher-option">
-    <h3>{v.name}</h3><strong>{v.code}</strong>
-    {v.description && <p>{v.description}</p>}
+    <h3>{offerTitle(v.name, v.code, v.discountType, v.discountValue)}</h3><strong>{v.code}</strong>
+    {offerDescription(v.description) && <p>{offerDescription(v.description)}</p>}
     <p>{v.discountType === "PERCENT" ? `${v.discountValue}%` : money(v.discountValue)}{v.maxDiscount != null && ` · Giảm tối đa ${money(v.maxDiscount)}`}</p>
     <p>Giá gốc tối thiểu {money(v.minimumSpend)}{v.customerLimit != null && ` · Tối đa ${v.customerLimit} lượt/khách`}</p>
     <p className="fine-print">{dateTime(v.startsAt)} – {dateTime(v.endsAt)} · Giờ Việt Nam</p>

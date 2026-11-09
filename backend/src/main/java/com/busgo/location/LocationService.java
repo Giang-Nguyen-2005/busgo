@@ -15,6 +15,15 @@ public class LocationService {
         this.locations = locations;
     }
 
+    /** Bounded exact lookup; autocomplete's first page is never a registry. */
+    @Transactional(readOnly = true)
+    public List<LocationResponse> lookup(List<Long> ids) {
+        return locations.findByIdInAndStatus(ids, com.busgo.common.entity.ActiveStatus.ACTIVE).stream()
+                .sorted(java.util.Comparator.comparing(com.busgo.location.entity.Location::getId))
+                .map(location -> new LocationResponse(location.getId(), location.getName(),
+                        location.getProvince(), location.getDistrict())).toList();
+    }
+
     @Transactional(readOnly = true)
     public List<LocationResponse> search(String query) {
         String normalized = query == null ? "" : query.strip();

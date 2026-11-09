@@ -1,3 +1,4 @@
+import { photoDescription } from "./displayCopy";
 import "./customer-media.css";
 import { useEffect, useId, useRef, useState } from "react";
 import { BusFront, MapPin, Image } from "lucide-react";
@@ -18,7 +19,7 @@ function ImageAttempt({ primary, fallback, alt, className, eager, width, height 
 }
 export function OperatorLogo({ name, logoUrl }: { name: string; logoUrl?: string | null }) {
   const demo = demoMedia && !safeImageUrl(logoUrl) ? demoOperatorLogo(name) : undefined;
-  return <span className="operator-logo" title={demo ? "Nhận diện hư cấu phục vụ demo" : undefined}><BusFront aria-hidden="true" size={28} /><AssetImage src={safeImageUrl(logoUrl) || demo} alt={`Logo ${name}${demo ? " — minh họa demo" : ""}`} width={72} height={72} /></span>;
+  return <span className="operator-logo"><BusFront aria-hidden="true" size={28} /><AssetImage src={safeImageUrl(logoUrl) || demo} alt={`Logo ${name}`} width={72} height={72} /></span>;
 }
 export function DestinationImage({ asset }: { asset?: DestinationAsset }) {
   return <span className="destination-image" aria-hidden="true"><MapPin size={26} /><AssetImage src={asset?.imageUrl} alt="" width={1200} height={900} /></span>;
@@ -45,9 +46,10 @@ function VehicleImageView({ demo, photos, name, detail, compact }: { demo?: stri
   const current=open ? usable[index % (usable.length || 1)] : cover;
   const src=current?.url || (demo && !failed.includes(demo) ? demo : undefined);
   const hasImage=!!src;
-  const caption=current ? "Ảnh do nhà xe cung cấp" : "Ảnh minh họa loại xe";
-  const label=current ? `Xem ảnh ${name}` : `Xem ảnh minh họa ${name}`;
-  const alt=current ? current.alt || name : `Nội thất minh họa ${name}`;
+  const illustrative = !current || current.alt.startsWith("[DEMO M31]");
+  const caption=illustrative ? "Ảnh minh họa loại xe" : "Ảnh do nhà xe cung cấp";
+  const label=illustrative ? `Xem ảnh minh họa ${name}` : `Xem ảnh ${name}`;
+  const alt=current ? photoDescription(current.alt, name) : `Nội thất minh họa ${name}`;
   function move(direction:number) { setIndex(i=>(i+direction+usable.length)%usable.length); }
   function broken() { if(src) setFailed(prev=>[...prev,src]); }
   useEffect(()=>{
@@ -59,9 +61,9 @@ function VehicleImageView({ demo, photos, name, detail, compact }: { demo?: stri
   function show() { setIndex(Math.max(0,usable.findIndex(p=>p.featured))); setOpen(true); }
   const image=src ? <img src={src} width={1200} height={900} alt={alt} loading="lazy" onError={broken} /> : <BusFront size={32} aria-hidden="true" />;
   return <div className={`vehicle-media${compact ? " vehicle-media-compact" : detail ? " vehicle-media-detail" : ""}`}>
-    {compact ? (src ? <button ref={trigger} className="secondary vehicle-media-trigger" type="button" aria-haspopup="dialog" aria-label={label} onClick={show}><Image size={16} aria-hidden="true" />{current ? "Xem ảnh nhà xe" : "Xem ảnh minh họa loại xe"}</button> : <small className="muted">Chưa có ảnh minh họa</small>) : src ? <button ref={trigger} className="vehicle-image-button" type="button" aria-label={label} onClick={show}>{image}<span>Xem ảnh</span></button> : <div className="vehicle-image-placeholder">{image}<span>Chưa có ảnh nội thất phù hợp</span></div>}
+    {compact ? (src ? <button ref={trigger} className="secondary vehicle-media-trigger" type="button" aria-haspopup="dialog" aria-label={label} onClick={show}><Image size={16} aria-hidden="true" />{illustrative ? "Xem ảnh minh họa loại xe" : "Xem ảnh nhà xe"}</button> : <small className="muted">Chưa có ảnh minh họa</small>) : src ? <button ref={trigger} className="vehicle-image-button" type="button" aria-label={label} onClick={show}>{image}<span>Xem ảnh</span></button> : <div className="vehicle-image-placeholder">{image}<span>Chưa có ảnh nội thất phù hợp</span></div>}
     {!compact && src && <small className="vehicle-image-caption">{caption}</small>}
-    {!compact && detail && !current && <p className="fine-print">Hình ảnh minh họa bố trí cơ bản, không xác nhận tiện nghi VIP hoặc trang bị của từng xe.</p>}
+    {!compact && detail && illustrative && <p className="fine-print">Hình ảnh minh họa bố trí cơ bản, không xác nhận tiện nghi VIP hoặc trang bị của từng xe.</p>}
     {src && <dialog ref={dialog} className="vehicle-image-modal" aria-labelledby={titleId} onKeyDown={e=>{
       if (usable.length>1 && e.key==="ArrowLeft") move(-1);
       if (usable.length>1 && e.key==="ArrowRight") move(1);

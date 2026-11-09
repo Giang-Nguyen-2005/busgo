@@ -1,10 +1,11 @@
+import { offerTitle, offerDescription } from "../customer/displayCopy";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { ErrorState, Loading, Pagination } from "../../components/ui";
 import type { PagedResponse } from "../../types/api";
-import { routeSearch } from "../customer/presentation";
+import { routeLabel, routeSearch } from "../customer/presentation";
 import { dateTime, money } from "../../utils/format";
 
 export interface PublicPromotion {
@@ -20,11 +21,11 @@ export function promotionSearch(p: PublicPromotion) {
 export function PublicPromotionCard({ promotion: p, inTrip = false }: { promotion: PublicPromotion; inTrip?: boolean }) {
   const [notice, setNotice] = useState("");
   return <article className="card public-promotion">
-    {inTrip ? <strong>{p.operator.name}</strong> : <Link to={`/operators/${p.operator.id}`}>{p.operator.name}</Link>}<h3>{p.name}</h3><strong>{p.code}</strong>
-    {p.description && <p>{p.description}</p>}
+    {inTrip ? <strong>{p.operator.name}</strong> : <Link to={`/operators/${p.operator.id}`}>{p.operator.name}</Link>}<h3>{offerTitle(p.name, p.code, p.discountType, p.discountValue)}</h3><strong>{p.code}</strong>
+    {offerDescription(p.description) && <p>{offerDescription(p.description)}</p>}
     <p>{p.discountType === "PERCENT" ? `${p.discountValue}%` : money(p.discountValue)}{p.maxDiscount != null && ` · Giảm tối đa ${money(p.maxDiscount)}`}</p>
     <p>Giá gốc tối thiểu {money(p.minimumSpend)}{p.customerLimit != null && ` · Tối đa ${p.customerLimit} lượt/khách`}</p>
-    <p>Tuyến: {p.route?.name || "Các tuyến đủ điều kiện của nhà xe"}</p>
+    <p>Tuyến: {(p.route ? routeLabel(p.route.name) : "") || "Các tuyến đủ điều kiện của nhà xe"}</p>
     <p className="fine-print">{dateTime(p.startsAt)} – {dateTime(p.endsAt)} · Giờ Việt Nam</p>
     <p className="fine-print">{inTrip ? "Chương trình có thể phù hợp với chuyến; còn phụ thuộc số ghế, giá trị đặt vé và giới hạn của bạn." : "Cần kiểm tra hành trình và tài khoản của bạn để xác nhận điều kiện áp dụng."} Điều kiện được kiểm tra theo chỗ bạn đang giữ. Xem hoặc sao chép mã không giữ lượt ưu đãi.</p>
     <div className="market-actions">{inTrip ? <a href="#trip-seats">Chọn chỗ để kiểm tra ưu đãi</a> : <Link to={promotionSearch(p)}>Tìm chuyến phù hợp</Link>}

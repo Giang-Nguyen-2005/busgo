@@ -1,5 +1,5 @@
 import { LoadingSkeleton } from "../components/foundations/Loading";
-import { historyEmpty } from "../features/customer/presentation";
+import { historyEmpty, placeLabel, routeLabel } from "../features/customer/presentation";
 import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
@@ -78,10 +78,10 @@ export function MyBookingsPage() {
                     <StatusBadge status={booking.status as BookingStatus} />
                   </div>
                   <h2>
-                    {booking.pickup.name} → {booking.dropoff.name}
+                    {placeLabel(booking.pickup.name)} → {placeLabel(booking.dropoff.name)}
                   </h2>
                   <p className="muted">
-                    {booking.operatorName} · {booking.routeName}
+                    {booking.operatorName} · {routeLabel(booking.routeName)}
                   </p>
                   <div className="booking-card-info">
                     <span>{dateTime(booking.departureTime)}</span>

@@ -20,6 +20,12 @@ public class LocationController {
         this.service = service;
     }
 
+    @GetMapping("/lookup")
+    public ApiResponse<List<LocationResponse>> lookup(
+            @RequestParam @Size(min = 1, max = 100) List<@jakarta.validation.constraints.Positive Long> ids) {
+        return ApiResponse.of(service.lookup(ids));
+    }
+
     @GetMapping
     public ApiResponse<List<LocationResponse>> search(
             @RequestParam(defaultValue = "") @Size(max = 150) String q) {

@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { SearchForm } from "../features/search/SearchForm";
-import { readJourney, journeyTitle } from "../features/customer/presentation";
+import { readJourney, journeyTitle, routeLabel } from "../features/customer/presentation";
 import { blockingQueryError, RefreshNotice } from "../features/customer/QueryFeedback";
 import { FilterPanel } from "../features/search/FilterPanel";
 import { apiClient } from "../api/client";
@@ -112,7 +112,7 @@ export function SearchPage() {
   if (!valid)
     return (
       <Empty title="Bạn muốn đi đâu?">
-        {params.get("routeName") && <p><strong>Tuyến: {params.get("routeName")}</strong></p>}<p>Chọn điểm đón, điểm trả và ngày đi để tìm chuyến. Chuyến và chỗ trống phụ thuộc ngày bạn chọn.</p><SearchForm />
+        {params.get("routeName") && <p><strong>Tuyến: {routeLabel(params.get("routeName") || "")}</strong></p>}<p>Chọn điểm đón, điểm trả và ngày đi để tìm chuyến. Chuyến và chỗ trống phụ thuộc ngày bạn chọn.</p><SearchForm />
         <Link className="button" to="/">
           Tìm chuyến xe
         </Link>

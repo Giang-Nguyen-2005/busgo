@@ -1,3 +1,4 @@
+import { placeLabel, routeLabel } from "../customer/presentation";
 import { PromotionPrice } from "./PromotionPrice";
 import type { Booking } from "../../types/customer";
 import { Journey, PriceSummary, StatusBadge } from "../../components/ui";
@@ -9,10 +10,10 @@ export function BookingSummary({ booking }: { booking: Booking }) {
         <StatusBadge status={booking.status} />
       </div>
       <h2>{booking.operator.name}</h2>
-      <p className="muted">{booking.route.name}</p>
+      <p className="muted">{routeLabel(booking.route.name)}</p>
       <Journey
-        pickup={booking.pickup.name}
-        dropoff={booking.dropoff.name}
+        pickup={placeLabel(booking.pickup.name)}
+        dropoff={placeLabel(booking.dropoff.name)}
         departure={booking.pickup.time}
         arrival={booking.dropoff.time}
       />

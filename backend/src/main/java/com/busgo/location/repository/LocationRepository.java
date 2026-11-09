@@ -4,6 +4,9 @@ import com.busgo.location.entity.Location;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LocationRepository extends JpaRepository<Location, Long> {
+    java.util.List<Location> findByName(String name);
+    java.util.List<Location> findByIdInAndStatus(java.util.Collection<Long> ids,
+            com.busgo.common.entity.ActiveStatus status);
     java.util.Optional<Location> findFirstByNameAndProvince(String name, String province);
 
     @org.springframework.data.jpa.repository.Query("""

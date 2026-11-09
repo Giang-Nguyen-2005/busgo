@@ -1,0 +1,96 @@
+[
+  {
+    "name": "home",
+    "width": 1440,
+    "labels": [],
+    "overflow": false,
+    "url": "http://127.0.0.1:5186/"
+  },
+  {
+    "name": "search",
+    "width": 1440,
+    "labels": [],
+    "overflow": false,
+    "url": "http://127.0.0.1:5186/search?pickupLocationId=261&dropoffLocationId=269&departureDate=2026-11-14"
+  },
+  {
+    "name": "trip",
+    "width": 1440,
+    "labels": [],
+    "overflow": false,
+    "url": "http://127.0.0.1:5186/trips/335?pickupLocationId=261&dropoffLocationId=269"
+  },
+  {
+    "name": "promotions",
+    "width": 1440,
+    "labels": [],
+    "overflow": false,
+    "url": "http://127.0.0.1:5186/promotions"
+  },
+  {
+    "name": "profile",
+    "width": 1440,
+    "labels": [],
+    "overflow": false,
+    "url": "http://127.0.0.1:5186/operators/61"
+  },
+  {
+    "name": "operator",
+    "width": 1440,
+    "labels": [],
+    "overflow": false
+  },
+  {
+    "name": "admin",
+    "width": 1440,
+    "labels": [],
+    "overflow": false
+  },
+  {
+    "name": "home",
+    "width": 390,
+    "labels": [],
+    "overflow": false,
+    "url": "http://127.0.0.1:5186/"
+  },
+  {
+    "name": "search",
+    "width": 390,
+    "labels": [],
+    "overflow": false,
+    "url": "http://127.0.0.1:5186/search?pickupLocationId=261&dropoffLocationId=269&departureDate=2026-11-14"
+  },
+  {
+    "name": "trip",
+    "width": 390,
+    "labels": [],
+    "overflow": false,
+    "url": "http://127.0.0.1:5186/trips/335?pickupLocationId=261&dropoffLocationId=269"
+  },
+  {
+    "name": "promotions",
+    "width": 390,
+    "labels": [],
+    "overflow": false,
+    "url": "http://127.0.0.1:5186/promotions"
+  },
+  {
+    "name": "profile",
+    "width": 390,
+    "labels": [],
+    "overflow": false,
+    "url": "http://127.0.0.1:5186/operators/61"
+  },
+  {
+    "name": "operator",
+    "width": 390,
+    "labels": [],
+    "overflow": false
+  },
+  {
+    "name": "admin",
+    "width": 390,
+    "labels": [],
+    "overflow": false
+  }
+]

@@ -10,13 +10,12 @@ export const homePromotionalCards = [
 ] as const;
 
 export function HomePromotionalCards() {
-  const preview = import.meta.env?.DEV === true;
-  const cards = homePromotionalCards.filter(card => card.key !== "journey" || preview);
+  const cards = homePromotionalCards.filter(card => card.key !== "journey");
   return <><p className="muted">Khám phá ưu đãi từ nhà xe. Xem phạm vi áp dụng và điều kiện trước khi chọn chuyến.</p>
     <div className="home-promo-cards" aria-label="Gợi ý khám phá">
       {cards.map(card => <a className="card home-promo-card" key={card.key} href={card.href}>
         <span className="home-promo-art" aria-hidden="true"><MapPin size={48} /><AssetImage src={card.image} alt="" width={1200} height={1200} /></span>
-        <span className="home-promo-copy">{card.key === "journey" && <small className="promo-preview-label">Bản xem trước · Chưa có hiệu lực</small>}<strong>{card.title} <ArrowUpRight size={16} /></strong><span>{card.description}</span></span>
+        <span className="home-promo-copy"><strong>{card.title} <ArrowUpRight size={16} /></strong><span>{card.description}</span></span>
       </a>)}
     </div></>;
 }

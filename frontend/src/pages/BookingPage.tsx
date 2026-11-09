@@ -1,3 +1,4 @@
+import { placeLabel, routeLabel } from "../features/customer/presentation";
 import { CheckoutVoucherOptions } from "../features/booking/CheckoutVoucherOptions";
 import { PrebookingDetails } from "../features/trip/PrebookingDetails";
 import { rememberBooking, bookingPaymentNavigation } from "../features/booking/recovery";
@@ -204,10 +205,10 @@ function BookingCheckout() {
           </section>
           <aside className="card summary sticky">
             <h2>{saved.operatorName || "Hành trình của bạn"}</h2>
-            {saved.routeName && <p className="muted">{saved.routeName}</p>}
+            {saved.routeName && <p className="muted">{routeLabel(saved.routeName)}</p>}
             <Journey
-              pickup={hold.data!.pickup.name}
-              dropoff={hold.data!.dropoff.name}
+              pickup={placeLabel(hold.data!.pickup.name)}
+              dropoff={placeLabel(hold.data!.dropoff.name)}
               departure={hold.data!.pickup.departureTime}
               arrival={hold.data!.dropoff.arrivalTime}
             />
@@ -230,7 +231,7 @@ function BookingCheckout() {
             </p>
 
           </aside>
-          <div className="checkout-confirm card">
+          <div className="checkout-confirm card"><p className="notice info">Bạn đang đặt vé minh họa. BusGo không thu tiền và vé này không dùng để lên xe.</p>
             <div><small>Tổng thanh toán</small><strong>{money(quoteReady ? voucher.data!.totalAmount : hold.data!.totalPrice)}</strong></div>
               <button form="booking-contact"
                 disabled={submitBlocked}

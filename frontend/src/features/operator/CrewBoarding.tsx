@@ -1,3 +1,5 @@
+import { placeLabel } from "../customer/presentation";
+import { employeeLabel, contactLabel } from "../customer/displayCopy";
 import { operationEventLabel, operationEntityLabel, operationHistoryReason } from "./operations";
 import { DomainStatusBadge } from "../../components/DomainStatusBadge";
 import { vietnamToday } from "./dispatch";
@@ -32,10 +34,10 @@ export function employeeMatches(e: Employee, filter: string, today = vietnamToda
 }
 export function EmployeeList({ employees, manage, onEdit }: { employees: Employee[]; manage: boolean; onEdit: (e: Employee) => void }) {
   return <div className="employee-list">{employees.map(e => <article className="employee-row" key={e.id}>
-    <div><h2>{e.fullName}</h2><small className="muted">{e.employeeCode}</small></div>
+    <div><h2>{employeeLabel(e.fullName)}</h2><small className="muted">{e.employeeCode}</small></div>
     <div className="employee-capabilities">{e.capabilities.map(c => <span className="operator-badge" key={c}>{c === "DRIVER" ? "Tài xế" : "Phụ xe"}</span>)}</div>
-    <div><small className="muted">Liên hệ</small><p>{e.phone}</p></div>
-    <div><small className="muted">Giấy phép</small><p>{e.capabilities.includes("DRIVER") ? e.licenceExpiryDate ? <>{e.licenceClass} · {date(e.licenceExpiryDate)}{e.licenceExpiryDate < vietnamToday() && <span className="operator-overdue"> · Đã hết hạn</span>}</> : "Chưa ghi nhận" : "Không áp dụng"}</p></div>
+    <div><small className="muted">Liên hệ</small><p>{contactLabel(e.phone)}</p></div>
+    <div><small className="muted">Giấy phép</small><p>{e.capabilities.includes("DRIVER") ? e.licenceClass === "DEMO" ? "Chưa cập nhật" : e.licenceExpiryDate ? <>{e.licenceClass} · {date(e.licenceExpiryDate)}{e.licenceExpiryDate < vietnamToday() && <span className="operator-overdue"> · Đã hết hạn</span>}</> : "Chưa ghi nhận" : "Không áp dụng"}</p></div>
     <DomainStatusBadge domain="user" status={e.status} />{manage && <button className="secondary" onClick={() => onEdit(e)}>Chỉnh sửa {e.employeeCode}</button>}
   </article>)}{!employees.length && <p>Không có nhân sự phù hợp.</p>}</div>;
 }
@@ -61,10 +63,10 @@ export function CrewSection({ tripId, status }: { tripId: number; status: string
   const editable = manage && ["SCHEDULED", "BOARDING"].includes(status);
   return <section className="card crew-section"><h2>Nhân sự chuyến xe</h2><QueryState query={crew}>{data => <>
     {!data.assignments.length && <p>Chưa phân công nhân sự.</p>}
-    {data.assignments.map(a => <div className="crew-person" key={a.id}><div><strong>{a.fullName}</strong><p>{a.duty === "DRIVER" ? "Tài xế" : "Phụ xe"}{a.licenceExpiryDate && ` · Hạn giấy phép ${date(a.licenceExpiryDate)}`}</p></div>{editable && <button className="secondary" disabled={change.isPending} onClick={() => change.mutate(data.assignments.filter(v => v.id !== a.id).map(v => ({ employeeId: v.employeeId, duty: v.duty })))}>Gỡ {a.fullName}</button>}</div>)}
+    {data.assignments.map(a => <div className="crew-person" key={a.id}><div><strong>{employeeLabel(a.fullName)}</strong><p>{a.duty === "DRIVER" ? "Tài xế" : "Phụ xe"}{a.licenceExpiryDate && !a.fullName.startsWith("Nhân sự demo ") && ` · Hạn giấy phép ${date(a.licenceExpiryDate)}`}</p></div>{editable && <button className="secondary" disabled={change.isPending} onClick={() => change.mutate(data.assignments.filter(v => v.id !== a.id).map(v => ({ employeeId: v.employeeId, duty: v.duty })))}>Gỡ {employeeLabel(a.fullName)}</button>}</div>)}
     {editable && <details className="crew-assignment"><summary>Phân công nhân sự</summary><form className="operator-filters" onSubmit={ev => { ev.preventDefault(); change.mutate([...data.assignments.map(v => ({ employeeId: v.employeeId, duty: v.duty })), { employeeId, duty }]); }}>
       <label className="field">Nhiệm vụ<select aria-label="Nhiệm vụ" value={duty} onChange={ev => { setDuty(ev.target.value as Capability); setEmployeeId(0); }}><option value="DRIVER">Tài xế</option><option value="ATTENDANT">Phụ xe</option></select></label>
-      <label className="field">Nhân sự<select aria-label="Nhân sự" value={employeeId} onChange={ev => setEmployeeId(Number(ev.target.value))}><option value={0}>Chọn nhân sự</option>{employees.data?.filter(e => e.status === "ACTIVE" && e.capabilities.includes(duty)).map(e => <option key={e.id} value={e.id}>{e.employeeCode} · {e.fullName}</option>)}</select></label>
+      <label className="field">Nhân sự<select aria-label="Nhân sự" value={employeeId} onChange={ev => setEmployeeId(Number(ev.target.value))}><option value={0}>Chọn nhân sự</option>{employees.data?.filter(e => e.status === "ACTIVE" && e.capabilities.includes(duty)).map(e => <option key={e.id} value={e.id}>{e.employeeCode} · {employeeLabel(e.fullName)}</option>)}</select></label>
       <button disabled={!employeeId || change.isPending}>Phân công</button><Link to="/operator/employees">Nhân sự vận hành</Link>
     </form></details>}</>}</QueryState>{employees.isError && <OperatorError error={employees.error} />}{change.isError && <OperatorError error={change.error} />}</section>;
 }
@@ -72,13 +74,13 @@ export function AttendanceContent({ rows, manage, tripStatus, closedStops, actio
   const [filter, setFilter] = useState(""); const [pickup, setPickup] = useState(0); const [search, setSearch] = useState("");
   const shown = rows.filter(p => (!pickup || p.pickupStopId === pickup) && (!filter || (filter === "UNPAID" ? p.paymentStatus !== "PAID" : (p.boardingStatus || "EXPECTED") === filter)) && `${p.seatCode} ${p.passengerName} ${p.phone} ${p.bookingCode}`.toLowerCase().includes(search.toLowerCase()));
   return <><div className="operator-filters"><label className="field">Trạng thái hành khách<select aria-label="Trạng thái hành khách" value={filter} onChange={ev => setFilter(ev.target.value)}><option value="">Tất cả</option>{Object.entries(boardingLabels).map(([s,l]) => <option key={s} value={s}>{l}</option>)}<option value="UNPAID">Chưa thanh toán</option></select></label>
-    <label className="field">Theo điểm đón<select aria-label="Theo điểm đón" value={pickup} onChange={ev => setPickup(Number(ev.target.value))}><option value={0}>Tất cả điểm đón</option>{[...new Map(rows.map(p => [p.pickupStopId,p.pickupName])).entries()].map(([id,name]) => <option key={id} value={id}>{name}</option>)}</select></label>
+    <label className="field">Theo điểm đón<select aria-label="Theo điểm đón" value={pickup} onChange={ev => setPickup(Number(ev.target.value))}><option value={0}>Tất cả điểm đón</option>{[...new Map(rows.map(p => [p.pickupStopId,p.pickupName])).entries()].map(([id,name]) => <option key={id} value={id}>{placeLabel(name)}</option>)}</select></label>
     <label className="field">Tìm hành khách<input type="search" value={search} onChange={ev => setSearch(ev.target.value)} /></label></div>
     <div className="operator-manifest-list">{shown.map(p => {
       const state = p.boardingStatus || "EXPECTED";
       const open = ["BOARDING", "DEPARTED"].includes(tripStatus) && !closedStops.includes(p.pickupStopId);
       const eligible = open && !!p.ticketId && p.paymentStatus === "PAID";
-      return <article className="card boarding-row" key={p.bookingItemId}><h3><span className="operator-seat-code">{p.seatCode}</span> {p.passengerName}</h3><div className="boarding-state"><DomainStatusBadge domain="payment" status={p.paymentStatus} /><DomainStatusBadge domain="attendance" status={state} /></div><p>{p.pickupName} → {p.dropoffName}</p><p className="fine-print">{p.phone} · <Link to={`/operator/bookings/${p.bookingId}`}>{p.bookingCode}</Link></p>
+      return <article className="card boarding-row" key={p.bookingItemId}><h3><span className="operator-seat-code">{p.seatCode}</span> {p.passengerName}</h3><div className="boarding-state"><DomainStatusBadge domain="payment" status={p.paymentStatus} /><DomainStatusBadge domain="attendance" status={state} /></div><p>{placeLabel(p.pickupName)} → {placeLabel(p.dropoffName)}</p><p className="fine-print">{p.phone} · <Link to={`/operator/bookings/${p.bookingId}`}>{p.bookingCode}</Link></p>
         <p className="fine-print">{paymentMethodLabel(p.paymentMethod)}</p>
         {p.pickupTime && <p className="fine-print">Đón dự kiến: {dateTime(p.pickupTime)}{Date.parse(p.pickupTime) < Date.now() && !["BOARDED", "NO_SHOW"].includes(state) && " · Đã qua giờ dự kiến; chưa xác nhận xe thực tế đến điểm đón."}</p>}
         {p.paymentStatus !== "PAID" && <p className="operator-overdue">Chưa thu tiền</p>}

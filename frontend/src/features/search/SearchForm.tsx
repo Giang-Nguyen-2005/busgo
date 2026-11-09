@@ -1,3 +1,4 @@
+import { placeLabel } from "../customer/presentation";
 import { useEffect, useId, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -63,7 +64,7 @@ function LocationInput({
   }, [active, open, id]);
   const suggestionsReady = query === text.trim() && !locations.isPending && !locations.isError;
   const choose = (location: Location) => {
-    onChange(location.id, location.name);
+    onChange(location.id, placeLabel(location.name));
     setOpen(false);
   };
   return (
@@ -153,7 +154,7 @@ function LocationInput({
               >
                 <MapPin size={17} />
                 <span>
-                  <strong>{location.name}</strong>
+                  <strong>{placeLabel(location.name)}</strong>
                   <small>
                     {[location.district, location.province]
                       .filter(Boolean)
@@ -183,13 +184,14 @@ function JourneyForm({ params }: { params: URLSearchParams }) {
       departureDate: params.get("departureDate") || (params.has("routeName") ? "" : today()),
     },
   });
-  // Resolve names only from the existing public autocomplete contract; IDs remain authoritative.
-  const names = useQuery({ queryKey: ["locations", ""], queryFn: ({ signal }) => get<Location[]>("/locations", { q: "" }, signal), enabled: !!params.get("routeName"), staleTime: 60_000 });
+  // Exact selected IDs are independent of autocomplete pagination.
+  const selectedIds = [...new Set([Number(params.get("pickupLocationId")), Number(params.get("dropoffLocationId"))].filter(id => Number.isSafeInteger(id) && id > 0))].sort((a,b) => a-b);
+  const names = useQuery({ queryKey: ["locations", "selected", selectedIds], queryFn: ({ signal }) => get<Location[]>("/locations/lookup", { ids: selectedIds.join(",") }, signal), enabled: !!params.get("routeName") && selectedIds.length > 0, staleTime: 60_000 });
   useEffect(() => {
     for (const [idKey, labelKey] of [["pickupLocationId", "pickupLabel"], ["dropoffLocationId", "dropoffLabel"]] as const) {
       const id = Number(params.get(idKey));
       const name = names.data?.find(item => item.id === id)?.name;
-      if (name && !params.get(labelKey) && form.getValues(idKey) === id && form.getValues(labelKey) === `${idKey === "pickupLocationId" ? "Điểm đón" : "Điểm trả"} đã chọn`) form.setValue(labelKey, name);
+      if (name && !params.get(labelKey) && form.getValues(idKey) === id && form.getValues(labelKey) === `${idKey === "pickupLocationId" ? "Điểm đón" : "Điểm trả"} đã chọn`) form.setValue(labelKey, placeLabel(name));
     }
   }, [names.data, params, form]);
   return (

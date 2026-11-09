@@ -1,3 +1,4 @@
+import { routeLabel } from "../customer/presentation";
 import { useAuth } from "../auth/AuthProvider";
 import { canManageOperator } from "../auth/access";
 import { useOccupancy } from "./queries";
@@ -24,7 +25,7 @@ export function TripWorkspace() {
   return <OperationsQueryState query={query}>{trip => <>
     <section className="operator-trip-header card">
       <Link to="/operator/trips">← Chuyến xe</Link>
-      <div className="operator-heading"><div><strong className="operator-departure">{departureClock(trip.departureTime)}</strong><h1>{trip.route.name}</h1>
+      <div className="operator-heading"><div><strong className="operator-departure">{departureClock(trip.departureTime)}</strong><h1>{routeLabel(trip.route.name)}</h1>
         <p>{dateTime(trip.departureTime)} · Giờ Việt Nam</p><p><strong>{trip.bus.licensePlate}</strong> · {trip.bus.busTypeName} · <OperatorStatusBadge status={trip.status} /></p></div>
         <div>{canManageOperator(auth.user?.roles) && trip.status === "SCHEDULED" && <Link className="button secondary" to={`/operator/bookings/new?tripId=${id}`}>Đặt chỗ cho khách</Link>}<TripStatusAction key={id} id={id} status={trip.status} crewReady={crew.data?.ready} /></div></div>
       {crew.data && !crew.isError && <p className="trip-readiness">{crew.data.ready ? "Nhân sự đã sẵn sàng" : crew.data.warning || "Nhân sự chưa sẵn sàng"}</p>}

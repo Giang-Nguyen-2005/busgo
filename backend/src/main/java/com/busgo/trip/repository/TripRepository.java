@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 public interface TripRepository extends JpaRepository<Trip, Long> {
+    java.util.List<Trip> findByBusIdOrderByDepartureTimeAsc(Long busId);
     Optional<Trip> findByOperatorRouteIdAndBusIdAndDepartureTime(
             Long operatorRouteId, Long busId, LocalDateTime departureTime);
 

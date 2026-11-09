@@ -1,3 +1,4 @@
+import { placeLabel } from "../../features/customer/presentation";
 import { cellLabels, cellStatus } from "../../features/operator/dispatch";
 import { BoardingManifest } from "../../features/operator/CrewBoarding";
 import { useTripWorkspace } from "../../features/operator/TripWorkspace";
@@ -25,7 +26,7 @@ export function ManifestContent({ manifest }: { manifest: PassengerManifest }) {
       <div className="operator-manifest-list">{group.passengers.map(p => <article className="operator-passenger" key={p.bookingItemId}>
         <div className="manifest-seat"><strong className="operator-seat-code">{p.seatCode}</strong></div>
         <div className="manifest-identity"><small>{p.passengerName ? "Khách trên ghế" : "Liên hệ đặt vé"}</small><strong>{p.passengerName || p.contact.name}</strong><p>{p.contact.phone} <small>Điện thoại liên hệ</small></p>{!p.passengerName && <small className="muted">Khách trên ghế: {seatPassenger(p.passengerName)}</small>}<details className="row-secondary"><summary>Đặt vé & thông tin vé</summary><Link to={"/operator/bookings/" + p.bookingId}>{p.bookingCode}</Link><p>Liên hệ đặt vé: {p.contact.name}</p><p>Mã vé: {p.ticketCode || "Chưa có vé"}</p><p>Tên trên vé: {p.ticketPassengerName || "—"}</p></details></div>
-        <div className="manifest-journey"><p><small>Đón</small>{p.pickup.name}{p.pickup.time && <small>{dateTime(p.pickup.time)}</small>}</p><p><small>Trả</small>{p.dropoff.name}{p.dropoff.time && <small>{dateTime(p.dropoff.time)}</small>}</p></div>
+        <div className="manifest-journey"><p><small>Đón</small>{placeLabel(p.pickup.name)}{p.pickup.time && <small>{dateTime(p.pickup.time)}</small>}</p><p><small>Trả</small>{placeLabel(p.dropoff.name)}{p.dropoff.time && <small>{dateTime(p.dropoff.time)}</small>}</p></div>
         <div className="manifest-state"><OperationsBadge status={p.bookingStatus} /><span className={`operator-badge operator-status-${p.paymentStatus}`}>{paymentStatusLabel(p.paymentStatus)}</span></div>
       </article>)}</div>
     </section>)}

@@ -1,3 +1,4 @@
+import { placeLabel, routeLabel } from "../../features/customer/presentation";
 import { PromotionPrice } from "../../features/booking/PromotionPrice";
 import { PartialCancellationSection } from "../../features/booking/PartialCancellation";
 import { ModificationSection } from "../../features/booking/Modification";
@@ -53,7 +54,7 @@ export function OperatorBookingsPage() {
 export function OperatorBookingRow({ booking: b }: { booking: OperatorBookingListItem }) {
   return <tr>
     <td className="booking-identity"><Link className="operator-booking-code" to={`/operator/bookings/${b.bookingId}`}>{b.bookingCode}</Link><Link className="operator-contact-name" to={`/operator/bookings/${b.bookingId}`}>{b.contact.name}</Link><p>{b.contact.phone}</p><details className="row-secondary"><summary>Thông tin thêm</summary><small className="muted">{b.contact.email || "Chưa có email"}</small><small>Tạo: {dateTime(b.createdAt)}</small></details></td>
-    <td className="booking-journey"><Link to={`/operator/trips/${b.tripId}`}><strong>{b.route.name}</strong></Link><p>{b.pickup.time ? dateTime(b.pickup.time) : "Chưa có giờ đón"} · <strong>{b.seatCount} ghế</strong></p><small className="muted">{b.pickup.name} → {b.dropoff.name}</small>{b.dropoff.time && <small className="muted">Trả: {dateTime(b.dropoff.time)}</small>}</td>
+    <td className="booking-journey"><Link to={`/operator/trips/${b.tripId}`}><strong>{routeLabel(b.route.name)}</strong></Link><p>{b.pickup.time ? dateTime(b.pickup.time) : "Chưa có giờ đón"} · <strong>{b.seatCount} ghế</strong></p><small className="muted">{placeLabel(b.pickup.name)} → {placeLabel(b.dropoff.name)}</small>{b.dropoff.time && <small className="muted">Trả: {dateTime(b.dropoff.time)}</small>}</td>
     <td className="booking-state"><div><OperationsBadge status={b.status} /><span className={`operator-badge operator-status-${b.paymentStatus}`}>{paymentStatusLabel(b.paymentStatus)}</span></div><small>{b.source} · {paymentMethodLabel(b.paymentMethod)}</small><strong className="booking-money">{money(b.totalAmount)}</strong></td>
   </tr>;
 }
@@ -63,7 +64,7 @@ export function BookingDetailContent({ booking: b }: { booking: OperatorBookingD
   return <article className="booking-dossier">
     <PromotionPrice price={b.price} /><header className="dossier-overview"><div><span className="eyebrow">ĐẶT VÉ</span><h2>{b.bookingCode}</h2><p>{b.source} · {paymentMethodLabel(b.paymentMethod)}</p><OperationsBadge status={b.status} /><p className="muted">Tạo: {dateTime(b.createdAt)} · Giờ Việt Nam</p></div><div className="dossier-total"><small>Tổng đặt vé</small><strong>{money(b.totalAmount)}</strong></div></header>
     <div className="dossier-context">
-      <section><h2>Hành trình</h2><h3>{b.route.name}</h3><p><Link to={`/operator/trips/${b.trip.id}`}>Chuyến #{b.trip.id}</Link> · <OperatorStatusBadge status={b.trip.status} /></p><dl className="dossier-stops"><div><dt>Đón</dt><dd><Stop stop={b.pickup} /></dd></div><div><dt>Trả</dt><dd><Stop stop={b.dropoff} /></dd></div></dl><p className="fine-print">Giờ toàn chuyến: {dateTime(b.trip.departureTime)} → {dateTime(b.trip.estimatedArrivalTime)}</p></section>
+      <section><h2>Hành trình</h2><h3>{routeLabel(b.route.name)}</h3><p><Link to={`/operator/trips/${b.trip.id}`}>Chuyến #{b.trip.id}</Link> · <OperatorStatusBadge status={b.trip.status} /></p><dl className="dossier-stops"><div><dt>Đón</dt><dd><Stop stop={b.pickup} /></dd></div><div><dt>Trả</dt><dd><Stop stop={b.dropoff} /></dd></div></dl><p className="fine-print">Giờ toàn chuyến: {dateTime(b.trip.departureTime)} → {dateTime(b.trip.estimatedArrivalTime)}</p></section>
       <section><h2>Liên hệ đặt vé</h2><strong>{b.contact.name}</strong><p>{b.contact.phone}</p><p>{b.contact.email || "Chưa có email"}</p></section>
     </div>
     <section className="dossier-section"><h2>Ghế và vé <span className="muted">· {b.items.length} ghế</span></h2><p className="fine-print">Tên trên vé có thể lấy từ liên hệ đặt vé, không xác minh danh tính người ngồi trên ghế.</p>

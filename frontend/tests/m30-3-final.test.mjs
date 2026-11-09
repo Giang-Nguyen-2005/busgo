@@ -38,7 +38,7 @@ test('interiors require exact established type, never guessed ID, limousine capa
 test('demo logos use exact identities and API URL has priority', () => {
   assert.match(demoOperatorLogo('An Phú Express'), /an-phu/);
   for (const name of ['An Phú','An Phu Express','An Phú Express VIP','an phú express','Unknown']) assert.equal(demoOperatorLogo(name),undefined);
-  assert.match(render(OperatorLogo,{name:'An Phú Express'}), /minh họa demo/);
+  assert.match(render(OperatorLogo,{name:'An Phú Express'}), /alt="Logo An Phú Express"/);
   const html=render(OperatorLogo,{name:'An Phú Express',logoUrl:'/api-logo.png'});
   assert.match(html,/api-logo.png/); assert.doesNotMatch(html,/an-phu-express-logo/);
 });

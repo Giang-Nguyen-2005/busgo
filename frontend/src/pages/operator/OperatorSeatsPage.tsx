@@ -1,3 +1,4 @@
+import { placeLabel } from "../../features/customer/presentation";
 import { useQueries } from "@tanstack/react-query";
 import { operatorApi } from "../../api/operatorApi";
 import { useEffect, useRef, useState } from "react";
@@ -26,7 +27,7 @@ export function BookingInspectionContent({ booking: b, seatId }: { booking: Oper
   const latest = b.payments.reduce<(typeof b.payments)[number] | undefined>((a, p) => !a || p.id > a.id ? p : a, undefined);
   return <section className="operator-inspection-booking"><div className="inspection-group"><h3>{b.bookingCode}</h3><OperationsBadge status={b.status} /></div>
     <section className="inspection-group"><h4>Thanh toán</h4><p>{latest ? paymentStatusLabel(latest.status) : "Chưa có giao dịch thanh toán"}</p></section>
-    <section className="inspection-group"><h4>Hành trình · Đón → trả</h4><p>{b.pickup.name} → {b.dropoff.name}</p>
+    <section className="inspection-group"><h4>Hành trình · Đón → trả</h4><p>{placeLabel(b.pickup.name)} → {placeLabel(b.dropoff.name)}</p>
     {b.pickup.time && <p>Giờ đón: {dateTime(b.pickup.time)}</p>}{b.dropoff.time && <p>Giờ trả: {dateTime(b.dropoff.time)}</p>}</section>
     <section className="inspection-group"><h4>Liên hệ đặt vé</h4><p>{b.contact.name}</p><p>{b.contact.phone} <button className="secondary" onClick={async () => { try { await navigator.clipboard.writeText(b.contact.phone); setCopied("Đã sao chép"); } catch { setCopied("Không thể sao chép. Vui lòng chọn số điện thoại."); } }}>Sao chép số</button></p><span role="status">{copied}</span>
     {b.contact.email && <p>{b.contact.email}</p>}</section>
